@@ -1,4 +1,4 @@
-MODULE BeamDyn_SP
+MODULE BeamDyn
 
    USE BeamDyn_Types
    USE NWTC_Library
@@ -11,16 +11,13 @@ MODULE BeamDyn_SP
 
    ! ..... Public Subroutines....................................................................
 
-   PUBLIC :: BeamDyn_Init                           ! Initialization routine
-   PUBLIC :: BeamDyn_End                            ! Ending routine (includes clean up)
-
-   PUBLIC :: BeamDyn_UpdateStates                   ! Loose coupling routine for solving for constraint states, integrating
-                                                 !   continuous states, and updating discrete states
-   PUBLIC :: BeamDyn_CalcOutput                     ! Routine for computing outputs
-
-   PUBLIC :: BeamDyn_CalcConstrStateResidual        ! Tight coupling routine for returning the constraint state residual
-   PUBLIC :: BeamDyn_CalcContStateDeriv             ! Tight coupling routine for computing derivatives of continuous states
-   PUBLIC :: BeamDyn_UpdateDiscState                ! Tight coupling routine for updating discrete states
+   PUBLIC :: BD_Init                           ! Initialization routine
+   PUBLIC :: BD_End                            ! Ending routine (includes clean up)
+   PUBLIC :: BD_UpdateStates                   ! Loose coupling routine for solving for constraint states, integrating
+   PUBLIC :: BD_CalcOutput                     ! Routine for computing outputs
+   PUBLIC :: BD_CalcConstrStateResidual        ! Tight coupling routine for returning the constraint state residual
+   PUBLIC :: BD_CalcContStateDeriv             ! Tight coupling routine for computing derivatives of continuous states
+   PUBLIC :: BD_UpdateDiscState                ! Tight coupling routine for updating discrete states
    PUBLIC :: CrvMatrixR                ! Tight coupling routine for updating discrete states
    PUBLIC :: CrvCompose                ! Tight coupling routine for updating discrete states
    PUBLIC :: CrvCompose_temp                ! Tight coupling routine for updating discrete states
@@ -28,11 +25,14 @@ MODULE BeamDyn_SP
    PUBLIC :: CrvMatrixB                ! Tight coupling routine for updating discrete states
    PUBLIC :: CrvExtractCrv                ! Tight coupling routine for updating discrete states
    PUBLIC :: Tilde
+   PUBLIC :: Norm
+   PUBLIC :: ludcmp
+   PUBLIC :: lubksb
    PUBLIC :: MotionTensor
 
 CONTAINS
 
-INCLUDE 'NodeLoc.f90'
+!INCLUDE 'NodeLoc.f90'
 INCLUDE 'Tilde.f90'
 INCLUDE 'CrvMatrixR.f90'
 INCLUDE 'CrvMatrixH.f90'
@@ -57,14 +57,14 @@ INCLUDE 'AssembleRHSGL.f90'
 INCLUDE 'GenerateDynamicElement.f90'
 INCLUDE 'ludcmp.f90'
 INCLUDE 'lubksb.f90'
-INCLUDE 'AppliedNodalLoad.f90'
-INCLUDE 'PrescribedRootMotion.f90'
+!INCLUDE 'AppliedNodalLoad.f90'
+!INCLUDE 'PrescribedRootMotion.f90'
 INCLUDE 'DynamicSolution.f90'
 INCLUDE 'BeamDyn_RK4.f90'
 INCLUDE 'BeamDyn_RK2.f90'
 INCLUDE 'CrvMatrixHinv.f90'
 INCLUDE 'ComputeUDN.f90'
-INCLUDE 'BeamDyn_CalcContStateDeriv.f90'
+INCLUDE 'BD_CalcContStateDeriv.f90'
 
 INCLUDE 'ReadPrimaryFile.f90'
 INCLUDE 'ComputeSectionProperty.f90'
@@ -137,7 +137,7 @@ INCLUDE 'InputGlobalLocal.f90'
 INCLUDE 'ElementMatrix_Force_New.f90'
 INCLUDE 'ComputeReactionForce.f90'
 
-   SUBROUTINE BeamDyn_Init( InitInp, u, p, x, xd, z, OtherState, y, Interval, InitOut, ErrStat, ErrMsg )
+   SUBROUTINE BD_Init( InitInp, u, p, x, xd, z, OtherState, y, Interval, InitOut, ErrStat, ErrMsg )
 !
 ! This routine is called at the start of the simulation to perform initialization steps.
 ! The parameters are set here and not changed during the simulation.
@@ -672,10 +672,10 @@ INCLUDE 'ComputeReactionForce.f90'
 
    OtherState%Rescale_counter = 0
 
-   END SUBROUTINE BeamDyn_Init
+   END SUBROUTINE BD_Init
 
    !----------------------------------------------------------------------------------------------------------------------------------
-   SUBROUTINE BeamDyn_End( u, p, x, xd, z, OtherState, y, ErrStat, ErrMsg )
+   SUBROUTINE BD_End( u, p, x, xd, z, OtherState, y, ErrStat, ErrMsg )
    !
    ! This routine is called at the end of the simulation.
    !..................................................................................................................................
@@ -719,9 +719,9 @@ INCLUDE 'ComputeReactionForce.f90'
    CALL BD_DestroyOutput( y, ErrStat, ErrMsg )
 
 
-   END SUBROUTINE BeamDyn_End
+   END SUBROUTINE BD_End
 
-   SUBROUTINE BeamDyn_UpdateStates( t, n, u, utimes, p, x, xd, z, OtherState, ErrStat, ErrMsg )
+   SUBROUTINE BD_UpdateStates( t, n, u, utimes, p, x, xd, z, OtherState, ErrStat, ErrMsg )
 !
 ! Routine for solving for constraint states, integrating continuous states, and updating discrete states
 ! Constraint states are solved for input t; Continuous and discrete states are updated for t + p%dt
@@ -788,10 +788,10 @@ INCLUDE 'ComputeReactionForce.f90'
 !ENDDO
    ENDIF
 
-   END SUBROUTINE BeamDyn_UpdateStates
+   END SUBROUTINE BD_UpdateStates
 
    !----------------------------------------------------------------------------------------------------------------------------------
-   SUBROUTINE BeamDyn_CalcOutput( t, u, p, x, xd, z, OtherState, y, ErrStat, ErrMsg )
+   SUBROUTINE BD_CalcOutput( t, u, p, x, xd, z, OtherState, y, ErrStat, ErrMsg )
    !
    ! Routine for computing outputs, used in both loose and tight coupling.
    !..................................................................................................................................
@@ -865,7 +865,7 @@ INCLUDE 'ComputeReactionForce.f90'
 
    IF(p%analysis_type .EQ. 2) THEN
 !       CALL BD_CopyContState(x, xdot, MESH_NEWCOPY, ErrStat, ErrMsg)
-!       CALL BeamDyn_CalcContStateDeriv( t, u, p, x, xd, z, OtherState, xdot, ErrStat, ErrMsg) 
+!       CALL BD_CalcContStateDeriv( t, u, p, x, xd, z, OtherState, xdot, ErrStat, ErrMsg) 
        DO i=1,p%elem_total
            DO j=1,p%node_elem
                temp_id = ((i-1)*(p%node_elem-1)+j-1)*p%dof_node
@@ -895,8 +895,8 @@ INCLUDE 'ComputeReactionForce.f90'
    temp6(:) = 0.0D0
    temp6(:) = temp_ReactionForce(1:6)
    temp6(:) = MATMUL(TRANSPOSE(temp66),temp6)
-   y%ReactionForce%Force(1:3,1) = -temp6(1:3)
-   y%ReactionForce%Moment(1:3,1) = -temp6(4:6)
+   y%ReactionForce%Force(1:3,1) = temp6(1:3)
+   y%ReactionForce%Moment(1:3,1) = temp6(4:6)
    DO i=1,p%node_total
        temp_id = (i-1)*p%dof_node
        temp6(:) = 0.0D0
@@ -906,10 +906,10 @@ INCLUDE 'ComputeReactionForce.f90'
        y%BldForce%Moment(1:3,i) = temp6(4:6)
    ENDDO
 
-   END SUBROUTINE BeamDyn_CalcOutput
+   END SUBROUTINE BD_CalcOutput
 
    !----------------------------------------------------------------------------------------------------------------------------------
-   SUBROUTINE BeamDyn_UpdateDiscState( t, n, u, p, x, xd, z, OtherState, ErrStat, ErrMsg )
+   SUBROUTINE BD_UpdateDiscState( t, n, u, p, x, xd, z, OtherState, ErrStat, ErrMsg )
    !
    ! Routine for updating discrete states
    !..................................................................................................................................
@@ -935,9 +935,9 @@ INCLUDE 'ComputeReactionForce.f90'
 
 !      xd%DummyDiscState = 0.0
 
-END SUBROUTINE BeamDyn_UpdateDiscState
+END SUBROUTINE BD_UpdateDiscState
    !----------------------------------------------------------------------------------------------------------------------------------
-   SUBROUTINE BeamDyn_CalcConstrStateResidual( t, u, p, x, xd, z, OtherState, Z_residual, ErrStat, ErrMsg )
+   SUBROUTINE BD_CalcConstrStateResidual( t, u, p, x, xd, z, OtherState, Z_residual, ErrStat, ErrMsg )
    !
    ! Routine for solving for the residual of the constraint state equations
    !..................................................................................................................................
@@ -965,7 +965,7 @@ END SUBROUTINE BeamDyn_UpdateDiscState
 
    Z_residual%DummyConstrState = 0
 
-   END SUBROUTINE BeamDyn_CalcConstrStateResidual
+   END SUBROUTINE BD_CalcConstrStateResidual
 
    !----------------------------------------------------------------------------------------------------------------------------------
    SUBROUTINE BD_gen_gll_LSGL(N, x, w)
@@ -1047,4 +1047,4 @@ END SUBROUTINE BeamDyn_UpdateDiscState
    END SUBROUTINE BD_gen_gll_LSGL
 
 
-END MODULE BeamDyn_SP
+END MODULE BeamDyn
