@@ -41,6 +41,7 @@
    RHS(:) = 0.0D0
    Reaction(:) = 0.0D0
 
+!WRITE(*,*) 'uuN:',uuN(1:6)
    CALL GenerateDynamicElement_Force(uuN0,uuN,vvN,aaN,     &
                                      Stif0,Mass0,gravity,u,&
                                      damp_flag,beta,&

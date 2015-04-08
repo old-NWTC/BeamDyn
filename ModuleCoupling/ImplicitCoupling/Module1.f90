@@ -105,7 +105,7 @@ SUBROUTINE Mod1_Init( InitInp, u, p, x, xd, z, OtherState, y, Interval, InitOut,
 !      p%m      = 1.0D+02       ! mass of mass 1 (kg)
       p%m      = 5.0D-01       ! mass of mass 1 (kg)
       p%c      = 0.1D+00      ! damping of dashpot 1 (N/(m/s))
-      p%k      = 1.0D+02      ! stiffness of spring 1 (N/m)
+      p%k      = 1.0D+05      ! stiffness of spring 1 (N/m)
       p%f      = 0.         ! applied force (constant) (N)  
       p%dt     = Interval   ! module time step (increment) (s)
       p%method = 3          ! integration method:  1 (RK4), 2 (AB4), 3 (ABM4), 4 (AM2)

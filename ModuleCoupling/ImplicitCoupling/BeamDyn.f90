@@ -880,6 +880,19 @@ INCLUDE 'ComputeReactionForce.f90'
            ENDDO
        ENDDO
 !       CALL BD_DestroyContState(xdot, ErrStat, ErrMsg)
+CALL MotionTensor(p%GlbRot,p%GlbPos,temp66,1)
+temp6(1:3) = u%RootMotion%TranslationDisp(:,1)
+temp6(4:6) = u%RootMotion%TranslationVel(:,1)
+temp6(:) = MATMUL(temp66,temp6)
+x%q(1:3) = temp6(1:3)
+x%q(4:6) = 0.0D0
+x%dqdt(1:3) = temp6(4:6)
+x%dqdt(4:6) = 0.0D0
+temp6(1:3) = u%RootMotion%TranslationAcc(:,1)
+temp6(4:6) = u%RootMotion%RotationAcc(:,1)
+temp6(:) = MATMUL(temp66,temp6)
+OtherState%Acc(1:6) = temp6(1:6)
+
        CALL DynamicSolution_Force(p%uuN0,x%q,x%dqdt,OtherState%Acc,                                  &
                                   p%Stif0_GL,p%Mass0_GL,p%gravity,u,                                 &
                                   p%damp_flag,p%beta,                                                &

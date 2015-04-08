@@ -121,14 +121,17 @@ SUBROUTINE Mod1_BD_InputOutputSolve(time, &
    ! This code will be specific to the underlying modules; could be placed in a separate routine.
    ! Note that Module2 has direct feedthrough, but Module1 does not. Thus, Module1 should be called first.
 
-   eps = 0.1D+00
+   eps = 0.01D+00
    DO i=1,iter_max
+WRITE(*,*) 'i=',i
        CALL Mod1_CalcOutput( time, Mod1_Input, Mod1_Parameter, Mod1_ContinuousState, Mod1_DiscreteState, &
                     Mod1_ConstraintState, Mod1_OtherState, Mod1_Output, ErrStat, ErrMsg )
 
        CALL BD_InputClean(BD_Input)
        CALL BD_CalcOutput( time, BD_Input, BD_Parameter, BD_ContinuousState, BD_DiscreteState, &
                     BD_ConstraintState, BD_OtherState, BD_Output, ErrStat, ErrMsg )
+
+!WRITE(*,*) 'Original BD Force:',BD_Output%ReactionForce%Force(1,1)
 
        BD_Force = BD_Output%ReactionForce%Force(1,1)
        BD_RootMotion(1) = BD_Input%RootMotion%TranslationDisp(1,1)
@@ -143,10 +146,13 @@ SUBROUTINE Mod1_BD_InputOutputSolve(time, &
     
        Coef(:,:) = 0.0D0
        Coef(1,1) = 1.0D0
+!WRITE(*,*) 'Ori TransDisp:',BD_Input%RootMotion%TranslationDisp(1,1)
        BD_Input%RootMotion%TranslationDisp(1,1) = BD_Input%RootMotion%TranslationDisp(1,1) + eps
        CALL BD_InputClean(BD_Input)
+!WRITE(*,*) 'Per TransDisp:',BD_Input%RootMotion%TranslationDisp(1,1)
        CALL BD_CalcOutput( time, BD_Input, BD_Parameter, BD_ContinuousState, BD_DiscreteState, &
                     BD_ConstraintState, BD_OtherState, BD_Output, ErrStat, ErrMsg )
+!WRITE(*,*) 'Perturbed Disp BD Force:',BD_Output%ReactionForce%Force(1,1)
        Coef(1,2) = -((BD_Output%ReactionForce%Force(1,1)-BD_Force)/eps)
        BD_Input%RootMotion%TranslationDisp(1,1) = BD_RootMotion(1)
 
@@ -154,6 +160,7 @@ SUBROUTINE Mod1_BD_InputOutputSolve(time, &
        CALL BD_InputClean(BD_Input)
        CALL BD_CalcOutput( time, BD_Input, BD_Parameter, BD_ContinuousState, BD_DiscreteState, &
                     BD_ConstraintState, BD_OtherState, BD_Output, ErrStat, ErrMsg )
+!WRITE(*,*) 'Perturbed Vel BD Force:',BD_Output%ReactionForce%Force(1,1)
        Coef(1,3) = -((BD_Output%ReactionForce%Force(1,1)-BD_Force)/eps)
        BD_Input%RootMotion%TranslationVel(1,1) = BD_RootMotion(2)
 
@@ -163,6 +170,10 @@ SUBROUTINE Mod1_BD_InputOutputSolve(time, &
                     BD_ConstraintState, BD_OtherState, BD_Output, ErrStat, ErrMsg )
        Coef(1,4) = -((BD_Output%ReactionForce%Force(1,1)-BD_Force)/eps)
        BD_Input%RootMotion%TranslationAcc(1,1) = BD_RootMotion(3)
+
+!WRITE(*,*) Coef(1,2)
+!WRITE(*,*) Coef(1,3)
+!WRITE(*,*) Coef(1,4)
 
        Coef(2,2) = 1.0D0
        Coef(3,3) = 1.0D0
@@ -182,7 +193,7 @@ SUBROUTINE Mod1_BD_InputOutputSolve(time, &
  
        CALL ludcmp(Coef,4,indx,d)
        CALL lubksb(Coef,4,indx,RHS,uinc)
-
+WRITE(*,*) 'Norm:',Norm(uinc)
        IF(Norm(uinc) .LE. TOLF) RETURN
        Mod1_Input%PointMesh%Force(1,1) = Mod1_Input%PointMesh%Force(1,1) + uinc(1)
        BD_Input%RootMotion%TranslationDisp(1,1) = BD_Input%RootMotion%TranslationDisp(1,1) + uinc(2)
@@ -191,7 +202,8 @@ SUBROUTINE Mod1_BD_InputOutputSolve(time, &
       
        IF(i .EQ. iter_max) THEN
            WRITE(*,*) "InputOutputSolve does not converge after the maximum number of iterations"
-           RETURN
+!           RETURN
+           STOP 
        ENDIF
 
    ENDDO
