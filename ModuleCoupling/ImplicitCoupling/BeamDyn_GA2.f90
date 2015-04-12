@@ -61,8 +61,8 @@
    CALL BD_CopyOtherState(OtherState, OS_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
    ! interpolate u to find u_interp = u(t)
 WRITE(*,*) 'u1%Acc',u(1)%RootMotion%TranslationAcc(1:3,1)
-WRITE(*,*) 'u2%Acc',u(2)%RootMotion%TranslationAcc(1:3,1)
-WRITE(*,*) 'u3%Acc',u(3)%RootMotion%TranslationAcc(1:3,1)
+!WRITE(*,*) 'u2%Acc',u(2)%RootMotion%TranslationAcc(1:3,1)
+!WRITE(*,*) 'u3%Acc',u(3)%RootMotion%TranslationAcc(1:3,1)
    CALL BD_Input_ExtrapInterp( u, utimes, u_interp, t+p%dt, ErrStat, ErrMsg )
 WRITE(*,*) 'u_interp%Acc',u_interp%RootMotion%TranslationAcc(1:3,1)
    CALL TiSchmPredictorStep( x_tmp%q,x_tmp%dqdt,OS_tmp%acc,OS_tmp%xcc,             &

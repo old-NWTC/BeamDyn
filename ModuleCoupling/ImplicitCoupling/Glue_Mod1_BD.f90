@@ -128,12 +128,12 @@ WRITE(*,*) 'i=',i
                     Mod1_ConstraintState, Mod1_OtherState, Mod1_Output, ErrStat, ErrMsg )
 
        CALL BD_InputClean(BD_Input)
-WRITE(*,*) 'BD_ContinuousState%q'
-WRITE(*,*) BD_ContinuousState%q
-WRITE(*,*) 'BD_ContinuousState%dqdt'
-WRITE(*,*) BD_ContinuousState%dqdt
-WRITE(*,*) 'BD_OtherState%Acc'
-WRITE(*,*) BD_OtherState%Acc
+!WRITE(*,*) 'BD_ContinuousState%q'
+!WRITE(*,*) BD_ContinuousState%q
+!WRITE(*,*) 'BD_ContinuousState%dqdt'
+!WRITE(*,*) BD_ContinuousState%dqdt
+!WRITE(*,*) 'BD_OtherState%Acc'
+!WRITE(*,*) BD_OtherState%Acc
        CALL BD_CalcOutput_Coupling( time, BD_Input, BD_Parameter, BD_ContinuousState, BD_DiscreteState, &
                     BD_ConstraintState, BD_OtherState, BD_Output, ErrStat, ErrMsg )
 
@@ -352,12 +352,12 @@ PROGRAM MAIN
    t_initial = 0.d0
    t_final   = 0.5D+01
 
-   pc_max = 1  ! Number of predictor-corrector iterations; 1 corresponds to an explicit calculation where UpdateStates
+   pc_max = 2  ! Number of predictor-corrector iterations; 1 corresponds to an explicit calculation where UpdateStates
                ! is called only once  per time step for each module; inputs and outputs are extrapolated in time and
                ! are available to modules that have an implicit dependence on other-module data
 
    ! specify time increment; currently, all modules will be time integrated with this increment size
-   dt_global = 1.0D-03
+   dt_global = 1.0D-04
 
    n_t_final = ((t_final - t_initial) / dt_global )
 
@@ -365,8 +365,8 @@ PROGRAM MAIN
 
    ! define polynomial-order for ModName_Input_ExtrapInterp and ModName_Output_ExtrapInterp
    ! Must be 0, 1, or 2
-   Mod1_interp_order = 2
-   BD_interp_order   = 2
+   Mod1_interp_order = 0
+   BD_interp_order   = 0
 
    !Module1: allocate Input and Output arrays; used for interpolation and extrapolation
    ALLOCATE(Mod1_Input(Mod1_interp_order + 1))
@@ -402,6 +402,8 @@ PROGRAM MAIN
       Mod1_InputTimes(i) = t_initial - (i - 1) * dt_global
       Mod1_OutputTimes(i) = t_initial - (i - 1) * dt_global
    ENDDO
+
+WRITE(*,*) 'Mod1_InputTimes:',Mod1_InputTimes(:)
 
    DO i = 1, Mod1_interp_order
      Call Mod1_CopyInput (Mod1_Input(i),  Mod1_Input(i+1),  MESH_NEWCOPY, Errstat, ErrMsg)
@@ -463,7 +465,7 @@ PROGRAM MAIN
 
    DO n_t_global = 0, n_t_final
 WRITE(*,*) "Time Step: ", n_t_global
-IF(n_t_global .EQ. 1) STOP
+!IF(n_t_global .EQ. 2) STOP
       ! Solve input-output relations; this section of code corresponds to Eq. (35) in Gasmi et al. (2013)
       ! This code will be specific to the underlying modules
 
