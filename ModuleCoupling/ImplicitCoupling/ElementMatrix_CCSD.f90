@@ -145,9 +145,9 @@
                elf2(temp_id1) = elf2(temp_id1) - hhx(i)*Fd(j)*Jacobian*gw(igp)
            ENDDO
        ENDDO
-DO i=1,18
+!DO i=1,18
 !WRITE(*,*) i,elf2(i)
-ENDDO
+!ENDDO
    ENDDO
 
 

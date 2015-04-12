@@ -15,6 +15,7 @@ MODULE BeamDyn
    PUBLIC :: BD_End                            ! Ending routine (includes clean up)
    PUBLIC :: BD_UpdateStates                   ! Loose coupling routine for solving for constraint states, integrating
    PUBLIC :: BD_CalcOutput                     ! Routine for computing outputs
+   PUBLIC :: BD_CalcOutput_Coupling                     ! Routine for computing outputs
    PUBLIC :: BD_CalcConstrStateResidual        ! Tight coupling routine for returning the constraint state residual
    PUBLIC :: BD_CalcContStateDeriv             ! Tight coupling routine for computing derivatives of continuous states
    PUBLIC :: BD_UpdateDiscState                ! Tight coupling routine for updating discrete states
@@ -446,6 +447,10 @@ INCLUDE 'ComputeReactionForce.f90'
 
    CALL AllocAry(x%q,p%dof_total,'x%q',ErrStat2,ErrMsg2)
    x%q(:) = 0.0D0
+!DO i=1,p%node_total
+!    temp_id = (i-1)*p%dof_node
+!    x%q(temp_id+2) = 0.1
+!ENDDO
    CALL AllocAry(x%dqdt,p%dof_total,'x%dqdt',ErrStat2,ErrMsg2)
    x%dqdt(:) = 0.0D0
 
@@ -633,6 +638,12 @@ INCLUDE 'ComputeReactionForce.f90'
    u%RootMotion%Orientation(3,3,:) = 1.0D0
    u%RootMotion%RotationVel(:,:)   = 0.0D0
    u%RootMotion%RotationAcc(:,:)   = 0.0D0
+
+   u%RootMotion%TranslationDisp(1,1) = 0.1D0
+DO i=1,p%node_total
+    temp_id = (i-1)*p%dof_node
+    x%q(temp_id+2) = -0.1
+ENDDO
 
    DO i=1,u%PointLoad%ElemTable(ELEMENT_POINT)%nelem
        j = u%PointLoad%ElemTable(ELEMENT_POINT)%Elements(i)%ElemNodes(1)
@@ -884,6 +895,8 @@ CALL MotionTensor(p%GlbRot,p%GlbPos,temp66,1)
 temp6(1:3) = u%RootMotion%TranslationDisp(:,1)
 temp6(4:6) = u%RootMotion%TranslationVel(:,1)
 temp6(:) = MATMUL(temp66,temp6)
+!WRITE(*,*) 'u%Disp',u%RootMotion%TranslationDisp(:,1)
+!WRITE(*,*) 'temp6',temp6
 x%q(1:3) = temp6(1:3)
 x%q(4:6) = 0.0D0
 x%dqdt(1:3) = temp6(4:6)
@@ -893,6 +906,8 @@ temp6(4:6) = u%RootMotion%RotationAcc(:,1)
 temp6(:) = MATMUL(temp66,temp6)
 OtherState%Acc(1:6) = temp6(1:6)
 
+WRITE(*,*) 'x%q'
+WRITE(*,*) x%q
        CALL DynamicSolution_Force(p%uuN0,x%q,x%dqdt,OtherState%Acc,                                  &
                                   p%Stif0_GL,p%Mass0_GL,p%gravity,u,                                 &
                                   p%damp_flag,p%beta,                                                &
@@ -921,6 +936,85 @@ OtherState%Acc(1:6) = temp6(1:6)
 
    END SUBROUTINE BD_CalcOutput
 
+   SUBROUTINE BD_CalcOutput_Coupling( t, u, p, x, xd, z, OtherState, y, ErrStat, ErrMsg )
+   !
+   ! Routine for computing outputs, used in both loose and tight coupling.
+   !..................................................................................................................................
+
+   REAL(DbKi),                   INTENT(IN   )  :: t           ! Current simulation time in seconds
+   TYPE(BD_InputType),           INTENT(IN   )  :: u           ! Inputs at t
+   TYPE(BD_ParameterType),       INTENT(IN   )  :: p           ! Parameters
+   TYPE(BD_ContinuousStateType), INTENT(INOUT)  :: x           ! Continuous states at t
+   TYPE(BD_DiscreteStateType),   INTENT(IN   )  :: xd          ! Discrete states at t
+   TYPE(BD_ConstraintStateType), INTENT(IN   )  :: z           ! Constraint states at t
+   TYPE(BD_OtherStateType),      INTENT(INOUT)  :: OtherState  ! Other/optimization states
+   TYPE(BD_OutputType),          INTENT(INOUT)  :: y           ! Outputs computed at t (Input only so that mesh con-
+                                                                    !   nectivity information does not have to be recalculated)
+   INTEGER(IntKi),                 INTENT(  OUT)  :: ErrStat     ! Error status of the operation
+   CHARACTER(*),                   INTENT(  OUT)  :: ErrMsg      ! Error message if ErrStat /= ErrID_None
+
+   TYPE(BD_ContinuousStateType):: xdot
+   INTEGER(IntKi):: i
+   INTEGER(IntKi):: j
+   INTEGER(IntKi):: temp_id
+   INTEGER(IntKi):: temp_id2
+   REAL(ReKi):: cc(3)
+   REAL(ReKi):: cc0(3)
+   REAL(ReKi):: temp_cc(3)
+   REAL(ReKi):: temp_R(3,3)
+   REAL(ReKi):: temp66(6,6)
+   REAL(ReKi):: temp6(6)
+   REAL(ReKi):: temp_Force(p%dof_total)
+   REAL(ReKi):: temp_ReactionForce(6)
+   ! Initialize ErrStat
+
+   ErrStat = ErrID_None
+   ErrMsg  = "" 
+
+
+   IF(p%analysis_type .EQ. 2) THEN
+       CALL BD_CopyContState(x, xdot, MESH_NEWCOPY, ErrStat, ErrMsg)
+       CALL BD_CalcContStateDeriv( t, u, p, x, xd, z, OtherState, xdot, ErrStat, ErrMsg) 
+!       CALL BD_DestroyContState(xdot, ErrStat, ErrMsg)
+CALL MotionTensor(p%GlbRot,p%GlbPos,temp66,1)
+temp6(1:3) = u%RootMotion%TranslationDisp(:,1)
+temp6(4:6) = u%RootMotion%TranslationVel(:,1)
+temp6(:) = MATMUL(temp66,temp6)
+!WRITE(*,*) 'u%Disp',u%RootMotion%TranslationDisp(:,1)
+!WRITE(*,*) 'temp6',temp6
+x%q(1:3) = temp6(1:3)
+x%q(4:6) = 0.0D0
+x%dqdt(1:3) = temp6(4:6)
+x%dqdt(4:6) = 0.0D0
+temp6(1:3) = u%RootMotion%TranslationAcc(:,1)
+temp6(4:6) = u%RootMotion%RotationAcc(:,1)
+temp6(:) = MATMUL(temp66,temp6)
+!OtherState%Acc(1:6) = temp6(1:6)
+xdot%dqdt(1:6) = temp6(1:6)
+
+       CALL DynamicSolution_Force(p%uuN0,x%q,x%dqdt,xdot%dqdt,                                       &
+                                  p%Stif0_GL,p%Mass0_GL,p%gravity,u,                                 &
+                                  p%damp_flag,p%beta,                                                &
+                                  p%node_elem,p%dof_node,p%elem_total,p%dof_total,p%node_total,p%ngp,&
+                                  p%analysis_type,temp_Force,temp_ReactionForce)
+   ENDIF
+
+   CALL MotionTensor(p%GlbRot,p%GlbPos,temp66,1)
+   temp6(:) = 0.0D0
+   temp6(:) = temp_ReactionForce(1:6)
+   temp6(:) = MATMUL(TRANSPOSE(temp66),temp6)
+   y%ReactionForce%Force(1:3,1) = temp6(1:3)
+   y%ReactionForce%Moment(1:3,1) = temp6(4:6)
+   DO i=1,p%node_total
+       temp_id = (i-1)*p%dof_node
+       temp6(:) = 0.0D0
+       temp6(:) = temp_Force(temp_id+1:temp_id+6)
+       temp6(:) = MATMUL(TRANSPOSE(temp66),temp6)
+       y%BldForce%Force(1:3,i) = temp6(1:3)
+       y%BldForce%Moment(1:3,i) = temp6(4:6)
+   ENDDO
+
+   END SUBROUTINE BD_CalcOutput_Coupling
    !----------------------------------------------------------------------------------------------------------------------------------
    SUBROUTINE BD_UpdateDiscState( t, n, u, p, x, xd, z, OtherState, ErrStat, ErrMsg )
    !

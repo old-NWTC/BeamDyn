@@ -57,7 +57,12 @@
        RHS = 0.0D0
        MassM = 0.0D0
        DampG = 0.0D0
-!WRITE(*,*) aaNf
+!WRITE(*,*) 'uuNf'
+!WRITE(*,*) uuNf(1:6)
+!WRITE(*,*) 'vvNf'
+!WRITE(*,*) vvNf(1:6)
+!WRITE(*,*) 'aaNf'
+!WRITE(*,*) aaNf(1:6)
        CALL BldGenerateDynamicElement(uuN0,uuNf,vvNf,aaNf,                 &
                                       Stif0,Mass0,gravity,u,damp_flag,beta,&
                                       elem_total,node_elem,dof_node,ngp,   &
@@ -95,17 +100,20 @@
        DO j=1,dof_total-6
            ai(j+6) = ai_temp(j)
        ENDDO
+
+!       DO j=1,dof_total-6
+!           WRITE(*,*) "Inc(j)=",j,ai_temp(j)
+!           WRITE(*,*) "feqv(j)=",j,feqv(j)
+!       ENDDO
+
        IF(i==1) Eref = SQRT(DOT_PRODUCT(ai_temp,feqv))*TOLF
        IF(i .GT. 1) THEN
            Enorm = 0.0D0
            Enorm = SQRT(DOT_PRODUCT(ai_temp,feqv))
- !          WRITE(*,*) "Enorm = ", Enorm
- !          WRITE(*,*) "Eref = ", Eref
+!           WRITE(*,*) "Enorm = ", Enorm
+!           WRITE(*,*) "Eref = ", Eref
            IF(Enorm .LE. Eref) RETURN
        ENDIF    
-!       DO j=1,dof_total
-!           WRITE(*,*) "Inc(j)=",j,ai(j)
-!       ENDDO
        CALL UpdateDynamic(ai,uuNf,vvNf,aaNf,xxNf,coef,node_total,dof_node)
            
        IF(i==niter) THEN
