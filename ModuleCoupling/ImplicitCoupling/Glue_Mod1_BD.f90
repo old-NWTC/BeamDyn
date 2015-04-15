@@ -128,16 +128,16 @@ WRITE(*,*) 'i=',i
                     Mod1_ConstraintState, Mod1_OtherState, Mod1_Output, ErrStat, ErrMsg )
 
        CALL BD_InputClean(BD_Input)
-!WRITE(*,*) 'BD_ContinuousState%q'
-!WRITE(*,*) BD_ContinuousState%q
-!WRITE(*,*) 'BD_ContinuousState%dqdt'
-!WRITE(*,*) BD_ContinuousState%dqdt
-!WRITE(*,*) 'BD_OtherState%Acc'
-!WRITE(*,*) BD_OtherState%Acc
+WRITE(*,*) 'BD_ContinuousState%q'
+WRITE(*,*) BD_ContinuousState%q
+WRITE(*,*) 'BD_ContinuousState%dqdt'
+WRITE(*,*) BD_ContinuousState%dqdt
+WRITE(*,*) 'BD_OtherState%Acc'
+WRITE(*,*) BD_OtherState%Acc
        CALL BD_CalcOutput_Coupling( time, BD_Input, BD_Parameter, BD_ContinuousState, BD_DiscreteState, &
                     BD_ConstraintState, BD_OtherState, BD_Output, ErrStat, ErrMsg )
 
-WRITE(*,*) 'Original BD Force:',BD_Output%ReactionForce%Force(1,1)
+!WRITE(*,*) 'Original BD Force:',BD_Output%ReactionForce%Force(1,1)
 
        BD_Force = BD_Output%ReactionForce%Force(1,1)
        BD_RootMotion(1) = BD_Input%RootMotion%TranslationDisp(1,1)
@@ -146,7 +146,7 @@ WRITE(*,*) 'Original BD Force:',BD_Output%ReactionForce%Force(1,1)
 
        RHS(:) = 0.0D0
        RHS(1) = -(Mod1_Input%PointMesh%Force(1,1) - BD_Output%ReactionForce%Force(1,1))
-       RHS(2) = -(BD_Input%RootMotion%TranslationDisp(1,1) - Mod1_Output%PointMesh%TranslationDisp(1,1))
+       RHS(2) = -(BD_Input%RootMotion%TranslationDisp(1,1) - Mod1_Output%PointMesh%TranslationDisp(1,1)+0.1)
        RHS(3) = -(BD_Input%RootMotion%TranslationVel(1,1) - Mod1_Output%PointMesh%TranslationVel(1,1))
        RHS(4) = -(BD_Input%RootMotion%TranslationAcc(1,1) - Mod1_Output%PointMesh%TranslationAcc(1,1))
     
@@ -199,8 +199,8 @@ WRITE(*,*) 'Original BD Force:',BD_Output%ReactionForce%Force(1,1)
  
        CALL ludcmp(Coef,4,indx,d)
        CALL lubksb(Coef,4,indx,RHS,uinc)
-WRITE(*,*) 'Norm:',Norm(uinc)
-WRITE(*,*) 'uinc:',uinc
+!WRITE(*,*) 'Norm:',Norm(uinc)
+!WRITE(*,*) 'uinc:',uinc
        IF(Norm(uinc) .LE. TOLF) RETURN
        Mod1_Input%PointMesh%Force(1,1) = Mod1_Input%PointMesh%Force(1,1) + uinc(1)
        BD_Input%RootMotion%TranslationDisp(1,1) = BD_Input%RootMotion%TranslationDisp(1,1) + uinc(2)
@@ -224,7 +224,7 @@ END SUBROUTINE Mod1_BD_InputOutputSolve
 
    BD_Input%RootMotion%TranslationDisp(2:3,1) = 0.0D0
    BD_Input%RootMotion%TranslationVel(2:3,1)  = 0.0D0
-   BD_Input%RootMotion%TranslationAcc(2:3,1)  = 0.0D0
+!   BD_Input%RootMotion%TranslationAcc(2:3,1)  = 0.0D0
    BD_Input%RootMotion%Orientation(:,:,:) = 0.0D0
    BD_Input%RootMotion%Orientation(1,1,1) = 1.0D0
    BD_Input%RootMotion%Orientation(2,2,1) = 1.0D0
@@ -357,7 +357,7 @@ PROGRAM MAIN
                ! are available to modules that have an implicit dependence on other-module data
 
    ! specify time increment; currently, all modules will be time integrated with this increment size
-   dt_global = 1.0D-04
+   dt_global = 1.0D-05
 
    n_t_final = ((t_final - t_initial) / dt_global )
 
@@ -418,7 +418,7 @@ WRITE(*,*) 'Mod1_InputTimes:',Mod1_InputTimes(:)
    BD_InitInput%gravity(2) = 0.0D0 
    BD_InitInput%gravity(3) = 0.0D0
    ALLOCATE(BD_InitInput%GlbPos(3)) 
-   BD_InitInput%GlbPos(1) = 0.0D+00
+   BD_InitInput%GlbPos(1) = 0.1D+00
    BD_InitInput%GlbPos(2) = 0.0D+01
    BD_InitInput%GlbPos(3) = 0.0D0
    ALLOCATE(BD_InitInput%GlbRot(3,3)) 
@@ -465,7 +465,7 @@ WRITE(*,*) 'Mod1_InputTimes:',Mod1_InputTimes(:)
 
    DO n_t_global = 0, n_t_final
 WRITE(*,*) "Time Step: ", n_t_global
-!IF(n_t_global .EQ. 2) STOP
+IF(n_t_global .EQ. 2) STOP
       ! Solve input-output relations; this section of code corresponds to Eq. (35) in Gasmi et al. (2013)
       ! This code will be specific to the underlying modules
 
@@ -476,9 +476,9 @@ WRITE(*,*) "Time Step: ", n_t_global
                    BD_ConstraintState, BD_OtherState, BD_Output(1),  &
 !                   Map_Mod1_P_Mod2_P, Map_Mod2_P_Mod1_P, &
                    ErrStat, ErrMsg)
-WRITE(*,*) 'BD_Input%Disp:',BD_Input(1)%RootMotion%TranslationDisp(:,1)
-WRITE(*,*) 'BD_Input%Velo:',BD_Input(1)%RootMotion%TranslationVel(:,1)
-WRITE(*,*) 'BD_Input%Acce:',BD_Input(1)%RootMotion%TranslationAcc(:,1)
+!WRITE(*,*) 'BD_Input%Disp:',BD_Input(1)%RootMotion%TranslationDisp(:,1)
+!WRITE(*,*) 'BD_Input%Velo:',BD_Input(1)%RootMotion%TranslationVel(:,1)
+!WRITE(*,*) 'BD_Input%Acce:',BD_Input(1)%RootMotion%TranslationAcc(:,1)
 
       ! after all InputOutputSolves, we can reset the mapping flags on the meshes:
          Mod1_Input(1)%PointMesh%RemapFlag    = .FALSE. 
@@ -567,7 +567,7 @@ WRITE(*,*) 'BD_Input%Acce:',BD_Input(1)%RootMotion%TranslationAcc(:,1)
          CALL BD_CopyDiscState   (BD_DiscreteState,   BD_DiscreteState_pred,   0, Errstat, ErrMsg)
          CALL BD_CopyOtherState  (BD_OtherState,   BD_OtherState_pred,   0, Errstat, ErrMsg)
 
-WRITE(*,*) 'BD_OtherState_pred:',BD_OtherState_pred%Acc(1:3)
+!WRITE(*,*) 'BD_OtherState_pred:',BD_OtherState_pred%Acc(1:3)
 
          CALL BD_UpdateStates( t_global, n_t_global, BD_Input, BD_InputTimes, BD_Parameter, BD_ContinuousState_pred, &
                                  BD_DiscreteState_pred, BD_ConstraintState_pred, &

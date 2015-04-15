@@ -639,11 +639,11 @@ INCLUDE 'ComputeReactionForce.f90'
    u%RootMotion%RotationVel(:,:)   = 0.0D0
    u%RootMotion%RotationAcc(:,:)   = 0.0D0
 
-   u%RootMotion%TranslationDisp(1,1) = 0.1D0
-DO i=1,p%node_total
-    temp_id = (i-1)*p%dof_node
-    x%q(temp_id+2) = -0.1
-ENDDO
+   u%RootMotion%TranslationDisp(1,1) = 0.0D0
+!DO i=1,p%node_total
+!    temp_id = (i-1)*p%dof_node
+!    x%q(temp_id+2) = -0.1
+!ENDDO
 
    DO i=1,u%PointLoad%ElemTable(ELEMENT_POINT)%nelem
        j = u%PointLoad%ElemTable(ELEMENT_POINT)%Elements(i)%ElemNodes(1)
