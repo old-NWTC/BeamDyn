@@ -123,17 +123,17 @@ SUBROUTINE Mod1_BD_InputOutputSolve(time, &
 
    eps = 0.01D+00
    DO i=1,iter_max
-WRITE(*,*) 'i=',i
+!WRITE(*,*) 'i=',i
        CALL Mod1_CalcOutput( time, Mod1_Input, Mod1_Parameter, Mod1_ContinuousState, Mod1_DiscreteState, &
                     Mod1_ConstraintState, Mod1_OtherState, Mod1_Output, ErrStat, ErrMsg )
 
        CALL BD_InputClean(BD_Input)
-WRITE(*,*) 'BD_ContinuousState%q'
-WRITE(*,*) BD_ContinuousState%q
-WRITE(*,*) 'BD_ContinuousState%dqdt'
-WRITE(*,*) BD_ContinuousState%dqdt
-WRITE(*,*) 'BD_OtherState%Acc'
-WRITE(*,*) BD_OtherState%Acc
+!WRITE(*,*) 'BD_ContinuousState%q'
+!WRITE(*,*) BD_ContinuousState%q
+!WRITE(*,*) 'BD_ContinuousState%dqdt'
+!WRITE(*,*) BD_ContinuousState%dqdt
+!WRITE(*,*) 'BD_OtherState%Acc'
+!WRITE(*,*) BD_OtherState%Acc
        CALL BD_CalcOutput_Coupling( time, BD_Input, BD_Parameter, BD_ContinuousState, BD_DiscreteState, &
                     BD_ConstraintState, BD_OtherState, BD_Output, ErrStat, ErrMsg )
 
@@ -146,7 +146,7 @@ WRITE(*,*) BD_OtherState%Acc
 
        RHS(:) = 0.0D0
        RHS(1) = -(Mod1_Input%PointMesh%Force(1,1) - BD_Output%ReactionForce%Force(1,1))
-       RHS(2) = -(BD_Input%RootMotion%TranslationDisp(1,1) - Mod1_Output%PointMesh%TranslationDisp(1,1)+0.1)
+       RHS(2) = -(BD_Input%RootMotion%TranslationDisp(1,1) - Mod1_Output%PointMesh%TranslationDisp(1,1))
        RHS(3) = -(BD_Input%RootMotion%TranslationVel(1,1) - Mod1_Output%PointMesh%TranslationVel(1,1))
        RHS(4) = -(BD_Input%RootMotion%TranslationAcc(1,1) - Mod1_Output%PointMesh%TranslationAcc(1,1))
     
@@ -207,6 +207,7 @@ WRITE(*,*) BD_OtherState%Acc
        BD_Input%RootMotion%TranslationVel(1,1) = BD_Input%RootMotion%TranslationVel(1,1) + uinc(3)
        BD_Input%RootMotion%TranslationAcc(1,1) = BD_Input%RootMotion%TranslationAcc(1,1) + uinc(4)
       
+!WRITE(*,*) 'Mod1 Input Force:',Mod1_Input%PointMesh%Force(1,1)
        IF(i .EQ. iter_max) THEN
            WRITE(*,*) "InputOutputSolve does not converge after the maximum number of iterations"
 !           RETURN
@@ -350,14 +351,14 @@ PROGRAM MAIN
    ! -------------------------------------------------------------------------
 
    t_initial = 0.d0
-   t_final   = 0.5D+01
+   t_final   = 5.0D+00
 
    pc_max = 2  ! Number of predictor-corrector iterations; 1 corresponds to an explicit calculation where UpdateStates
                ! is called only once  per time step for each module; inputs and outputs are extrapolated in time and
                ! are available to modules that have an implicit dependence on other-module data
 
    ! specify time increment; currently, all modules will be time integrated with this increment size
-   dt_global = 1.0D-05
+   dt_global = 1.0D-03
 
    n_t_final = ((t_final - t_initial) / dt_global )
 
@@ -418,7 +419,7 @@ WRITE(*,*) 'Mod1_InputTimes:',Mod1_InputTimes(:)
    BD_InitInput%gravity(2) = 0.0D0 
    BD_InitInput%gravity(3) = 0.0D0
    ALLOCATE(BD_InitInput%GlbPos(3)) 
-   BD_InitInput%GlbPos(1) = 0.1D+00
+   BD_InitInput%GlbPos(1) = 1.0D+00
    BD_InitInput%GlbPos(2) = 0.0D+01
    BD_InitInput%GlbPos(3) = 0.0D0
    ALLOCATE(BD_InitInput%GlbRot(3,3)) 
@@ -465,7 +466,7 @@ WRITE(*,*) 'Mod1_InputTimes:',Mod1_InputTimes(:)
 
    DO n_t_global = 0, n_t_final
 WRITE(*,*) "Time Step: ", n_t_global
-IF(n_t_global .EQ. 2) STOP
+!IF(n_t_global .EQ. 20) STOP
       ! Solve input-output relations; this section of code corresponds to Eq. (35) in Gasmi et al. (2013)
       ! This code will be specific to the underlying modules
 
@@ -495,6 +496,13 @@ IF(n_t_global .EQ. 2) STOP
       !------------------------------
       ! END Compute initial condition
       !------------------------------      
+      CALL BD_CalcOutput( t_global, BD_Input(1), BD_Parameter, BD_ContinuousState, BD_DiscreteState, &
+                             BD_ConstraintState, &
+                             BD_OtherState,  BD_Output(1), ErrStat, ErrMsg)
+
+      CALL Mod1_CalcOutput( t_global, Mod1_Input(1), Mod1_Parameter, Mod1_ContinuousState, Mod1_DiscreteState, &
+                             Mod1_ConstraintState, &
+                             Mod1_OtherState,  Mod1_Output(1), ErrStat, ErrMsg)
 
       
       ! extrapolate inputs and outputs to t + dt; will only be used by modules with an implicit dependence on input data.
@@ -572,6 +580,8 @@ IF(n_t_global .EQ. 2) STOP
          CALL BD_UpdateStates( t_global, n_t_global, BD_Input, BD_InputTimes, BD_Parameter, BD_ContinuousState_pred, &
                                  BD_DiscreteState_pred, BD_ConstraintState_pred, &
                                  BD_OtherState_pred, ErrStat, ErrMsg )
+!WRITE(*,*) 'BD_ContinuousState_pred%q:'
+!WRITE(*,*) BD_ContinuousState_pred%q(:)
 
          !-----------------------------------------------------------------------------------------
          ! If correction iteration is to be taken, solve intput-output equations; otherwise move on
@@ -598,18 +608,6 @@ IF(n_t_global .EQ. 2) STOP
 
       enddo
 
-      CALL CrvExtractCrv(BD_OutPut(1)%BldMotion%Orientation(1:3,1:3,BD_Parameter%node_total),temp_cc)
-      WRITE(QiDisUnit,6000) t_global,&
-                            &BD_OutPut(1)%BldMotion%TranslationDisp(1:3,BD_Parameter%node_total),&
-                            &temp_cc(1:3)
-      WRITE(BDForce,6000) t_global,&
-                           &BD_OutPut(1)%ReactionForce%Force(1:3,1),&
-                           &BD_OutPut(1)%ReactionForce%Moment(1:3,1)
-      WRITE(Mod1Disp,6000) t_global,&
-                           &Mod1_OutPut(1)%PointMesh%TranslationDisp(1:3,1)
-      WRITE(Mod1Vel,6000) t_global,&
-                           &Mod1_OutPut(1)%PointMesh%TranslationVel(1:3,1),&
-                           &Mod1_Output(1)%PointMesh%TranslationAcc(1:3,1)
       ! Save all final variables
 
       CALL Mod1_CopyContState   (Mod1_ContinuousState_pred,  Mod1_ContinuousState, 0, Errstat, ErrMsg)
@@ -621,6 +619,20 @@ IF(n_t_global .EQ. 2) STOP
       CALL BD_CopyDiscState   (BD_DiscreteState_pred,   BD_DiscreteState,   0, Errstat, ErrMsg)
       CALL BD_CopyOtherState  (BD_OtherState_pred,   BD_OtherState,   0, Errstat, ErrMsg)
 
+      CALL CrvExtractCrv(BD_OutPut(1)%BldMotion%Orientation(1:3,1:3,BD_Parameter%node_total),temp_cc)
+      WRITE(QiDisUnit,6000) t_global,&
+                            &BD_OutPut(1)%BldMotion%TranslationDisp(1:3,BD_Parameter%node_total),&
+                            &temp_cc(1:3)
+!      WRITE(QiDisUnit,6000) t_global,&
+!                            &BD_ContinuousState%q(BD_Parameter%dof_total-5:BD_Parameter%dof_total)
+      WRITE(BDForce,6000) t_global,&
+                           &BD_OutPut(1)%ReactionForce%Force(1:3,1),&
+                           &BD_OutPut(1)%ReactionForce%Moment(1:3,1)
+      WRITE(Mod1Disp,6000) t_global,&
+                           &Mod1_OutPut(1)%PointMesh%TranslationDisp(1:3,1)
+      WRITE(Mod1Vel,6000) t_global,&
+                           &Mod1_OutPut(1)%PointMesh%TranslationVel(1:3,1),&
+                           &Mod1_Output(1)%PointMesh%TranslationAcc(1:3,1)
       ! update the global time
 
       t_global = REAL(n_t_global+1,DbKi) * dt_global + t_initial

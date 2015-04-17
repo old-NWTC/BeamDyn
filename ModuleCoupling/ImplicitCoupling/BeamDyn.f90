@@ -138,6 +138,12 @@ INCLUDE 'InputGlobalLocal.f90'
 INCLUDE 'ElementMatrix_Force_New.f90'
 INCLUDE 'ComputeReactionForce.f90'
 
+INCLUDE 'BD_CalcIC.f90'
+INCLUDE 'BD_CalcAcc.f90'
+INCLUDE 'Solution_Acc.f90'
+INCLUDE 'GenerateDynamicElement_ACC.f90'
+INCLUDE 'ElementMatrix_Acc.f90'
+
    SUBROUTINE BD_Init( InitInp, u, p, x, xd, z, OtherState, y, Interval, InitOut, ErrStat, ErrMsg )
 !
 ! This routine is called at the start of the simulation to perform initialization steps.
@@ -639,11 +645,7 @@ INCLUDE 'ComputeReactionForce.f90'
    u%RootMotion%RotationVel(:,:)   = 0.0D0
    u%RootMotion%RotationAcc(:,:)   = 0.0D0
 
-   u%RootMotion%TranslationDisp(1,1) = 0.0D0
-!DO i=1,p%node_total
-!    temp_id = (i-1)*p%dof_node
-!    x%q(temp_id+2) = -0.1
-!ENDDO
+  u%RootMotion%TranslationDisp(1,1) = 0.1D0
 
    DO i=1,u%PointLoad%ElemTable(ELEMENT_POINT)%nelem
        j = u%PointLoad%ElemTable(ELEMENT_POINT)%Elements(i)%ElemNodes(1)
@@ -660,6 +662,7 @@ INCLUDE 'ComputeReactionForce.f90'
        u%DistrLoad%Moment(:,k) = 0.0D0
    ENDDO
 
+   CALL BD_CalcIC(u,p,x,OtherState)
    ! Define initial guess for the system outputs here:
 
    y%BldForce%Force(:,:)    = 0.0D0
@@ -891,28 +894,11 @@ INCLUDE 'ComputeReactionForce.f90'
            ENDDO
        ENDDO
 !       CALL BD_DestroyContState(xdot, ErrStat, ErrMsg)
-CALL MotionTensor(p%GlbRot,p%GlbPos,temp66,1)
-temp6(1:3) = u%RootMotion%TranslationDisp(:,1)
-temp6(4:6) = u%RootMotion%TranslationVel(:,1)
-temp6(:) = MATMUL(temp66,temp6)
-!WRITE(*,*) 'u%Disp',u%RootMotion%TranslationDisp(:,1)
-!WRITE(*,*) 'temp6',temp6
-x%q(1:3) = temp6(1:3)
-x%q(4:6) = 0.0D0
-x%dqdt(1:3) = temp6(4:6)
-x%dqdt(4:6) = 0.0D0
-temp6(1:3) = u%RootMotion%TranslationAcc(:,1)
-temp6(4:6) = u%RootMotion%RotationAcc(:,1)
-temp6(:) = MATMUL(temp66,temp6)
-OtherState%Acc(1:6) = temp6(1:6)
-
-WRITE(*,*) 'x%q'
-WRITE(*,*) x%q
        CALL DynamicSolution_Force(p%uuN0,x%q,x%dqdt,OtherState%Acc,                                  &
                                   p%Stif0_GL,p%Mass0_GL,p%gravity,u,                                 &
                                   p%damp_flag,p%beta,                                                &
                                   p%node_elem,p%dof_node,p%elem_total,p%dof_total,p%node_total,p%ngp,&
-                                  p%analysis_type,temp_Force,temp_ReactionForce)
+                                  temp66,p%analysis_type,temp_Force,temp_ReactionForce)
    ELSEIF(p%analysis_type .EQ. 1) THEN
        CALL StaticSolution_Force(p%uuN0,x%q,x%dqdt,p%Stif0_GL,p%Mass0_GL,p%gravity,u,&
                                  &p%node_elem,p%dof_node,p%elem_total,p%dof_total,p%node_total,p%ngp,&
@@ -961,8 +947,10 @@ WRITE(*,*) x%q
    REAL(ReKi):: cc(3)
    REAL(ReKi):: cc0(3)
    REAL(ReKi):: temp_cc(3)
+   REAL(ReKi):: temp3(3)
    REAL(ReKi):: temp_R(3,3)
    REAL(ReKi):: temp66(6,6)
+   REAL(ReKi):: MoTens(6,6)
    REAL(ReKi):: temp6(6)
    REAL(ReKi):: temp_Force(p%dof_total)
    REAL(ReKi):: temp_ReactionForce(6)
@@ -973,30 +961,29 @@ WRITE(*,*) x%q
 
 
    IF(p%analysis_type .EQ. 2) THEN
-       CALL BD_CopyContState(x, xdot, MESH_NEWCOPY, ErrStat, ErrMsg)
-       CALL BD_CalcContStateDeriv( t, u, p, x, xd, z, OtherState, xdot, ErrStat, ErrMsg) 
+!       CALL BD_CopyContState(x, xdot, MESH_NEWCOPY, ErrStat, ErrMsg)
+!       CALL BD_CalcContStateDeriv( t, u, p, x, xd, z, OtherState, xdot, ErrStat, ErrMsg) 
 !       CALL BD_DestroyContState(xdot, ErrStat, ErrMsg)
-CALL MotionTensor(p%GlbRot,p%GlbPos,temp66,1)
-temp6(1:3) = u%RootMotion%TranslationDisp(:,1)
-temp6(4:6) = u%RootMotion%TranslationVel(:,1)
-temp6(:) = MATMUL(temp66,temp6)
-!WRITE(*,*) 'u%Disp',u%RootMotion%TranslationDisp(:,1)
-!WRITE(*,*) 'temp6',temp6
-x%q(1:3) = temp6(1:3)
+temp3(1:3) = u%RootMotion%TranslationDisp(1:3,1)
+x%q(1:3) = MATMUL(TRANSPOSE(p%GlbRot),temp3)
 x%q(4:6) = 0.0D0
-x%dqdt(1:3) = temp6(4:6)
-x%dqdt(4:6) = 0.0D0
+CALL MotionTensor(p%GlbRot,p%GlbPos,temp66,1)
+temp6(1:3) = u%RootMotion%TranslationVel(1:3,1)
+temp6(4:6) = u%RootMotion%RotationVel(1:3,1)
+temp6(:) = MATMUL(temp66,temp6)
+x%dqdt(1:6) = temp6(1:6)
 temp6(1:3) = u%RootMotion%TranslationAcc(:,1)
 temp6(4:6) = u%RootMotion%RotationAcc(:,1)
 temp6(:) = MATMUL(temp66,temp6)
-!OtherState%Acc(1:6) = temp6(1:6)
-xdot%dqdt(1:6) = temp6(1:6)
+OtherState%Acc(1:6) = temp6(1:6)
+CALL BD_CalcAcc(u,p,x,OtherState)
 
-       CALL DynamicSolution_Force(p%uuN0,x%q,x%dqdt,xdot%dqdt,                                       &
+CALL MotionTensor(p%GlbRot,p%GlbPos,MoTens,0)
+       CALL DynamicSolution_Force(p%uuN0,x%q,x%dqdt,OtherState%Acc,                                       &
                                   p%Stif0_GL,p%Mass0_GL,p%gravity,u,                                 &
                                   p%damp_flag,p%beta,                                                &
                                   p%node_elem,p%dof_node,p%elem_total,p%dof_total,p%node_total,p%ngp,&
-                                  p%analysis_type,temp_Force,temp_ReactionForce)
+                                  MoTens,p%analysis_type,temp_Force,temp_ReactionForce)
    ENDIF
 
    CALL MotionTensor(p%GlbRot,p%GlbPos,temp66,1)

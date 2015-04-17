@@ -1,7 +1,7 @@
    SUBROUTINE GenerateDynamicElement_Force(uuN0,uuN,vvN,aaN,     &
                                            Stif0,Mass0,gravity,u,&
                                            damp_flag,beta,       &
-                                           elem_total,node_elem,dof_node,ngp,RHS,Reaction)
+                                           elem_total,node_elem,dof_node,ngp,MoTens,RHS,Reaction)
    !----------------------------------------------------------------------------------------
    ! This subroutine computes Global mass matrix and force vector for the beam.
    !----------------------------------------------------------------------------------------
@@ -19,6 +19,7 @@
    INTEGER(IntKi),     INTENT(IN   ):: node_elem ! Node per element
    INTEGER(IntKi),     INTENT(IN   ):: dof_node ! Degrees of freedom per node
    INTEGER(IntKi),     INTENT(IN   ):: ngp ! Number of Gauss points
+   REAL(ReKi),         INTENT(IN   ):: MoTens(:,:)
    REAL(ReKi),         INTENT(  OUT):: RHS(:) ! Right hand side of the equation Ax=B  
    REAL(ReKi),         INTENT(  OUT):: Reaction(:) ! Right hand side of the equation Ax=B  
 
@@ -32,7 +33,8 @@
    REAL(ReKi),           ALLOCATABLE:: EMass0_GL(:,:,:) ! Nodal material properties for each element
    REAL(ReKi),           ALLOCATABLE:: DistrLoad_GL(:,:) ! Nodal material properties for each element
    REAL(ReKi),           ALLOCATABLE:: elf(:) ! Total element force (Fc, Fd, Fb)
-   REAL(ReKi)                       :: ReactionForce(6)
+!   REAL(ReKi)                       :: ReactionForce(6)
+   REAL(ReKi)                       :: temp6(6)
    INTEGER(IntKi)                   :: dof_elem ! Degree of freedom per node
    INTEGER(IntKi)                   :: rot_elem ! Rotational degrees of freedom
    INTEGER(IntKi)                   :: nelem ! number of elements
@@ -94,18 +96,25 @@
        DO j=1,ngp
            EStif0_GL(1:6,1:6,j) = Stif0(1:6,1:6,temp_id+j)
            EMass0_GL(1:6,1:6,j) = Mass0(1:6,1:6,temp_id+j)
-           DistrLoad_GL(1:3,j)  = u%DistrLoad%Force(1:3,temp_id+j+1)
-           DistrLoad_GL(4:6,j)  = u%DistrLoad%Moment(1:3,temp_id+j+1)
+           temp6(1:3) = u%DistrLoad%Force(1:3,temp_id+j+1)
+           temp6(4:6) = u%DistrLoad%Moment(1:3,temp_id+j+1)
+           temp6(:) = MATMUL(TRANSPOSE(MoTens),temp6)
+           DistrLoad_GL(1:6,j)  = temp6(1:6)
+!           DistrLoad_GL(1:3,j)  = u%DistrLoad%Force(1:3,temp_id+j+1)
+!           DistrLoad_GL(4:6,j)  = u%DistrLoad%Moment(1:3,temp_id+j+1)
        ENDDO
 
        IF(nelem .EQ. 1) THEN
            CALL ComputeReactionForce(Nuu0,Nuuu,Nrr0,Nrrr,Nvvv,Naaa,           &
                                      EStif0_GL,EMass0_GL,gravity,DistrLoad_GL,&
                                      damp_flag,beta,                          &
-                                     ngp,node_elem,dof_node,elf,ReactionForce)
-           ReactionForce(1:3) = ReactionForce(1:3) - u%PointLoad%Force(1:3,1) 
-           ReactionForce(4:6) = ReactionForce(4:6) - u%PointLoad%Moment(1:3,1) 
-           Reaction(1:6) = ReactionForce(1:6)
+                                     ngp,node_elem,dof_node,elf,Reaction)
+           temp6(1:3) = u%PointLoad%Force(1:3,j)
+           temp6(4:6) = u%PointLoad%Moment(1:3,j)
+           temp6(:) = MATMUL(TRANSPOSE(MoTens),temp6)
+           Reaction(1:6) = Reaction(1:6) - temp6(1:6)
+!           ReactionForce(1:3) = ReactionForce(1:3) - u%PointLoad%Force(1:3,1) 
+!           ReactionForce(4:6) = ReactionForce(4:6) - u%PointLoad%Moment(1:3,1) 
        ENDIF
        CALL ElementMatrix_Force_New(Nuu0,Nuuu,Nrr0,Nrrr,Nvvv,&
                                     EStif0_GL,EMass0_GL,     &
