@@ -645,7 +645,8 @@ INCLUDE 'ElementMatrix_Acc.f90'
    u%RootMotion%RotationVel(:,:)   = 0.0D0
    u%RootMotion%RotationAcc(:,:)   = 0.0D0
 
-  u%RootMotion%TranslationDisp(1,1) = 0.1D0
+   u%RootMotion%TranslationDisp(1,1) = 0.1D0
+!  u%RootMotion%TranslationDisp(1,1) = 0.0D0
 
    DO i=1,u%PointLoad%ElemTable(ELEMENT_POINT)%nelem
        j = u%PointLoad%ElemTable(ELEMENT_POINT)%Elements(i)%ElemNodes(1)

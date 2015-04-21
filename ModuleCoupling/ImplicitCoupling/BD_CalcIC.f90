@@ -24,13 +24,16 @@
        temp_id = (i-1)*p%dof_node
        x%q(temp_id+1:temp_id+3) = temp3(1:3)
        x%q(temp_id+4:temp_id+6) = 0.0D0
+!       x%q(temp_id+1:temp_id+6) = 0.0D0
    ENDDO
    
    !Initialize velocities and angular velocities
+       x%dqdt(:) = 0.0D0
    DO i=1,p%node_total
        temp_id = (i-1)*p%dof_node
        x%dqdt(temp_id+1:temp_id+3) = 0.0D0
        x%dqdt(temp_id+4:temp_id+6) = 0.0D0
+!       x%dqdt(temp_id+2) = -1.0D0
    ENDDO
    
    !Initialize acceleration and angular acceleration
