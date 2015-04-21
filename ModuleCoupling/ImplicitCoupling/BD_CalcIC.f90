@@ -43,6 +43,6 @@
    OtherState%Acc(4:6) = temp6(4:6)
    
    CALL BD_CalcAcc(u,p,x,OtherState)
-!   OtherState%Acc(:) = 0.0D0
+   OtherState%Acc(:) = 0.0D0
 
    END SUBROUTINE BD_CalcIC

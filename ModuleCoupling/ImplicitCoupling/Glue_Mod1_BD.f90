@@ -128,16 +128,18 @@ SUBROUTINE Mod1_BD_InputOutputSolve(time, &
                     Mod1_ConstraintState, Mod1_OtherState, Mod1_Output, ErrStat, ErrMsg )
 
        CALL BD_InputClean(BD_Input)
-!WRITE(*,*) 'BD_ContinuousState%q'
-!WRITE(*,*) BD_ContinuousState%q
-!WRITE(*,*) 'BD_ContinuousState%dqdt'
-!WRITE(*,*) BD_ContinuousState%dqdt
-!WRITE(*,*) 'BD_OtherState%Acc'
-!WRITE(*,*) BD_OtherState%Acc
+WRITE(*,*) 'BD_ContinuousState%q'
+WRITE(*,*) BD_ContinuousState%q
+WRITE(*,*) 'BD_ContinuousState%dqdt'
+WRITE(*,*) BD_ContinuousState%dqdt
+WRITE(*,*) 'BD_OtherState%Acc'
+WRITE(*,*) BD_OtherState%Acc
        CALL BD_CalcOutput_Coupling( time, BD_Input, BD_Parameter, BD_ContinuousState, BD_DiscreteState, &
                     BD_ConstraintState, BD_OtherState, BD_Output, ErrStat, ErrMsg )
 
-!WRITE(*,*) 'Original BD Force:',BD_Output%ReactionForce%Force(1,1)
+WRITE(*,*) 'Original BD Force:',BD_Output%ReactionForce%Force(1,1)
+WRITE(*,*) 'BD_OtherState%Acc'
+WRITE(*,*) BD_OtherState%Acc
 
        BD_Force = BD_Output%ReactionForce%Force(1,1)
        BD_RootMotion(1) = BD_Input%RootMotion%TranslationDisp(1,1)
@@ -351,7 +353,7 @@ PROGRAM MAIN
    ! -------------------------------------------------------------------------
 
    t_initial = 0.d0
-   t_final   = 5.0D+00
+   t_final   = 2.0D+00
 
    pc_max = 2  ! Number of predictor-corrector iterations; 1 corresponds to an explicit calculation where UpdateStates
                ! is called only once  per time step for each module; inputs and outputs are extrapolated in time and
@@ -366,8 +368,8 @@ PROGRAM MAIN
 
    ! define polynomial-order for ModName_Input_ExtrapInterp and ModName_Output_ExtrapInterp
    ! Must be 0, 1, or 2
-   Mod1_interp_order = 0
-   BD_interp_order   = 0
+   Mod1_interp_order = 1
+   BD_interp_order   = 1
 
    !Module1: allocate Input and Output arrays; used for interpolation and extrapolation
    ALLOCATE(Mod1_Input(Mod1_interp_order + 1))
@@ -466,7 +468,7 @@ WRITE(*,*) 'Mod1_InputTimes:',Mod1_InputTimes(:)
 
    DO n_t_global = 0, n_t_final
 WRITE(*,*) "Time Step: ", n_t_global
-!IF(n_t_global .EQ. 20) STOP
+IF(n_t_global .EQ. 1) STOP
       ! Solve input-output relations; this section of code corresponds to Eq. (35) in Gasmi et al. (2013)
       ! This code will be specific to the underlying modules
 

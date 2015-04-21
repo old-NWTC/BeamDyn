@@ -106,7 +106,10 @@
 !           WRITE(*,*) "feqv(j)=",j,feqv(j)
 !       ENDDO
 
-       IF(i==1) Eref = SQRT(DOT_PRODUCT(ai_temp,feqv))*TOLF
+       IF(i==1) THEN
+           Eref = SQRT(DOT_PRODUCT(ai_temp,feqv))*TOLF
+           IF(Eref .LE. TOLF) RETURN
+       ENDIF
        IF(i .GT. 1) THEN
            Enorm = 0.0D0
            Enorm = SQRT(DOT_PRODUCT(ai_temp,feqv))

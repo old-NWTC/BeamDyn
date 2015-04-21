@@ -74,6 +74,12 @@
    ! find x at t+dt
    CALL InputGlobalLocal(p,u_interp,0)
    CALL BeamDyn_BoundaryGA2(x,u_interp,t+p%dt,OtherState,ErrStat,ErrMsg)
+!WRITE(*,*) 'x%q'
+!WRITE(*,*) x%q
+!WRITE(*,*) 'x%dqdt'
+!WRITE(*,*) x%dqdt
+!WRITE(*,*) 'OtherState%acc'
+!WRITE(*,*) OtherState%acc
    CALL DynamicSolution_GA2( p%uuN0,x%q,x%dqdt,OtherState%acc,OtherState%xcc,&
                              p%Stif0_GL,p%Mass0_GL,p%gravity,u_interp,       &
                              p%damp_flag,p%beta,                             &
