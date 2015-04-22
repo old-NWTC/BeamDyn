@@ -399,28 +399,28 @@ INCLUDE 'ElementMatrix_Acc.f90'
    DEALLOCATE(temp_ratio)
 
    WRITE(*,*) "Finished Read Input"
-   WRITE(*,*) "member_total = ", InputFileData%member_total
-   WRITE(*,*) "gravity = ", p%gravity
-   DO i=1,InputFileData%member_total
-       DO j=1,InputFileData%kp_member(i)
-           WRITE(*,*) "kp_coordinate:", InputFileData%kp_coordinate(j,:)
-       ENDDO
-   ENDDO
-   DO i=1,InputFiledata%member_total
-       WRITE(*,*) "ith_member_length",i,p%member_length(i,:)
-!       WRITE(*,*) "temp_ratio: ", temp_ratio(:,i)
-       DO j=1,p%node_elem
-           WRITE(*,*) "Nodal Position:",j
-           WRITE(*,*) p%uuN0((j-1)*6+1,i),p%uuN0((j-1)*6+2,i),p%uuN0((j-1)*6+3,i)
-           WRITE(*,*) p%uuN0((j-1)*6+4,i),p%uuN0((j-1)*6+5,i),p%uuN0((j-1)*6+6,i)
-       ENDDO
-!       DO j=1,p%ngp+2
-!           WRITE(*,*) "Gauss Point Position:",j
-!           WRITE(*,*) temp_L2(1:3,j)
+!   WRITE(*,*) "member_total = ", InputFileData%member_total
+!   WRITE(*,*) "gravity = ", p%gravity
+!   DO i=1,InputFileData%member_total
+!       DO j=1,InputFileData%kp_member(i)
+!           WRITE(*,*) "kp_coordinate:", InputFileData%kp_coordinate(j,:)
 !       ENDDO
-   ENDDO
-   WRITE(*,*) "Blade Length: ", p%blade_length
-   WRITE(*,*) "node_elem: ", p%node_elem
+!   ENDDO
+!   DO i=1,InputFiledata%member_total
+!       WRITE(*,*) "ith_member_length",i,p%member_length(i,:)
+!!       WRITE(*,*) "temp_ratio: ", temp_ratio(:,i)
+!       DO j=1,p%node_elem
+!           WRITE(*,*) "Nodal Position:",j
+!           WRITE(*,*) p%uuN0((j-1)*6+1,i),p%uuN0((j-1)*6+2,i),p%uuN0((j-1)*6+3,i)
+!           WRITE(*,*) p%uuN0((j-1)*6+4,i),p%uuN0((j-1)*6+5,i),p%uuN0((j-1)*6+6,i)
+!       ENDDO
+!!       DO j=1,p%ngp+2
+!!           WRITE(*,*) "Gauss Point Position:",j
+!!           WRITE(*,*) temp_L2(1:3,j)
+!!       ENDDO
+!   ENDDO
+!   WRITE(*,*) "Blade Length: ", p%blade_length
+!   WRITE(*,*) "node_elem: ", p%node_elem
 !   WRITE(*,*) "Stiff0: ", InputFileData%InpBl%stiff0(4,:,1)
 !   WRITE(*,*) "Stiff0: ", InputFileData%InpBl%stiff0(4,:,2)
 !   WRITE(*,*) "Stiff0: ", InputFileData%InpBl%stiff0(4,:,3)
@@ -439,7 +439,7 @@ INCLUDE 'ElementMatrix_Acc.f90'
    p%dof_total   = p%node_total*p%dof_node   ! total number of dof
    p%dt = Interval
    p%alpha = 0.5D0
-   WRITE(*,*) "node_total: ", p%node_total
+!   WRITE(*,*) "node_total: ", p%node_total
 !   STOP
    
    CALL AllocAry(p%coef,9,'GA2 coefficient',ErrStat2,ErrMsg2)
@@ -960,6 +960,30 @@ INCLUDE 'ElementMatrix_Acc.f90'
    ErrStat = ErrID_None
    ErrMsg  = "" 
 
+   CALL MotionTensor(p%GlbRot,p%GlbPos,temp66,0)
+   DO i=1,p%elem_total
+       DO j=1,p%node_elem
+           temp_id = ((i-1)*(p%node_elem-1)+j-1)*p%dof_node
+           temp_id2= (i-1)*p%node_elem+j
+           y%BldMotion%TranslationDisp(1:3,temp_id2) = MATMUL(p%GlbRot,x%q(temp_id+1:temp_id+3))
+           cc(1:3) = x%q(temp_id+4:temp_id+6)
+           temp_id = (j-1)*p%dof_node
+           cc0(1:3) = p%uuN0(temp_id+4:temp_id+6,i)
+!           CALL CrvCompose_temp(temp_cc,cc0,cc,0)
+           CALL CrvCompose(temp_cc,cc0,cc,0)
+           temp_cc = MATMUL(p%GlbRot,temp_cc)
+           CALL CrvMatrixR(temp_cc,temp_R)
+           y%BldMotion%Orientation(1:3,1:3,temp_id2) = temp_R(1:3,1:3)
+
+           temp_id = ((i-1)*(p%node_elem-1)+j-1)*p%dof_node
+           temp6(:) = 0.0D0
+           temp6(1:3) = x%dqdt(temp_id+1:temp_id+3)
+           temp6(4:6) = x%dqdt(temp_id+4:temp_id+6)
+           temp6(:) = MATMUL(temp66,temp6)
+           y%BldMotion%TranslationVel(1:3,temp_id2) = temp6(1:3)
+           y%BldMotion%RotationVel(1:3,temp_id2) = temp6(4:6)
+       ENDDO
+   ENDDO
 
    IF(p%analysis_type .EQ. 2) THEN
 !       CALL BD_CopyContState(x, xdot, MESH_NEWCOPY, ErrStat, ErrMsg)

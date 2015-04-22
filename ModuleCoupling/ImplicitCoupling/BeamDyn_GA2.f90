@@ -63,14 +63,14 @@
 !WRITE(*,*) 'u1%Acc',u(1)%RootMotion%TranslationAcc(1:3,1)
 !WRITE(*,*) 'u2%Acc',u(2)%RootMotion%TranslationAcc(1:3,1)
 !WRITE(*,*) 'u3%Acc',u(3)%RootMotion%TranslationAcc(1:3,1)
-   CALL BD_Input_ExtrapInterp( u, utimes, u_interp, t+p%dt, ErrStat, ErrMsg )
+!WRITE(*,*) 'u1%Disp',u(1)%RootMotion%TranslationDisp(1:3,1)
+!WRITE(*,*) 'u2%Disp',u(2)%RootMotion%TranslationDisp(1:3,1)
+!WRITE(*,*) 'u3%Disp',u(3)%RootMotion%TranslationDisp(1:3,1)
+!   CALL BD_Input_ExtrapInterp( u, utimes, u_interp, t+p%dt, ErrStat, ErrMsg )
 !WRITE(*,*) 'u_interp%Acc',u_interp%RootMotion%TranslationAcc(1:3,1)
    CALL TiSchmPredictorStep( x_tmp%q,x_tmp%dqdt,OS_tmp%acc,OS_tmp%xcc,             &
                              p%coef,p%dt,x%q,x%dqdt,OtherState%acc,OtherState%xcc, &
                              p%node_total,p%dof_node )
-!DO i=1,p%dof_total
-!WRITE(*,*) 'uuNf',i,x%q(i)
-!ENDDO
    ! find x at t+dt
    CALL InputGlobalLocal(p,u_interp,0)
    CALL BeamDyn_BoundaryGA2(x,u_interp,t+p%dt,OtherState,ErrStat,ErrMsg)
