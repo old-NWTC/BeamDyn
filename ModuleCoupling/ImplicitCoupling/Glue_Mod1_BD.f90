@@ -119,6 +119,7 @@ SUBROUTINE Mod1_BD_InputOutputSolve(time, &
    INTEGER(IntKi),                    PARAMETER :: iter_max = 10
    TYPE(BD_ContinuousStateType)                 :: CS_tmp
    TYPE(BD_OtherStateType)                      :: OS_tmp
+   TYPE(BD_OutputType)                          :: OT_tmp
    ! Solve input-output relations; this section of code corresponds to Eq. (35) in Gasmi et al. (2013)
    ! This code will be specific to the underlying modules; could be placed in a separate routine.
    ! Note that Module2 has direct feedthrough, but Module1 does not. Thus, Module1 should be called first.
@@ -137,9 +138,9 @@ SUBROUTINE Mod1_BD_InputOutputSolve(time, &
 !WRITE(*,*) 'BD_OtherState%Acc'
 !WRITE(*,*) BD_OtherState%Acc
 CALL BD_CopyContState(BD_ContinuousState, CS_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
-CALL BD_CopyOtherState(BD_OtherState, OS_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
+!CALL BD_CopyOtherState(BD_OtherState, OS_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
        CALL BD_CalcOutput_Coupling( time, BD_Input, BD_Parameter, CS_tmp, BD_DiscreteState, &
-                    BD_ConstraintState, OS_tmp, BD_Output, ErrStat, ErrMsg )
+                    BD_ConstraintState, BD_OtherState, BD_Output, ErrStat, ErrMsg )
 
 !WRITE(*,*) 'Original BD Force:',BD_Output%ReactionForce%Force(1,1)
 !WRITE(*,*) 'BD_OtherState%Acc'
@@ -164,8 +165,9 @@ CALL BD_CopyOtherState(BD_OtherState, OS_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
 !WRITE(*,*) 'Per TransDisp:',BD_Input%RootMotion%TranslationDisp(1,1)
 CALL BD_CopyContState(BD_ContinuousState, CS_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
 CALL BD_CopyOtherState(BD_OtherState, OS_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
+CALL BD_CopyOutput(BD_Output, OT_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
        CALL BD_CalcOutput_Coupling( time, BD_Input, BD_Parameter, CS_tmp, BD_DiscreteState, &
-                    BD_ConstraintState, OS_tmp, BD_Output, ErrStat, ErrMsg )
+                    BD_ConstraintState, OS_tmp, OT_tmp, ErrStat, ErrMsg )
 !WRITE(*,*) 'Perturbed Disp BD Force:',BD_Output%ReactionForce%Force(1,1)
        Coef(1,2) = -((BD_Output%ReactionForce%Force(1,1)-BD_Force)/eps)
        BD_Input%RootMotion%TranslationDisp(1,1) = BD_RootMotion(1)
@@ -174,8 +176,9 @@ CALL BD_CopyOtherState(BD_OtherState, OS_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
        CALL BD_InputClean(BD_Input)
 CALL BD_CopyContState(BD_ContinuousState, CS_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
 CALL BD_CopyOtherState(BD_OtherState, OS_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
+CALL BD_CopyOutput(BD_Output, OT_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
        CALL BD_CalcOutput_Coupling( time, BD_Input, BD_Parameter, CS_tmp, BD_DiscreteState, &
-                    BD_ConstraintState, OS_tmp, BD_Output, ErrStat, ErrMsg )
+                    BD_ConstraintState, OS_tmp, OT_tmp, ErrStat, ErrMsg )
 !WRITE(*,*) 'Perturbed Vel BD Force:',BD_Output%ReactionForce%Force(1,1)
        Coef(1,3) = -((BD_Output%ReactionForce%Force(1,1)-BD_Force)/eps)
        BD_Input%RootMotion%TranslationVel(1,1) = BD_RootMotion(2)
@@ -184,8 +187,9 @@ CALL BD_CopyOtherState(BD_OtherState, OS_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
        CALL BD_InputClean(BD_Input)
 CALL BD_CopyContState(BD_ContinuousState, CS_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
 CALL BD_CopyOtherState(BD_OtherState, OS_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
+CALL BD_CopyOutput(BD_Output, OT_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
        CALL BD_CalcOutput_Coupling( time, BD_Input, BD_Parameter, CS_tmp, BD_DiscreteState, &
-                    BD_ConstraintState, OS_tmp, BD_Output, ErrStat, ErrMsg )
+                    BD_ConstraintState, OS_tmp, OT_tmp, ErrStat, ErrMsg )
        Coef(1,4) = -((BD_Output%ReactionForce%Force(1,1)-BD_Force)/eps)
        BD_Input%RootMotion%TranslationAcc(1,1) = BD_RootMotion(3)
 
@@ -363,7 +367,7 @@ PROGRAM MAIN
    ! -------------------------------------------------------------------------
 
    t_initial = 0.d0
-   t_final   = 10.0D-01
+   t_final   = 1.0D+00
 
    pc_max = 2  ! Number of predictor-corrector iterations; 1 corresponds to an explicit calculation where UpdateStates
                ! is called only once  per time step for each module; inputs and outputs are extrapolated in time and
@@ -475,10 +479,24 @@ PROGRAM MAIN
    ! write headers for output columns:
 
    ! write initial condition for q1
+   CALL Mod1_BD_InputOutputSolve(t_global, &
+                   Mod1_Input(1), Mod1_Parameter, Mod1_ContinuousState, Mod1_DiscreteState, &
+                   Mod1_ConstraintState, Mod1_OtherState, Mod1_Output(1), &
+                   BD_Input(1), BD_Parameter, BD_ContinuousState, BD_DiscreteState, &
+                   BD_ConstraintState, BD_OtherState, BD_Output(1),  &
+!                   Map_Mod1_P_Mod2_P, Map_Mod2_P_Mod1_P, &
+                   ErrStat, ErrMsg)
+
+BD_OtherState%Xcc(:) = BD_OtherState%Acc(:)
+
+WRITE(*,*) 'OtherState%Acc'
+WRITE(*,*) BD_OtherState%Acc
+WRITE(*,*) 'OtherState%Xcc'
+WRITE(*,*) BD_OtherState%Xcc
 
    DO n_t_global = 0, n_t_final
 WRITE(*,*) "Time Step: ", n_t_global
-!IF(n_t_global .EQ. 200) STOP
+IF(n_t_global .EQ. 2) STOP
       ! Solve input-output relations; this section of code corresponds to Eq. (35) in Gasmi et al. (2013)
       ! This code will be specific to the underlying modules
 
@@ -489,6 +507,7 @@ WRITE(*,*) "Time Step: ", n_t_global
                    BD_ConstraintState, BD_OtherState, BD_Output(1),  &
 !                   Map_Mod1_P_Mod2_P, Map_Mod2_P_Mod1_P, &
                    ErrStat, ErrMsg)
+!BD_OtherState%Xcc(:) = BD_OtherState%Acc(:)
 
       CALL CrvExtractCrv(BD_OutPut(1)%BldMotion%Orientation(1:3,1:3,BD_Parameter%node_total),temp_cc)
       WRITE(QiDisUnit,6000) t_global,&

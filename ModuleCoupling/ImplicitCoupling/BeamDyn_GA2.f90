@@ -73,7 +73,7 @@
                              p%node_total,p%dof_node )
    ! find x at t+dt
    CALL InputGlobalLocal(p,u_interp,0)
-   CALL BeamDyn_BoundaryGA2(x,u_interp,t+p%dt,OtherState,ErrStat,ErrMsg)
+   CALL BeamDyn_BoundaryGA2(x,p,u_interp,t+p%dt,OtherState,ErrStat,ErrMsg)
 !WRITE(*,*) 'x%q'
 !WRITE(*,*) x%q
 !WRITE(*,*) 'x%dqdt'
