@@ -367,7 +367,7 @@ PROGRAM MAIN
    ! -------------------------------------------------------------------------
 
    t_initial = 0.d0
-   t_final   = 1.0D+00
+   t_final   = 5.0D+00
 
    pc_max = 2  ! Number of predictor-corrector iterations; 1 corresponds to an explicit calculation where UpdateStates
                ! is called only once  per time step for each module; inputs and outputs are extrapolated in time and
@@ -496,7 +496,7 @@ WRITE(*,*) BD_OtherState%Xcc
 
    DO n_t_global = 0, n_t_final
 WRITE(*,*) "Time Step: ", n_t_global
-IF(n_t_global .EQ. 2) STOP
+!IF(n_t_global .EQ. 2) STOP
       ! Solve input-output relations; this section of code corresponds to Eq. (35) in Gasmi et al. (2013)
       ! This code will be specific to the underlying modules
 

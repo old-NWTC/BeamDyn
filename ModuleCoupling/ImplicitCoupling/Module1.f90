@@ -103,7 +103,7 @@ SUBROUTINE Mod1_Init( InitInp, u, p, x, xd, z, OtherState, y, Interval, InitOut,
       ! Define parameters here:
 
       p%m      = 2.712D+02       ! mass of mass 1 (kg)
-      p%c      = 0.0 !2.07D+01      ! damping of dashpot 1 (N/(m/s))
+      p%c      = 2.07D+01      ! damping of dashpot 1 (N/(m/s))
       p%k      = 1.0707D+04      ! stiffness of spring 1 (N/m)
       p%f      = 0.         ! applied force (constant) (N)  
       p%dt     = Interval   ! module time step (increment) (s)
