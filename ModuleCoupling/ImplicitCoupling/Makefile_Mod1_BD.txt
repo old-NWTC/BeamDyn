@@ -68,7 +68,6 @@ ifeq ($(OS),Windows_NT)
    SYS_FILE  = SysGnuWin
 else
       # Linux
-      # Linux
    DEL_CMD   = rm -f
    EXE_EXT   = _glin$(BITS)
    INTER_DIR = Obj_lin$(BITS)
