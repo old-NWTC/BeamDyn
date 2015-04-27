@@ -28,10 +28,12 @@ else
    REGISTRY = /Users/qwang2/Desktop/BeamDyn/SVN/BJonkman/Source/dependencies/registry.exe
    NETLIB_DIR = /Users/qwang2/Desktop/BeamDyn/SVN/BJonkman/Source/dependencies/NetLib/
    LAPACK_LINK  = -llapack -lblas
-
 endif
 
-MODNAME_DIR = .
+   BD_LIB_DIR  = /Users/qwang2/spectral-fe/beam/BeamDyn
+   Mod1_LIB_DIR  = /Users/qwang2/spectral-fe/beam/Module1
+
+#MODNAME_DIR = .
 
    # Name of compiler to use and flags to use.
 
