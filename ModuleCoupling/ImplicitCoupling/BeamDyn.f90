@@ -4475,7 +4475,7 @@ END SUBROUTINE ludcmp
    REAL(ReKi)                       :: feqv(dof_total-6)
    REAL(ReKi)                       :: Eref
    REAL(ReKi)                       :: Enorm
-   REAL(ReKi),PARAMETER             :: TOLF = 1.0D-08
+   REAL(ReKi),PARAMETER             :: TOLF = 1.0D-05
    REAL(ReKi)                       :: d
    INTEGER(IntKi)                   :: indx(dof_total-6)
    INTEGER(IntKi)                   :: i
@@ -4525,11 +4525,13 @@ END SUBROUTINE ludcmp
 
        IF(i==1) THEN
            Eref = SQRT(DOT_PRODUCT(ai_temp,feqv))*TOLF
+!WRITE(*,*) 'Eref:',Eref
            IF(Eref .LE. TOLF) RETURN
        ENDIF
        IF(i .GT. 1) THEN
            Enorm = 0.0D0
            Enorm = SQRT(DOT_PRODUCT(ai_temp,feqv))
+!WRITE(*,*) 'Enorm:',Enorm
            IF(Enorm .LE. Eref) RETURN
        ENDIF    
        CALL BD_UpdateDynamicGA2(ai,uuNf,vvNf,aaNf,xxNf,coef,node_total,dof_node)
@@ -4649,12 +4651,20 @@ END SUBROUTINE ludcmp
                               EStif0_GL,EMass0_GL,gravity,DistrLoad_GL,&
                               damp_flag,beta,                          &
                               ngp,node_elem,dof_node,elk,elf,elm,elg)
+!WRITE(*,*) 'elf:',nelem
+!DO j=1,18
+!   WRITE(*,*) elf(j)
+!ENDDO
 
        CALL BD_AssembleStiffK(nelem,node_elem,dof_elem,dof_node,elk,StifK)
        CALL BD_AssembleStiffK(nelem,node_elem,dof_elem,dof_node,elm,MassM)
        CALL BD_AssembleStiffK(nelem,node_elem,dof_elem,dof_node,elg,DampG)
        CALL BD_AssembleRHS(nelem,dof_elem,node_elem,dof_node,elf,RHS)
    ENDDO
+!WRITE(*,*) 'RHS:'
+!DO j=1,30
+!   WRITE(*,*) RHS(j)
+!ENDDO
 
    DEALLOCATE(Nuu0)
    DEALLOCATE(Nuuu)

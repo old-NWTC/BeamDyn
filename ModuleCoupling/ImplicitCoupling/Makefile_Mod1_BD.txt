@@ -28,10 +28,9 @@ else
    REGISTRY = /Users/qwang2/Desktop/BeamDyn/SVN/BJonkman/Source/dependencies/registry.exe
    NETLIB_DIR = /Users/qwang2/Desktop/BeamDyn/SVN/BJonkman/Source/dependencies/NetLib/
    LAPACK_LINK  = -llapack -lblas
+
 endif
 
-BD_DIR  = /Users/qwang2/spectral-fe/beam/BeamDyn
-Mod1_DIR  = /Users/qwang2/spectral-fe/beam/Module1
 MODNAME_DIR = .
 
    # Name of compiler to use and flags to use.
@@ -68,6 +67,7 @@ ifeq ($(OS),Windows_NT)
    SYS_FILE  = SysGnuWin
 else
       # Linux
+      # Linux
    DEL_CMD   = rm -f
    EXE_EXT   = _glin$(BITS)
    INTER_DIR = Obj_lin$(BITS)
@@ -100,26 +100,18 @@ NETLIB_SOURCES=             \
         NWTC_LAPACK.f90
 
 
-#MODNAME_SOURCES   =             \
-#	Module1.f90             \
-#	BeamDyn.f90             \
-#	Glue_Mod1_BD.f90      \
-#	Module1_Types.f90       \
-#	BeamDyn_Types.f90       \
+MODNAME_SOURCES   =             \
+	Module1.f90             \
+	BeamDyn.f90             \
+	Glue_Mod1_BD.f90      \
+	Module1_Types.f90       \
+	BeamDyn_Types.f90       \
 
-BD_SOURCES =     \
-    BeamDyn.f90  \
-    BeamDyn_Types.f90
-MOD1_SOURCES =     \
-    Module1.f90  \
-    Module1_Types.f90
-MODNAME_SOURCES = Glue_Mod1_BD.f90
-
-vpath %.f90 $(LIB_DIR) $(NETLIB_DIR) $(BD_SOURCES) $(MOD1_SOURCES) $(MODNAME_DIR)
+vpath %.f90 $(LIB_DIR) $(NETLIB_DIR) $(MODNAME_DIR)
 vpath %.mod $(INTER_DIR)
 vpath %.obj $(INTER_DIR)
 
-ALL_SOURCES = $(LIB_SOURCES) $(NETLIB_SOURCES) $(BD_SOURCES) $(MOD1_SOURCES) $(MODNAME_SOURCES)
+ALL_SOURCES = $(LIB_SOURCES) $(NETLIB_SOURCES) $(MODNAME_SOURCES)
 tmp_objs1   = $(ALL_SOURCES:.f90=.obj)
 tmp_objs2   = $(tmp_objs1:.F90=.obj)       #note the upper case here (from IceFloe)
 ALL_OBJS    = $(tmp_objs2:.f=.obj)
@@ -187,5 +179,6 @@ $(DEST_DIR)/$(OUTPUT_NAME)$(EXE_EXT): $(ALL_OBJS) | $(INTER_DIR)
    # Cleanup afterwards.
 
 clean:
-	$(DEL_CMD) $(INTER_DIR)$(PATH_SEP)*.mod $(INTER_DIR)$(PATH_SEP)*.obj $(OUTPUT_NAME)$(EXE_EXT) \ Module1_Types.f90 BeamDyn_Types.f90 *.dat *.out
+	$(DEL_CMD) $(INTER_DIR)$(PATH_SEP)*.mod $(INTER_DIR)$(PATH_SEP)*.obj $(OUTPUT_NAME)$(EXE_EXT) \
+	Module1_Types.f90 BeamDyn_Types.f90 *.dat *.out
 

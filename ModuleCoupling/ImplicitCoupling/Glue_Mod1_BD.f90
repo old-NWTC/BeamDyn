@@ -139,7 +139,7 @@ SUBROUTINE Mod1_BD_InputOutputSolve(time, &
 !WRITE(*,*) BD_OtherState%Acc
 CALL BD_CopyContState(BD_ContinuousState, CS_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
 !CALL BD_CopyOtherState(BD_OtherState, OS_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
-       CALL BD_CalcOutput_Coupling( time, BD_Input, BD_Parameter, CS_tmp, BD_DiscreteState, &
+       CALL BD_CalcOutput( time, BD_Input, BD_Parameter, CS_tmp, BD_DiscreteState, &
                     BD_ConstraintState, BD_OtherState, BD_Output, ErrStat, ErrMsg )
 
 !WRITE(*,*) 'Original BD Force:',BD_Output%ReactionForce%Force(1,1)
@@ -166,7 +166,7 @@ CALL BD_CopyContState(BD_ContinuousState, CS_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
 CALL BD_CopyContState(BD_ContinuousState, CS_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
 CALL BD_CopyOtherState(BD_OtherState, OS_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
 CALL BD_CopyOutput(BD_Output, OT_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
-       CALL BD_CalcOutput_Coupling( time, BD_Input, BD_Parameter, CS_tmp, BD_DiscreteState, &
+       CALL BD_CalcOutput( time, BD_Input, BD_Parameter, CS_tmp, BD_DiscreteState, &
                     BD_ConstraintState, OS_tmp, OT_tmp, ErrStat, ErrMsg )
 !WRITE(*,*) 'Perturbed Disp BD Force:',BD_Output%ReactionForce%Force(1,1)
        Coef(1,2) = -((BD_Output%ReactionForce%Force(1,1)-BD_Force)/eps)
@@ -177,7 +177,7 @@ CALL BD_CopyOutput(BD_Output, OT_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
 CALL BD_CopyContState(BD_ContinuousState, CS_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
 CALL BD_CopyOtherState(BD_OtherState, OS_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
 CALL BD_CopyOutput(BD_Output, OT_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
-       CALL BD_CalcOutput_Coupling( time, BD_Input, BD_Parameter, CS_tmp, BD_DiscreteState, &
+       CALL BD_CalcOutput( time, BD_Input, BD_Parameter, CS_tmp, BD_DiscreteState, &
                     BD_ConstraintState, OS_tmp, OT_tmp, ErrStat, ErrMsg )
 !WRITE(*,*) 'Perturbed Vel BD Force:',BD_Output%ReactionForce%Force(1,1)
        Coef(1,3) = -((BD_Output%ReactionForce%Force(1,1)-BD_Force)/eps)
@@ -188,7 +188,7 @@ CALL BD_CopyOutput(BD_Output, OT_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
 CALL BD_CopyContState(BD_ContinuousState, CS_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
 CALL BD_CopyOtherState(BD_OtherState, OS_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
 CALL BD_CopyOutput(BD_Output, OT_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
-       CALL BD_CalcOutput_Coupling( time, BD_Input, BD_Parameter, CS_tmp, BD_DiscreteState, &
+       CALL BD_CalcOutput( time, BD_Input, BD_Parameter, CS_tmp, BD_DiscreteState, &
                     BD_ConstraintState, OS_tmp, OT_tmp, ErrStat, ErrMsg )
        Coef(1,4) = -((BD_Output%ReactionForce%Force(1,1)-BD_Force)/eps)
        BD_Input%RootMotion%TranslationAcc(1,1) = BD_RootMotion(3)
@@ -215,9 +215,8 @@ CALL BD_CopyOutput(BD_Output, OT_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
  
        CALL ludcmp(Coef,4,indx,d)
        CALL lubksb(Coef,4,indx,RHS,uinc)
-!WRITE(*,*) 'Norm:',Norm(uinc)
-!WRITE(*,*) 'uinc:',uinc
-       IF(Norm(uinc) .LE. TOLF) RETURN
+
+       IF(BD_Norm(uinc) .LE. TOLF) RETURN
        Mod1_Input%PointMesh%Force(1,1) = Mod1_Input%PointMesh%Force(1,1) + uinc(1)
        BD_Input%RootMotion%TranslationDisp(1,1) = BD_Input%RootMotion%TranslationDisp(1,1) + uinc(2)
        BD_Input%RootMotion%TranslationVel(1,1) = BD_Input%RootMotion%TranslationVel(1,1) + uinc(3)
@@ -367,7 +366,7 @@ PROGRAM MAIN
    ! -------------------------------------------------------------------------
 
    t_initial = 0.d0
-   t_final   = 5.0D+00
+   t_final   = 5.0D-00
 
    pc_max = 2  ! Number of predictor-corrector iterations; 1 corresponds to an explicit calculation where UpdateStates
                ! is called only once  per time step for each module; inputs and outputs are extrapolated in time and
@@ -443,7 +442,7 @@ PROGRAM MAIN
    temp_vec(1) = 0.0
    temp_vec(2) = 0.0
    temp_vec(3) = 4.0D0*TAN((3.1415926D0/2.0D0)/4.0D0)
-   CALL CrvMatrixR(temp_vec,temp_R)
+   CALL BD_CrvMatrixR(temp_vec,temp_R)
    BD_InitInput%GlbRot(1:3,1:3) = temp_R(1:3,1:3)
 
    CALL BD_Init( BD_InitInput, BD_Input(1), BD_Parameter, BD_ContinuousState, BD_DiscreteState, &
@@ -486,7 +485,7 @@ PROGRAM MAIN
                    BD_ConstraintState, BD_OtherState, BD_Output(1),  &
 !                   Map_Mod1_P_Mod2_P, Map_Mod2_P_Mod1_P, &
                    ErrStat, ErrMsg)
-
+BD_OtherState%Acc(2) = -BD_Input(1)%RootMotion%TranslationAcc(1,1)
 BD_OtherState%Xcc(:) = BD_OtherState%Acc(:)
 
 WRITE(*,*) 'OtherState%Acc'
@@ -496,20 +495,20 @@ WRITE(*,*) BD_OtherState%Xcc
 
    DO n_t_global = 0, n_t_final
 WRITE(*,*) "Time Step: ", n_t_global
-!IF(n_t_global .EQ. 2) STOP
+!IF(n_t_global .EQ. 1) STOP
       ! Solve input-output relations; this section of code corresponds to Eq. (35) in Gasmi et al. (2013)
       ! This code will be specific to the underlying modules
 
-      CALL Mod1_BD_InputOutputSolve(t_global, &
-                   Mod1_Input(1), Mod1_Parameter, Mod1_ContinuousState, Mod1_DiscreteState, &
-                   Mod1_ConstraintState, Mod1_OtherState, Mod1_Output(1), &
-                   BD_Input(1), BD_Parameter, BD_ContinuousState, BD_DiscreteState, &
-                   BD_ConstraintState, BD_OtherState, BD_Output(1),  &
-!                   Map_Mod1_P_Mod2_P, Map_Mod2_P_Mod1_P, &
-                   ErrStat, ErrMsg)
+!      CALL Mod1_BD_InputOutputSolve(t_global, &
+!                   Mod1_Input(1), Mod1_Parameter, Mod1_ContinuousState, Mod1_DiscreteState, &
+!                   Mod1_ConstraintState, Mod1_OtherState, Mod1_Output(1), &
+!                   BD_Input(1), BD_Parameter, BD_ContinuousState, BD_DiscreteState, &
+!                   BD_ConstraintState, BD_OtherState, BD_Output(1),  &
+!!                   Map_Mod1_P_Mod2_P, Map_Mod2_P_Mod1_P, &
+!                   ErrStat, ErrMsg)
 !BD_OtherState%Xcc(:) = BD_OtherState%Acc(:)
 
-      CALL CrvExtractCrv(BD_OutPut(1)%BldMotion%Orientation(1:3,1:3,BD_Parameter%node_total),temp_cc)
+      CALL BD_CrvExtractCrv(BD_OutPut(1)%BldMotion%Orientation(1:3,1:3,BD_Parameter%node_total),temp_cc)
       WRITE(QiDisUnit,6000) t_global,&
                             &BD_OutPut(1)%BldMotion%TranslationDisp(1:3,BD_Parameter%node_total),&
                             &temp_cc(1:3)
@@ -651,7 +650,7 @@ WRITE(*,*) "Time Step: ", n_t_global
          ! If correction iteration is to be taken, solve intput-output equations; otherwise move on
          !-----------------------------------------------------------------------------------------
 
-         if (pc .lt. pc_max) then
+         if (pc .LE. pc_max) then
 
             call Mod1_BD_InputOutputSolve( t_global + dt_global, &
                                              Mod1_Input(1), Mod1_Parameter, Mod1_ContinuousState_pred, Mod1_DiscreteState_pred, &
@@ -741,49 +740,3 @@ WRITE(*,*) "Time Step: ", n_t_global
 
 END PROGRAM MAIN
 
-   SUBROUTINE BD_InitialCondition(u,p,x,ErrStat,ErrMsg)
-
-   USE BeamDyn
-   USE BeamDyn_Types
-
-   ! Module1 Derived-types variables; see Registry_Module1.txt for details
-
-   TYPE(BD_InputType),                     INTENT(IN   ):: u
-   TYPE(BD_ParameterType),                 INTENT(IN   ):: p
-   TYPE(BD_ContinuousStateType),           INTENT(INOUT):: x
-   INTEGER(IntKi),                         INTENT(  OUT):: ErrStat     ! Error status of the operation
-   CHARACTER(*),                           INTENT(  OUT):: ErrMsg      ! Error message if ErrStat /= ErrID_None
-
-   INTEGER(IntKi)                                       :: i
-   INTEGER(IntKi)                                       :: j
-   INTEGER(IntKi)                                       :: k
-   INTEGER(IntKi)                                       :: temp_id
-   INTEGER(IntKi)                                       :: temp_id2
-   REAL(ReKi)                                           :: temp66(6,6)
-
-   ErrStat = ErrID_None
-   ErrMsg  = ''
-   ! Initial displacements and rotations
-   x%q(:) = 0.0D0
-   DO i=1,p%node_total
-       temp_id = (i-1)*p%dof_node
-!       x%q(temp_id+1:temp_id+3) = u%RootMotion%TranslationDisp(:,1)
-       x%q(temp_id+2) = u%RootMotion%TranslationDisp(1,1)
-   ENDDO
-   ! Initial velocities and angular velocities
-   DO i=1,p%elem_total
-       DO j=1,p%node_elem
-           temp_id = (i-1)*p%dof_node*p%node_elem+(j-1)*p%dof_node
-           temp_id2= (j-1)*p%dof_node
-!           x%dqdt(temp_id+1:temp_id+3) = u%RootMotion%TranslationVel(1:3,1) + &
-!                 &MATMUL(Tilde(u%RootMotion%RotationVel(1:3,1)),p%uuN0(temp_id2+1:temp_id2+3,i))
-           x%dqdt(temp_id+1:temp_id+3) = &
-           MATMUL(Tilde(u%RootMotion%RotationVel(1:3,1)),p%GlbPos(1:3)+MATMUL(p%GlbRot,p%uuN0(temp_id2+1:temp_id2+3,i)))
-           x%dqdt(temp_id+4:temp_id+6) = u%RootMotion%RotationVel(1:3,1)
-           CALL MotionTensor(p%GlbRot,p%GlbPos,temp66,1)
-           x%dqdt(temp_id+1:temp_id+6) = MATMUL(temp66,x%dqdt(temp_id+1:temp_id+6))
-       ENDDO
-   ENDDO
-x%dqdt(:) = 0.0D0
-   END SUBROUTINE BD_InitialCondition
-!!----------------------------------------------------------------------------------------------------------------------------------
