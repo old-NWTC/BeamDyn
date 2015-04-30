@@ -276,13 +276,6 @@ CONTAINS
            ENDDO
        ENDDO
    ENDDO
-!   temp66(:,:) = 0.0D0
-!   temp66(1:3,1:3) = InitInp%GlbRot(1:3,1:3)
-!   temp66(4:6,4:6) = InitInp%GlbRot(1:3,1:3)
-!   DO i=1,p%ngp*p%elem_total
-!       p%Stif0_GL(:,:,i) = MATMUL(TRANSPOSE(temp66),MATMUL(p%Stif0_GL(:,:,i),temp66))
-!       p%Mass0_GL(:,:,i) = MATMUL(TRANSPOSE(temp66),MATMUL(p%Mass0_GL(:,:,i),temp66))
-!   ENDDO
 
    DEALLOCATE(temp_GL)
    DEALLOCATE(temp_ratio)
@@ -689,6 +682,7 @@ CONTAINS
    CHARACTER(*),                   INTENT(  OUT)  :: ErrMsg      ! Error message if ErrStat /= ErrID_None
 
    TYPE(BD_OtherStateType):: OS_tmp
+   TYPE(BD_ContinuousStateType):: x_tmp
    TYPE(BD_InputType):: u_tmp
    INTEGER(IntKi):: i
    INTEGER(IntKi):: j
@@ -699,7 +693,6 @@ CONTAINS
    REAL(ReKi):: temp_cc(3)
    REAL(ReKi):: temp3(3)
    REAL(ReKi):: temp_R(3,3)
-   REAL(ReKi):: temp66(6,6)
    REAL(ReKi):: MoTens(6,6)
    REAL(ReKi):: temp6(6)
    REAL(ReKi):: temp_Force(p%dof_total)
@@ -709,7 +702,11 @@ CONTAINS
    ErrStat = ErrID_None
    ErrMsg  = "" 
 
-   CALL BD_MotionTensor(p%GlbRot,p%GlbPos,temp66,0)
+   CALL BD_CopyContState(x, x_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
+   CALL BD_CopyOtherState(OtherState, OS_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
+   CALL BD_CopyInput(u, u_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
+
+   CALL BD_MotionTensor(p%GlbRot,p%GlbPos,MoTens,0)
    DO i=1,p%elem_total
        DO j=1,p%node_elem
            temp_id = ((i-1)*(p%node_elem-1)+j-1)*p%dof_node
@@ -727,42 +724,52 @@ CONTAINS
            temp6(:) = 0.0D0
            temp6(1:3) = x%dqdt(temp_id+1:temp_id+3)
            temp6(4:6) = x%dqdt(temp_id+4:temp_id+6)
-           temp6(:) = MATMUL(temp66,temp6)
+           temp6(:) = MATMUL(MoTens,temp6)
            y%BldMotion%TranslationVel(1:3,temp_id2) = temp6(1:3)
            y%BldMotion%RotationVel(1:3,temp_id2) = temp6(4:6)
        ENDDO
    ENDDO
 
-   CALL BD_CopyOtherState(OtherState, OS_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
-   CALL BD_CopyInput(u, u_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
    CALL BD_InputGlobalLocal(p,u_tmp,0)
-   CALL BD_BoundaryGA2(x,p,u_tmp,t,OS_tmp,ErrStat,ErrMsg)
+   CALL BD_BoundaryGA2(x_tmp,p,u_tmp,t,OS_tmp,ErrStat,ErrMsg)
    IF(p%analysis_type .EQ. 2) THEN
-       CALL BD_CalcAcc(u,p,x,OS_tmp)
-
-       CALL BD_MotionTensor(p%GlbRot,p%GlbPos,MoTens,0)
+       CALL BD_CalcAcc(u_tmp,p,x_tmp,OS_tmp)
+       DO i=1,p%elem_total
+           DO j=1,p%node_elem
+               temp_id = ((i-1)*(p%node_elem-1)+j-1)*p%dof_node
+               temp_id2= (i-1)*p%node_elem+j
+               temp6(:) = 0.0D0
+               temp6(1:3) = OS_tmp%Acc(temp_id+1:temp_id+3)
+               temp6(4:6) = OS_tmp%Acc(temp_id+4:temp_id+6)
+               temp6(:) = MATMUL(MoTens,temp6)
+               y%BldMotion%TranslationAcc(1:3,temp_id2) = temp6(1:3)
+               y%BldMotion%RotationAcc(1:3,temp_id2) = temp6(4:6)
+           ENDDO
+       ENDDO
        CALL BD_DynamicSolutionForce(p%uuN0,x%q,x%dqdt,OS_tmp%Acc,                                      &
-                                    p%Stif0_GL,p%Mass0_GL,p%gravity,u,                                 &
+                                    p%Stif0_GL,p%Mass0_GL,p%gravity,u_tmp,                             &
                                     p%damp_flag,p%beta,                                                &
                                     p%node_elem,p%dof_node,p%elem_total,p%dof_total,p%node_total,p%ngp,&
-                                    MoTens,p%analysis_type,temp_Force,temp_ReactionForce)
+                                    temp_Force,temp_ReactionForce)
    ELSEIF(p%analysis_type .EQ. 1) THEN
        CALL BD_StaticSolutionForce( p%uuN0,x%q,x%dqdt,p%Stif0_GL,p%Mass0_GL,p%gravity,u_tmp,           &
                                     p%node_elem,p%dof_node,p%elem_total,p%dof_total,p%node_total,p%ngp,&
-                                    p%analysis_type,temp_Force) 
+                                    temp_Force) 
    ENDIF
 
-   CALL BD_MotionTensor(p%GlbRot,p%GlbPos,temp66,1)
+   CALL BD_MotionTensor(p%GlbRot,p%GlbPos,MoTens,1)
    temp6(:) = 0.0D0
-   temp6(:) = temp_ReactionForce(1:6)
-   temp6(:) = MATMUL(TRANSPOSE(temp66),temp6)
-   y%ReactionForce%Force(1:3,1) = temp6(1:3)
-   y%ReactionForce%Moment(1:3,1) = temp6(4:6)
+   IF(p%analysis_type .EQ. 2) THEN
+       temp6(:) = temp_ReactionForce(1:6)
+       temp6(:) = MATMUL(TRANSPOSE(MoTens),temp6)
+       y%ReactionForce%Force(1:3,1) = temp6(1:3)
+       y%ReactionForce%Moment(1:3,1) = temp6(4:6)
+   ENDIF
    DO i=1,p%node_total
        temp_id = (i-1)*p%dof_node
        temp6(:) = 0.0D0
        temp6(:) = temp_Force(temp_id+1:temp_id+6)
-       temp6(:) = MATMUL(TRANSPOSE(temp66),temp6)
+       temp6(:) = MATMUL(TRANSPOSE(MoTens),temp6)
        y%BldForce%Force(1:3,i) = temp6(1:3)
        y%BldForce%Moment(1:3,i) = temp6(4:6)
    ENDDO
@@ -2018,7 +2025,7 @@ END SUBROUTINE ludcmp
     	ui(i)=b(i)
     enddo
     	
-	END subroutine
+   END SUBROUTINE lubksb
 
    SUBROUTINE BD_UpdateDynamicGA2(ainc,uf,vf,af,xf,coef,node_total,dof_node)
 
@@ -2086,20 +2093,19 @@ END SUBROUTINE ludcmp
    TYPE(BD_OtherStateType),      INTENT(INOUT):: OtherState  ! Other/optimization states
 
    ! local variables
-   INTEGER(IntKi)                             :: j 
-   REAL(ReKi)                                 :: MoTens(6,6)
+   REAL(ReKi)                                 :: Acc(p%dof_total)
    
-   CALL BD_MotionTensor(p%GlbRot,p%GlbPos,MoTens,0)
    CALL BD_SolutionAcc(p%uuN0,x%q,x%dqdt,p%Stif0_GL,p%Mass0_GL,p%gravity,u,&
                        p%damp_flag,p%beta,&
-                       p%node_elem,p%dof_node,p%elem_total,p%dof_total,p%node_total,p%ngp,MoTens,&
-                       OtherState)
+                       p%node_elem,p%dof_node,p%elem_total,p%dof_total,p%node_total,p%ngp,&
+                       Acc)
+   OtherState%Acc(7:p%dof_total) = Acc(7:p%dof_total)
 
    END SUBROUTINE BD_CalcAcc
 
-   SUBROUTINE BD_GenerateDynamicElementAcc(uuN0,uuN,vvN,Stif0,Mass0,gravity,u,&
-                                           damp_flag,beta,&
-                                           elem_total,node_elem,dof_total,dof_node,ngp,MoTens,&
+   SUBROUTINE BD_GenerateDynamicElementAcc(uuN0,uuN,vvN,Stif0,Mass0,gravity,u,         &
+                                           damp_flag,beta,                             &
+                                           elem_total,node_elem,dof_total,dof_node,ngp,&
                                            RHS,MassM)
    !----------------------------------------------------------------------------------------
    ! This subroutine computes Global mass matrix and force vector for the beam.
@@ -2118,23 +2124,19 @@ END SUBROUTINE ludcmp
    INTEGER(IntKi),    INTENT(IN   ):: dof_total ! Degrees of freedom per node
    INTEGER(IntKi),    INTENT(IN   ):: dof_node ! Degrees of freedom per node
    INTEGER(IntKi),    INTENT(IN   ):: ngp ! Number of Gauss points
-   REAL(ReKi),        INTENT(IN   ):: MoTens(:,:)
-   REAL(ReKi),        INTENT(INOUT):: MassM(:,:) ! Mass matrix 
-   REAL(ReKi),        INTENT(INOUT):: RHS(:) ! Right hand side of the equation Ax=B  
+   REAL(ReKi),        INTENT(  OUT):: MassM(:,:) ! Mass matrix 
+   REAL(ReKi),        INTENT(  OUT):: RHS(:) ! Right hand side of the equation Ax=B  
 
-   REAL(ReKi) :: Nuu0(dof_node*node_elem) ! Nodal initial position for each element
-   REAL(ReKi) :: Nuuu(dof_node*node_elem) ! Nodal displacement of Mass 1 for each element
-   REAL(ReKi) :: Nrr0(3*node_elem) ! Nodal rotation parameters for initial position 
-   REAL(ReKi) :: Nrrr(3*node_elem) ! Nodal rotation parameters for displacement of Mass 1
-   REAL(ReKi) :: Nvvv(dof_node*node_elem) ! Nodal velocity of Mass 1: m/s for each element
-   REAL(ReKi) :: EStif0_GL(6,6,node_elem-1) ! Nodal material properties for each element
-   REAL(ReKi) :: EMass0_GL(6,6,node_elem-1) ! Nodal material properties for each element
-   REAL(ReKi) :: DistrLoad_GL(6,node_elem-1) ! Nodal material properties for each element
-   REAL(ReKi) :: elf(dof_node*node_elem) ! Total element force (Fc, Fd, Fb)
-   REAL(ReKi) :: elm(dof_node*node_elem,dof_node*node_elem) ! Element mass matrix
-   
-   REAL(ReKi) :: temp6(6)
-
+   REAL(ReKi)                      :: Nuu0(dof_node*node_elem) ! Nodal initial position for each element
+   REAL(ReKi)                      :: Nuuu(dof_node*node_elem) ! Nodal displacement of Mass 1 for each element
+   REAL(ReKi)                      :: Nrr0(3*node_elem) ! Nodal rotation parameters for initial position 
+   REAL(ReKi)                      :: Nrrr(3*node_elem) ! Nodal rotation parameters for displacement of Mass 1
+   REAL(ReKi)                      :: Nvvv(dof_node*node_elem) ! Nodal velocity of Mass 1: m/s for each element
+   REAL(ReKi)                      :: EStif0_GL(6,6,node_elem-1) ! Nodal material properties for each element
+   REAL(ReKi)                      :: EMass0_GL(6,6,node_elem-1) ! Nodal material properties for each element
+   REAL(ReKi)                      :: DistrLoad_GL(6,node_elem-1) ! Nodal material properties for each element
+   REAL(ReKi)                      :: elf(dof_node*node_elem) ! Total element force (Fc, Fd, Fb)
+   REAL(ReKi)                      :: elm(dof_node*node_elem,dof_node*node_elem) ! Element mass matrix
    INTEGER(IntKi)                  :: dof_elem ! Degree of freedom per node
    INTEGER(IntKi)                  :: rot_elem ! Rotational degrees of freedom
    INTEGER(IntKi)                  :: nelem ! number of elements
@@ -2151,10 +2153,8 @@ END SUBROUTINE ludcmp
        DO j=1,ngp
            EStif0_GL(1:6,1:6,j) = Stif0(1:6,1:6,temp_id+j)
            EMass0_GL(1:6,1:6,j) = Mass0(1:6,1:6,temp_id+j)
-           temp6(1:3) = u%DistrLoad%Force(1:3,temp_id+j+1)
-           temp6(4:6) = u%DistrLoad%Moment(1:3,temp_id+j+1)
-           temp6(:) = MATMUL(TRANSPOSE(MoTens),temp6)
-           DistrLoad_GL(1:6,j)  = temp6(1:6)
+           DistrLoad_GL(1:3,j) = u%DistrLoad%Force(1:3,temp_id+j+1)
+           DistrLoad_GL(4:6,j) = u%DistrLoad%Moment(1:3,temp_id+j+1)
        ENDDO
        
        CALL BD_NodalRelRot(Nuu0,node_elem,dof_node,Nrr0)
@@ -2174,8 +2174,6 @@ END SUBROUTINE ludcmp
        CALL BD_AssembleRHS(nelem,dof_elem,node_elem,dof_node,elf,RHS)
 
    ENDDO
-
-
 
    END SUBROUTINE BD_GenerateDynamicElementAcc
 
@@ -2535,7 +2533,7 @@ END SUBROUTINE ludcmp
    SUBROUTINE BD_GenerateDynamicElementForce(uuN0,uuN,vvN,aaN,     &
                                              Stif0,Mass0,gravity,u,&
                                              damp_flag,beta,       &
-                                             elem_total,node_elem,dof_node,ngp,MoTens,RHS,Reaction)
+                                             elem_total,node_elem,dof_node,ngp,RHS,Reaction)
    !----------------------------------------------------------------------------------------
    ! This subroutine computes Global mass matrix and force vector for the beam.
    !----------------------------------------------------------------------------------------
@@ -2553,7 +2551,6 @@ END SUBROUTINE ludcmp
    INTEGER(IntKi),     INTENT(IN   ):: node_elem ! Node per element
    INTEGER(IntKi),     INTENT(IN   ):: dof_node ! Degrees of freedom per node
    INTEGER(IntKi),     INTENT(IN   ):: ngp ! Number of Gauss points
-   REAL(ReKi),         INTENT(IN   ):: MoTens(:,:)
    REAL(ReKi),         INTENT(  OUT):: RHS(:) ! Right hand side of the equation Ax=B  
    REAL(ReKi),         INTENT(  OUT):: Reaction(:) ! Right hand side of the equation Ax=B  
 
@@ -2567,8 +2564,6 @@ END SUBROUTINE ludcmp
    REAL(ReKi),           ALLOCATABLE:: EMass0_GL(:,:,:) ! Nodal material properties for each element
    REAL(ReKi),           ALLOCATABLE:: DistrLoad_GL(:,:) ! Nodal material properties for each element
    REAL(ReKi),           ALLOCATABLE:: elf(:) ! Total element force (Fc, Fd, Fb)
-!   REAL(ReKi)                       :: ReactionForce(6)
-   REAL(ReKi)                       :: temp6(6)
    INTEGER(IntKi)                   :: dof_elem ! Degree of freedom per node
    INTEGER(IntKi)                   :: rot_elem ! Rotational degrees of freedom
    INTEGER(IntKi)                   :: nelem ! number of elements
@@ -2630,10 +2625,8 @@ END SUBROUTINE ludcmp
        DO j=1,ngp
            EStif0_GL(1:6,1:6,j) = Stif0(1:6,1:6,temp_id+j)
            EMass0_GL(1:6,1:6,j) = Mass0(1:6,1:6,temp_id+j)
-           temp6(1:3) = u%DistrLoad%Force(1:3,temp_id+j+1)
-           temp6(4:6) = u%DistrLoad%Moment(1:3,temp_id+j+1)
-           temp6(:) = MATMUL(TRANSPOSE(MoTens),temp6)
-           DistrLoad_GL(1:6,j)  = temp6(1:6)
+           DistrLoad_GL(1:3,j) = u%DistrLoad%Force(1:3,temp_id+j+1)
+           DistrLoad_GL(4:6,j) = u%DistrLoad%Moment(1:3,temp_id+j+1)
        ENDDO
 
        IF(nelem .EQ. 1) THEN
@@ -2641,10 +2634,8 @@ END SUBROUTINE ludcmp
                                         EStif0_GL,EMass0_GL,gravity,DistrLoad_GL,&
                                         damp_flag,beta,                          &
                                         ngp,node_elem,dof_node,elf,Reaction)
-           temp6(1:3) = u%PointLoad%Force(1:3,j)
-           temp6(4:6) = u%PointLoad%Moment(1:3,j)
-           temp6(:) = MATMUL(TRANSPOSE(MoTens),temp6)
-           Reaction(1:6) = Reaction(1:6) - temp6(1:6) 
+           Reaction(1:3) = Reaction(1:3) - u%PointLoad%Force(1:3,1)
+           Reaction(4:6) = Reaction(4:6) - u%PointLoad%Moment(1:3,1)
        ENDIF
        CALL BD_ElementMatrixForce(Nuu0,Nuuu,Nrr0,Nrrr,Nvvv,&
                                   EStif0_GL,EMass0_GL,     &
@@ -2686,7 +2677,7 @@ END SUBROUTINE ludcmp
                                       Stif0,Mass0,gravity,u,                                 &
                                       damp_flag,beta,                                        &
                                       node_elem,dof_node,elem_total,dof_total,node_total,ngp,&
-                                      MoTens,analysis_type,Force,ReactionForce)
+                                      Force,ReactionForce)
    !***************************************************************************************
    ! This subroutine calls other subroutines to apply the force, build the beam element 
    ! stiffness and mass matrices, build nodal force vector.  The output of this subroutine
@@ -2708,8 +2699,6 @@ END SUBROUTINE ludcmp
    INTEGER(IntKi),     INTENT(IN   ):: dof_total ! Total number of degrees of freedom
    INTEGER(IntKi),     INTENT(IN   ):: node_total ! Total number of nodes
    INTEGER(IntKi),     INTENT(IN   ):: ngp ! Number of Gauss points
-   REAL(ReKi),         INTENT(IN   ):: MoTens(:,:)
-   INTEGER(IntKi),     INTENT(IN   ):: analysis_type ! Number of Gauss points
    REAL(ReKi),         INTENT(  OUT):: Force(:)
    REAL(ReKi),         INTENT(  OUT):: ReactionForce(:)
 
@@ -2729,7 +2718,7 @@ END SUBROUTINE ludcmp
    CALL BD_GenerateDynamicElementForce(uuN0,uuN,vvN,aaN,     &
                                        Stif0,Mass0,gravity,u,&
                                        damp_flag,beta,&
-                                       elem_total,node_elem,dof_node,ngp,MoTens,RHS,Reaction)
+                                       elem_total,node_elem,dof_node,ngp,RHS,Reaction)
    
    Force(:) = 0.0D0
    Force(:) = RHS(:)
@@ -2934,7 +2923,7 @@ END SUBROUTINE ludcmp
 
 
    SUBROUTINE BD_ReadPrimaryFile(InputFile,InputFileData,&
-              OutFileRoot,UnEc,ErrStat,ErrMsg)
+                                 OutFileRoot,UnEc,ErrStat,ErrMsg)
    !------------------------------------------------------------------------------------
    ! This routine reads in the primary BeamDyn input file and places the values it reads
    ! in the InputFileData structure.
@@ -2966,6 +2955,9 @@ END SUBROUTINE ludcmp
    INTEGER(IntKi)               :: j
    INTEGER(IntKi)               :: temp_int 
 
+   ! Initialize some variables:
+   ErrStat = ErrID_None
+   ErrMsg  = ""
    Echo = .FALSE.
    UnEc = -1
 
@@ -2984,8 +2976,6 @@ END SUBROUTINE ludcmp
    ENDIF
    IF ( UnEc > 0 )  WRITE(UnEc,*)  'test'
    CALL ReadVar(UnIn,InputFile,InputFileData%analysis_type,"analysis_type", "Analysis type",ErrStat2,ErrMsg2,UnEc)
-!   CALL ReadVar(UnIn,InputFile,InputFileData%damp_flag,"damp_flag", "Damping flag",ErrStat2,ErrMsg2,UnEc)
-   CALL ReadVar(UnIn,InputFile,InputFileData%time_integrator,"time_integrator", "Time integrator type",ErrStat2,ErrMsg2,UnEc)
    CALL ReadVar(UnIn,InputFile,InputFileData%rhoinf,"rhoinf", "Coefficient for GA2",ErrStat2,ErrMsg2,UnEc)
 
    !---------------------- GEOMETRY PARAMETER --------------------------------------
@@ -2999,10 +2989,14 @@ END SUBROUTINE ludcmp
    temp_int = 0
    DO i=1,InputFileData%member_total
        READ(UnIn,*) j,InputFileData%kp_member(j)
+       IF(InputFileData%kp_member(j) .LT. 3) THEN
+!           CALL SetErrors(ErrID_Fatal,TRIM(Num2LStr(j))//'th member has less than 3 key points.')    
+           STOP
+       ENDIF
        temp_int = temp_int + InputFileData%kp_member(j)
    ENDDO
    IF( temp_int .NE. InputFileData%kp_total+InputFileData%member_total-1) THEN
-       WRITE(*,*) "Error in input file: geometry1"
+!       CALL SetErrors(ErrID_Fatal,'Error in input file: definition of key points and members')
        STOP
    ENDIF
    CALL ReadCom(UnIn,InputFile,'key point x,y,z locations and initial twist angles',ErrStat2,ErrMsg2,UnEc)
@@ -3016,13 +3010,14 @@ END SUBROUTINE ludcmp
                                  InputFileData%kp_coordinate(i,1),InputFileData%kp_coordinate(i,4)
        ENDIF
    ENDDO
+   InputFileData%kp_coordinate(:,4) = -InputFileData%kp_coordinate(:,4)
    !---------------------- MESH PARAMETER -----------------------------------------
    CALL ReadCom(UnIn,InputFile,'Section Header: Mesh Parameter',ErrStat2,ErrMsg2,UnEc)
    CALL ReadVar(UnIn,InputFile,InputFileData%order_elem,"order_elem","Order of basis function",&
                 ErrStat2,ErrMsg2,UnEc)
-   !---------------------- BLADE PARAMETER ----------------------------------------
+   !---------------------- BEAM SECTIONAL PARAMETER ----------------------------------------
    CALL ReadCom(UnIn,InputFile,'Section Header: Blade Parameter',ErrStat2,ErrMsg2,UnEc)
-   CALL ReadVar ( UnIn, InputFile, InputFileData%BldFile, 'BldFile', 'Name of the file containing properties for blade', ErrStat2, ErrMsg2, UnEc )
+   CALL ReadVar ( UnIn, InputFile, InputFileData%BldFile, 'MatFile', 'Name of the file containing properties for beam', ErrStat2, ErrMsg2, UnEc )
 
    END SUBROUTINE BD_ReadPrimaryFile
 
@@ -3056,11 +3051,11 @@ END SUBROUTINE ludcmp
 
    !  -------------- HEADER -------------------------------------------------------
    ! Skip the header.
-   CALL ReadCom(UnIn,BldFile,'unused blade file header line 1',ErrStat2,ErrMsg2,UnEc)
-   CALL ReadCom(UnIn,BldFile,'unused blade file header line 2',ErrStat2,ErrMsg2,UnEc)
+   CALL ReadCom(UnIn,BldFile,'unused beam file header line 1',ErrStat2,ErrMsg2,UnEc)
+   CALL ReadCom(UnIn,BldFile,'unused beam file header line 2',ErrStat2,ErrMsg2,UnEc)
 
    !  -------------- BLADE PARAMETER-----------------------------------------------
-   CALL ReadCom(UnIn,BldFile,'blade parameters',ErrStat2,ErrMsg2,UnEc)
+   CALL ReadCom(UnIn,BldFile,'beam parameters',ErrStat2,ErrMsg2,UnEc)
 
    CALL ReadVar(UnIn,BldFile,BladeInputFileData%station_total,'station_total','Number of blade input stations',ErrStat2,ErrMsg2,UnEc)
 
@@ -3895,7 +3890,7 @@ END SUBROUTINE ludcmp
 
    SUBROUTINE BD_StaticSolutionForce(uuN0,uuN,vvN,Stif0,Mass0,gravity,u,&
                                      node_elem,dof_node,elem_total,dof_total,node_total,ngp,&
-                                     analysis_type,Force)
+                                     Force)
    !***************************************************************************************
    ! This subroutine calls other subroutines to apply the force, build the beam element 
    ! stiffness and mass matrices, build nodal force vector.  The output of this subroutine
@@ -3914,8 +3909,6 @@ END SUBROUTINE ludcmp
    INTEGER(IntKi),INTENT(IN):: dof_total ! Total number of degrees of freedom
    INTEGER(IntKi),INTENT(IN):: node_total ! Total number of nodes
    INTEGER(IntKi),INTENT(IN):: ngp ! Number of Gauss points
-   INTEGER(IntKi),INTENT(IN):: analysis_type ! Number of Gauss points
-   
    REAL(ReKi),INTENT(OUT):: Force(:)
 
    ! Local variables
@@ -4389,49 +4382,20 @@ END SUBROUTINE ludcmp
    INTEGER(IntKi),               INTENT(  OUT)  :: ErrStat     ! Error status of the operation
    CHARACTER(*),                 INTENT(  OUT)  :: ErrMsg      ! Error message if ErrStat /= ErrID_None
 
-   REAL(ReKi)                                   :: pi
    REAL(ReKi)                                   :: temp_cc(3)
 
-   pi = ACOS(-1.0D0)
+   ! Root displacements
    x%q(1:3) = u%RootMotion%TranslationDisp(1:3,1)
-!   x%q(6) = 4.0D0*TAN((3.1415926D0*t*1.0D0/3.0D0+(2.0D0*pi*OtherState%Rescale_Counter))/4.0D0)
+   ! Root rotations
    CALL BD_CrvExtractCrv(u%RootMotion%Orientation(1:3,1:3,1),x%q(4:6))
-!WRITE(*,*) x%q(4:6)
    CALL BD_CrvExtractCrv(p%GlbRot(1:3,1:3),temp_cc(1:3))
-!WRITE(*,*) temp_cc(1:3) 
    CALL BD_CrvCompose(x%q(4:6),x%q(4:6),temp_cc,0)
-!   x%q(4:6) = 0.0D0
-!WRITE(*,*) 'BC Disp:'
-!WRITE(*,*) x%q(1:6)
-!   x%q(6) = 4.0D0*TAN((3.1415926D0*t*1.0D0/3.0D0)/4.0D0)
-!   IF(ABS(x%q(6)) .GT. 4.0D0) THEN
-!       x%q(6) = 4.0D0*TAN((3.1415926D0*t*1.0D0/3.0D0+(2.0D0*pi))/4.0D0)
-!   ENDIF
-!------------------
-!  Rotating beam
-!------------------
+   ! Root velocities/angular velocities and accelerations/angular accelerations
    x%dqdt(1:3) = u%RootMotion%TranslationVel(1:3,1)
    x%dqdt(4:6) = u%Rootmotion%RotationVel(1:3,1)
    OtherState%acc(1:3) = u%RootMotion%TranslationAcc(1:3,1)
    OtherState%acc(4:6) = u%RootMotion%RotationAcc(1:3,1)
-!WRITE(*,*) 'BC Vel:'
-!WRITE(*,*) x%dqdt(1:6)
-!WRITE(*,*) 'BC Acc'
-!WRITE(*,*) OtherState%acc(1:6)
-!------------------
-! End rotating beam
-!------------------
 
-!-------DEBUG---------
-!x%q(1:6) = 0.0D0
-!x%dqdt(1:6) = 0.0D0
-!OtherState%acc(1:6) = 0.0D0
-!x%q(5) = -4.0D0*TAN((3.1415926D0*t/3.0D0)/4.0D0)
-!IF(ABS(x%q(5)) .GT. 4.0D0) THEN
-!    x%q(5) = -4.0D0*TAN((3.1415926D0*t/3.0D0+2.0D0*3.1415926D0)/4.0D0)
-!ENDIF
-!x%dqdt(5) = -3.1415926D0/3.0D0
-!-------END DEBUG-----
    END SUBROUTINE BD_BoundaryGA2
 
    SUBROUTINE BD_DynamicSolutionGA2( uuN0,uuNf,vvNf,aaNf,xxNf,               &
@@ -4803,9 +4767,9 @@ END SUBROUTINE ludcmp
 
    END SUBROUTINE BD_CalcIC
 
-   SUBROUTINE BD_SolutionAcc(uuN0,uuN,vvN,Stif0,Mass0,gravity,u,&
-                             damp_flag,beta,&
-                             node_elem,dof_node,elem_total,dof_total,node_total,ngp,MoTens,&
+   SUBROUTINE BD_SolutionAcc(uuN0,uuN,vvN,Stif0,Mass0,gravity,u,                    &
+                             damp_flag,beta,                                        &
+                             node_elem,dof_node,elem_total,dof_total,node_total,ngp,&
                              Acc)
    !***************************************************************************************
    ! This subroutine calls other subroutines to apply the force, build the beam element 
@@ -4827,8 +4791,7 @@ END SUBROUTINE ludcmp
    INTEGER(IntKi),               INTENT(IN   ):: dof_total ! Total number of degrees of freedom
    INTEGER(IntKi),               INTENT(IN   ):: node_total ! Total number of nodes
    INTEGER(IntKi),               INTENT(IN   ):: ngp ! Number of Gauss points
-   REAL(ReKi),                   INTENT(IN   ):: MoTens(:,:)
-   TYPE(BD_OtherStateType),      INTENT(INOUT):: Acc
+   REAL(ReKi),                   INTENT(  OUT):: Acc(:)
 
    ! Local variables
    
@@ -4839,7 +4802,6 @@ END SUBROUTINE ludcmp
    REAL(ReKi):: F_PointLoad(dof_total) 
    REAL(ReKi):: sol_temp(dof_total-6) 
    REAL(ReKi):: d 
-   REAL(ReKi):: temp6(6)
    INTEGER(IntKi):: indx(dof_total-6) 
    INTEGER(IntKi):: j 
    INTEGER(IntKi):: k 
@@ -4850,17 +4812,15 @@ END SUBROUTINE ludcmp
 
    CALL BD_GenerateDynamicElementAcc(uuN0,uuN,vvN,Stif0,Mass0,gravity,u,&
                                      damp_flag,beta,&
-                                     elem_total,node_elem,dof_total,dof_node,ngp,MoTens,&
+                                     elem_total,node_elem,dof_total,dof_node,ngp,&
                                      RHS,MassM)
    DO j=1,node_total
        temp_id = (j-1)*dof_node
-       temp6(1:3) = u%PointLoad%Force(1:3,j)
-       temp6(4:6) = u%PointLoad%Moment(1:3,j)
-       temp6(:) = MATMUL(TRANSPOSE(MoTens),temp6)
-       F_PointLoad(temp_id+1:temp_id+6) = temp6(1:6)
+       F_PointLoad(temp_id+1:temp_id+3) = u%PointLoad%Force(1:3,j)
+       F_PointLoad(temp_id+4:temp_id+6) = u%PointLoad%Moment(1:3,j)
    ENDDO
-
    RHS(:) = RHS(:) + F_PointLoad(:) 
+
    DO j=1,dof_total-6
        RHS_LU(j) = RHS(j+6)
        DO k=1,dof_total-6
@@ -4873,7 +4833,7 @@ END SUBROUTINE ludcmp
    CALL lubksb(MassM_LU,dof_total-6,indx,RHS_LU,sol_temp)
 
    DO j=1,dof_total-6
-       Acc%Acc(j+6)    = sol_temp(j)
+       Acc(j+6)    = sol_temp(j)
    ENDDO
 
    END SUBROUTINE BD_SolutionAcc
