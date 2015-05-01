@@ -327,7 +327,7 @@ CONTAINS
    CALL AllocAry(p%coef,9,'GA2 coefficient',ErrStat2,ErrMsg2)
    p%coef(:)  = 0.0D0
    p%rhoinf = InputFileData%rhoinf
-   IF(p%time_flag .EQ. 2) CALL BD_TiSchmComputeCoefficients(p%rhoinf,p%dt,p%coef)
+   CALL BD_TiSchmComputeCoefficients(p%rhoinf,p%dt,p%coef)
    ! Allocate OtherState if using multi-step method; initialize n
 
 
@@ -644,16 +644,21 @@ CONTAINS
    INTEGER(IntKi):: i
    INTEGER(IntKi):: j
    INTEGER(IntKi):: temp_id
-   REAL(ReKi):: temp
-   REAL(ReKi):: temp_pp(3)
-   REAL(ReKi):: temp_qq(3)
-   REAL(ReKi):: temp_rr(3)
+   REAL(ReKi):: MoTens(6,6)
+   TYPE(BD_InputType):: u_tmp
    ! Initialize ErrStat
 
    ErrStat = ErrID_None
    ErrMsg  = "" 
-
    IF(p%analysis_type == 2) THEN
+       IF(n .EQ. 0) THEN
+           CALL BD_CopyInput(u(2), u_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
+           CALL BD_InputGlobalLocal(p,u_tmp,0)
+           OtherState%Acc(1:3) = u_tmp%RootMotion%TranslationAcc(1:3,1)
+           OtherState%Acc(4:6) = u_tmp%RootMotion%RotationAcc(1:3,1)
+           CALL BD_CalcAcc(u_tmp,p,x,OtherState)
+           OtherState%Xcc(:) = OtherState%Acc(:)
+       ENDIF
        CALL BD_GA2( t, n, u, utimes, p, x, xd, z, OtherState, ErrStat, ErrMsg )
    ELSEIF(p%analysis_type == 1) THEN
        CALL BD_Static( t, n, u, utimes, p, x, xd, z, OtherState, ErrStat, ErrMsg )
@@ -4220,7 +4225,6 @@ END SUBROUTINE ludcmp
    TYPE(BD_ContinuousStateType)                 :: x_tmp       ! Holds temporary modification to x
    TYPE(BD_OtherStateType     )                 :: OS_tmp       ! Holds temporary modification to x
    TYPE(BD_InputType)                           :: u_interp    ! interpolated value of inputs 
-   TYPE(BD_InputType)                           :: u_interp0    ! interpolated value of inputs 
 !   INTEGER(IntKi)                               :: flag_scale
    INTEGER(IntKi)                               :: i
 
@@ -4229,38 +4233,7 @@ END SUBROUTINE ludcmp
    ErrStat = ErrID_None
    ErrMsg  = "" 
 
-   CALL MeshCopy ( SrcMesh  = u(1)%RootMotion     &
-                 , DestMesh = u_interp%RootMotion &
-                 , CtrlCode = MESH_NEWCOPY        &
-                 , ErrStat  = ErrStat             &
-                 , ErrMess  = ErrMsg               )
-   CALL MeshCopy ( SrcMesh  = u(1)%PointLoad      &
-                 , DestMesh = u_interp%PointLoad  &
-                 , CtrlCode = MESH_NEWCOPY        &
-                 , ErrStat  = ErrStat             &
-                 , ErrMess  = ErrMsg               )
-   CALL MeshCopy ( SrcMesh  = u(1)%DistrLoad      &
-                 , DestMesh = u_interp%DistrLoad  &
-                 , CtrlCode = MESH_NEWCOPY        &
-                 , ErrStat  = ErrStat             &
-                 , ErrMess  = ErrMsg               )
-
-   CALL MeshCopy ( SrcMesh  = u(1)%RootMotion     &
-                 , DestMesh = u_interp0%RootMotion &
-                 , CtrlCode = MESH_NEWCOPY        &
-                 , ErrStat  = ErrStat             &
-                 , ErrMess  = ErrMsg               )
-   CALL MeshCopy ( SrcMesh  = u(1)%PointLoad      &
-                 , DestMesh = u_interp0%PointLoad &
-                 , CtrlCode = MESH_NEWCOPY        &
-                 , ErrStat  = ErrStat             &
-                 , ErrMess  = ErrMsg               )
-   CALL MeshCopy ( SrcMesh  = u(1)%DistrLoad      &
-                 , DestMesh = u_interp0%DistrLoad  &
-                 , CtrlCode = MESH_NEWCOPY        &
-                 , ErrStat  = ErrStat             &
-                 , ErrMess  = ErrMsg               )
-
+   CALL BD_CopyInput(u(1), u_interp, MESH_NEWCOPY, ErrStat, ErrMsg)
    CALL BD_CopyContState(x, x_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
    CALL BD_CopyOtherState(OtherState, OS_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
    ! interpolate u to find u_interp = u(t)
@@ -4277,15 +4250,9 @@ END SUBROUTINE ludcmp
                                p%node_elem,p%dof_node,p%elem_total,p%dof_total,&
                                p%node_total,p%niter,p%ngp,p%coef)
 
-   CALL MeshDestroy ( u_interp%RootMotion        &
-                    , ErrStat  = ErrStat         &
-                    , ErrMess  = ErrMsg           )
-   CALL MeshDestroy ( u_interp%PointLoad         &
-                    , ErrStat  = ErrStat         &
-                    , ErrMess  = ErrMsg           )
-   CALL MeshDestroy ( u_interp%DistrLoad         &
-                    , ErrStat  = ErrStat         &
-                    , ErrMess  = ErrMsg           )
+   CALL BD_DestroyInput(u_interp, ErrStat, ErrMsg)
+   CALL BD_DestroyContState(x_tmp, ErrStat, ErrMsg )
+   CALL BD_DestroyOtherState(OS_tmp, ErrStat, ErrMsg )
    
    END SUBROUTINE BD_GA2
 
@@ -4451,7 +4418,7 @@ END SUBROUTINE ludcmp
    Eref = 0.0D0
 
    DO i=1,niter
-!       WRITE(*,*) "N-R Iteration #", i
+!WRITE(*,*) "N-R Iteration #", i
        StifK = 0.0D0
        RHS = 0.0D0
        MassM = 0.0D0
@@ -4486,16 +4453,13 @@ END SUBROUTINE ludcmp
            ai(j+6) = ai_temp(j)
        ENDDO
 
-
        IF(i==1) THEN
            Eref = SQRT(DOT_PRODUCT(ai_temp,feqv))*TOLF
-!WRITE(*,*) 'Eref:',Eref
            IF(Eref .LE. TOLF) RETURN
        ENDIF
        IF(i .GT. 1) THEN
            Enorm = 0.0D0
            Enorm = SQRT(DOT_PRODUCT(ai_temp,feqv))
-!WRITE(*,*) 'Enorm:',Enorm
            IF(Enorm .LE. Eref) RETURN
        ENDIF    
        CALL BD_UpdateDynamicGA2(ai,uuNf,vvNf,aaNf,xxNf,coef,node_total,dof_node)
@@ -4754,16 +4718,15 @@ END SUBROUTINE ludcmp
    ENDDO
    
    !Initialize acceleration and angular acceleration
-   temp6(:) = 0.0D0
-   temp6(1:3) = u%RootMotion%TranslationAcc(:,1)
-   temp6(4:6) = u%RootMotion%RotationAcc(:,1)
-   CALL BD_MotionTensor(p%GlbRot,p%GlbPos,temp66,1)
-   temp6(:) = MATMUL(temp66,temp6)
-   OtherState%Acc(1:3) = temp6(1:3)
-   OtherState%Acc(4:6) = temp6(4:6)
-   
-   CALL BD_CalcAcc(u,p,x,OtherState)
-!   OtherState%Acc(:) = 0.0D0
+!   temp6(:) = 0.0D0
+!   temp6(1:3) = u%RootMotion%TranslationAcc(:,1)
+!   temp6(4:6) = u%RootMotion%RotationAcc(:,1)
+!   CALL BD_MotionTensor(p%GlbRot,p%GlbPos,temp66,1)
+!   temp6(:) = MATMUL(temp66,temp6)
+!   OtherState%Acc(1:3) = temp6(1:3)
+!   OtherState%Acc(4:6) = temp6(4:6)
+!   
+!   CALL BD_CalcAcc(u,p,x,OtherState)
 
    END SUBROUTINE BD_CalcIC
 
