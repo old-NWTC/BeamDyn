@@ -118,7 +118,7 @@ SUBROUTINE BD1_BD_InputOutputSolve(time, &
    INTEGER(IntKi)                               :: i
    INTEGER(IntKi),                    PARAMETER :: iter_max = 10
    TYPE(BD_OutputType)                          :: OT_tmp
-   TYPE(Mod1_OutputType)                          :: Mod1OT_tmp
+   TYPE(BD1_OutputType)                         :: BD1OT_tmp
    ! Solve input-output relations; this section of code corresponds to Eq. (35) in Gasmi et al. (2013)
    ! This code will be specific to the underlying modules; could be placed in a separate routine.
    ! Note that Module2 has direct feedthrough, but Module1 does not. Thus, Module1 should be called first.
@@ -129,84 +129,158 @@ SUBROUTINE BD1_BD_InputOutputSolve(time, &
        CALL BD1_CalcOutput( time, BD1_Input, BD1_Parameter, BD1_ContinuousState, BD1_DiscreteState, &
                     BD1_ConstraintState, BD1_OtherState, BD1_Output, ErrStat, ErrMsg )
 
-       CALL BD_InputClean(BD_Input)
        CALL BD_CalcOutput( time, BD_Input, BD_Parameter, BD_ContinuousState, BD_DiscreteState, &
                     BD_ConstraintState, BD_OtherState, BD_Output, ErrStat, ErrMsg )
 
 !WRITE(*,*) 'Original BD Force:',BD_Output%ReactionForce%Force(1,1)
 !WRITE(*,*) 'BD_Output%Disp'
 !WRITE(*,*) BD_Output%BldMotion%TranslationDisp(:,BD_Parameter%node_total)
-
-       BD_Force = BD_Output%ReactionForce%Force(1,1)
-       BD_RootMotion(1) = BD_Input%RootMotion%TranslationDisp(1,1)
-       BD_RootMotion(2) = BD_Input%RootMotion%TranslationVel(1,1)
-       BD_RootMotion(3) = BD_Input%RootMotion%TranslationAcc(1,1)
+       CALL BD_CopyInput(BD_Input,BDInput_tmp,MESH_NEWCOPY,ErrStat,ErrMsg)
+       CALL BD1_CopyInput(BD1_Input,BD1Input_tmp,MESH_NEWCOPY,ErrStat,ErrMsg)
 
        RHS(:) = 0.0D0
-       RHS(1) = -(Mod1_Input%PointMesh%Force(1,1) - BD_Output%ReactionForce%Force(1,1))
-       RHS(2) = -(BD_Input%RootMotion%TranslationDisp(1,1) - Mod1_Output%PointMesh%TranslationDisp(1,1))
-       RHS(3) = -(BD_Input%RootMotion%TranslationVel(1,1) - Mod1_Output%PointMesh%TranslationVel(1,1))
-       RHS(4) = -(BD_Input%RootMotion%TranslationAcc(1,1) - Mod1_Output%PointMesh%TranslationAcc(1,1))
+       RHS(1:3) = -(BD1_Input%TipForce%Force(1:3,1) - BD_Output%ReactoinForce%Force(1:3,1))
+       RHS(4:6) = -(BD1_Input%TipForce%Moment(1:3,1) - BD_Output%ReactoinForce%Moment(1:3,1))
+       RHS(7:9) = -(BD_Input%RootMotion%TranslationDisp(1:3,1) - &
+                    BD1_Output%BldMotion%TranslationDisp(1:3,BD1_Parameter%node_total))
+       CALL BD_CrvExtractCrv(BD_Input%RootMotion%Orientation(1:3,1:3,1),temp_cc)
+       temp_c0(1:3) = MATMUL(BD_Parameter%GlbRot(1:3,1:3),BD_Parameter%uuN0(4:6))
+       CALL BD_CrvCompose(tempBD_rr,temp_c0,temp_cc,1)
+       CALL BD1_CrvExtractCrv(BD1_Output%BldMotion%Orientation(1:3,1:3,BD1_Parameter%node_total),tempBD_cc)
+       tempBD_c0(1:3) = MATMUL(BD1_Parameter%GlbRot(1:3,1:3),BD1_Parameter%uuN0(4:6))
+       CALL BD1_CrvCompose(tempBD1_rr,tempBD_c0,tempBD_cc,1)
+       RHS(10:12) = -(tempBD_rr(1:3) - tempBD1_rr(1:3))
+       RHS(13:15) = -(BD_Input%RootMotion%TranslationVel(1:3,1) - &
+                      BD1_Output%BldMotion%TranslationVel(1:3,BD1_Parameter%node_total))
+       RHS(16:18) = -(BD_Input%RootMotion%RotationVel(1:3,1) - &
+                      BD1_Output%BldMotion%RotationVel(1:3,BD1_Parameter%node_total))
+       RHS(19:21) = -(BD_Input%RootMotion%TranslationAcc(1:3,1) - &
+                      BD1_Output%BldMotion%TranslationAcc(1:3,BD1_Parameter%node_total))
+       RHS(22:24) = -(BD_Input%RootMotion%RotationAcc(1:3,1) - &
+                      BD1_Output%BldMotion%RotationAcc(1:3,BD1_Parameter%node_total))
     
        Coef(:,:) = 0.0D0
-       Coef(1,1) = 1.0D0
-!WRITE(*,*) 'Ori TransDisp:',BD_Input%RootMotion%TranslationDisp(1,1)
-       BD_Input%RootMotion%TranslationDisp(1,1) = BD_Input%RootMotion%TranslationDisp(1,1) + eps
-       CALL BD_InputClean(BD_Input)
-!WRITE(*,*) 'Per TransDisp:',BD_Input%RootMotion%TranslationDisp(1,1)
-CALL BD_CopyOutput(BD_Output, OT_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
-       CALL BD_CalcOutput( time, BD_Input, BD_Parameter, BD_ContinuousState, BD_DiscreteState, &
-                    BD_ConstraintState, BD_OtherState, OT_tmp, ErrStat, ErrMsg )
-!WRITE(*,*) 'Perturbed Disp BD Force:',BD_Output%ReactionForce%Force(1,1)
-       Coef(1,2) = -((OT_tmp%ReactionForce%Force(1,1)-BD_Force)/eps)
-       BD_Input%RootMotion%TranslationDisp(1,1) = BD_RootMotion(1)
+       DO j=1,24
+           Coef(j,j) = 1.0D0
+       ENDDO
+       DO j=1,3
+           BD_Input%RootMotion%TranslationDisp(j,1) = BD_Input%RootMotion%TranslationDisp(j,1) + eps
+!           CALL BD_CopyOutput(BD_Output, OT_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
+           CALL BD_CalcOutput( time, BD_Input, BD_Parameter, BD_ContinuousState, BD_DiscreteState, &
+                        BD_ConstraintState, BD_OtherState, OT_tmp, ErrStat, ErrMsg )
+           Coef(1:3,6+j) = -((OT_tmp%ReactionForce%Force(1:3,1)-BD_Output%ReactionForce%Force(1:3,1))/eps)
+           Coef(4:6,6+j) = -((OT_tmp%ReactionForce%Moment(1:3,1)-BD_Output%ReactionForce%Moment(1:3,1))/eps)
+           CALL BD_CopyInput(BDInput_tmp,BD_Input,MESH_NEWCOPY,ErrStat,ErrMsg)
+       ENDDO
+       temp_c0(1:3) = MATMUL(BD_Parameter%GlbRot(1:3,1:3),BD_Parameter%uuN0(4:6))
+       DO j=1,3
+           temp_cc(:) = tempBD_rr(:)
+           temp_cc(j) = temp_cc(j) + eps
+           CALL BD_CrvCompose(temp3,tempBD_cc,tempBD_c0,0)
+           CALL BD_CrvMatrixR(temp3,BD_Input%RootMotion%Orientation(1:3,1:3,1))
+           CALL BD_CalcOutput( time, BD_Input, BD_Parameter, BD_ContinuousState, BD_DiscreteState, &
+                        BD_ConstraintState, BD_OtherState, OT_tmp, ErrStat, ErrMsg )
+           Coef(1:3,9+j) = -((OT_tmp%ReactionForce%Force(1:3,1)-BD_Output%ReactionForce%Force(1:3,1))/eps)
+           Coef(4:6,9+j) = -((OT_tmp%ReactionForce%Moment(1:3,1)-BD_Output%ReactionForce%Moment(1:3,1))/eps)
+           CALL BD_CopyInput(BDInput_tmp,BD_Input,MESH_NEWCOPY,ErrStat,ErrMsg)
+       ENDDO
+       DO j=1,3
+           BD_Input%RootMotion%TranslationVel(j,1) = BD_Input%RootMotion%TranslationVel(j,1) + eps
+           CALL BD_CalcOutput( time, BD_Input, BD_Parameter, BD_ContinuousState, BD_DiscreteState, &
+                        BD_ConstraintState, BD_OtherState, OT_tmp, ErrStat, ErrMsg )
+           Coef(1:3,12+j) = -((OT_tmp%ReactionForce%Force(1:3,1)-BD_Output%ReactionForce%Force(1:3,1))/eps)
+           Coef(4:6,12+j) = -((OT_tmp%ReactionForce%Moment(1:3,1)-BD_Output%ReactionForce%Moment(1:3,1))/eps)
+           CALL BD_CopyInput(BDInput_tmp,BD_Input,MESH_NEWCOPY,ErrStat,ErrMsg)
+       ENDDO
+       DO j=1,3
+           BD_Input%RootMotion%RotationVel(j,1) = BD_Input%RootMotion%RotationVel(j,1) + eps
+           CALL BD_CalcOutput( time, BD_Input, BD_Parameter, BD_ContinuousState, BD_DiscreteState, &
+                        BD_ConstraintState, BD_OtherState, OT_tmp, ErrStat, ErrMsg )
+           Coef(1:3,15+j) = -((OT_tmp%ReactionForce%Force(1:3,1)-BD_Output%ReactionForce%Force(1:3,1))/eps)
+           Coef(4:6,15+j) = -((OT_tmp%ReactionForce%Moment(1:3,1)-BD_Output%ReactionForce%Moment(1:3,1))/eps)
+           CALL BD_CopyInput(BDInput_tmp,BD_Input,MESH_NEWCOPY,ErrStat,ErrMsg)
+       ENDDO
+       DO j=1,3
+           BD_Input%RootMotion%TranslationAcc(j,1) = BD_Input%RootMotion%TranslationAcc(j,1) + eps
+           CALL BD_CalcOutput( time, BD_Input, BD_Parameter, BD_ContinuousState, BD_DiscreteState, &
+                        BD_ConstraintState, BD_OtherState, OT_tmp, ErrStat, ErrMsg )
+           Coef(1:3,18+j) = -((OT_tmp%ReactionForce%Force(1:3,1)-BD_Output%ReactionForce%Force(1:3,1))/eps)
+           Coef(4:6,18+j) = -((OT_tmp%ReactionForce%Moment(1:3,1)-BD_Output%ReactionForce%Moment(1:3,1))/eps)
+           CALL BD_CopyInput(BDInput_tmp,BD_Input,MESH_NEWCOPY,ErrStat,ErrMsg)
+       ENDDO
+       DO j=1,3
+           BD_Input%RootMotion%RotationAcc(j,1) = BD_Input%RootMotion%RotationAcc(j,1) + eps
+           CALL BD_CalcOutput( time, BD_Input, BD_Parameter, BD_ContinuousState, BD_DiscreteState, &
+                        BD_ConstraintState, BD_OtherState, OT_tmp, ErrStat, ErrMsg )
+           Coef(1:3,21+j) = -((OT_tmp%ReactionForce%Force(1:3,1)-BD_Output%ReactionForce%Force(1:3,1))/eps)
+           Coef(4:6,21+j) = -((OT_tmp%ReactionForce%Moment(1:3,1)-BD_Output%ReactionForce%Moment(1:3,1))/eps)
+           CALL BD_CopyInput(BDInput_tmp,BD_Input,MESH_NEWCOPY,ErrStat,ErrMsg)
+       ENDDO
 
-       BD_Input%RootMotion%TranslationVel(1,1) = BD_Input%RootMotion%TranslationVel(1,1) + eps
-       CALL BD_InputClean(BD_Input)
-CALL BD_CopyOutput(BD_Output, OT_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
-       CALL BD_CalcOutput( time, BD_Input, BD_Parameter, BD_ContinuousState, BD_DiscreteState, &
-                    BD_ConstraintState, BD_OtherState, OT_tmp, ErrStat, ErrMsg )
-!WRITE(*,*) 'Perturbed Vel BD Force:',BD_Output%ReactionForce%Force(1,1)
-       Coef(1,3) = -((OT_tmp%ReactionForce%Force(1,1)-BD_Force)/eps)
-       BD_Input%RootMotion%TranslationVel(1,1) = BD_RootMotion(2)
-
-       BD_Input%RootMotion%TranslationAcc(1,1) = BD_Input%RootMotion%TranslationAcc(1,1) + eps
-       CALL BD_InputClean(BD_Input)
-CALL BD_CopyOutput(BD_Output, OT_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
-       CALL BD_CalcOutput( time, BD_Input, BD_Parameter, BD_ContinuousState, BD_DiscreteState, &
-                    BD_ConstraintState, BD_OtherState, OT_tmp, ErrStat, ErrMsg )
-       Coef(1,4) = -((OT_tmp%ReactionForce%Force(1,1)-BD_Force)/eps)
-       BD_Input%RootMotion%TranslationAcc(1,1) = BD_RootMotion(3)
-
-!WRITE(*,*) Coef(1,2)
-!WRITE(*,*) Coef(1,3)
-!WRITE(*,*) Coef(1,4)
-
-       Coef(2,2) = 1.0D0
-       Coef(3,3) = 1.0D0
-       Coef(4,4) = 1.0D0
-       Mod1_Force = Mod1_Input%PointMesh%Force(1,1)
-       Mod1_Motion(1) = Mod1_Output%PointMesh%TranslationDisp(1,1)
-       Mod1_Motion(2) = Mod1_Output%PointMesh%TranslationVel(1,1)
-       Mod1_Motion(3) = Mod1_Output%PointMesh%TranslationAcc(1,1)
-
-       Mod1_Input%PointMesh%Force(1,1) = Mod1_Input%PointMesh%Force(1,1) + eps
-CALL Mod1_CopyOutput(Mod1_Output, Mod1OT_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
-       CALL Mod1_CalcOutput( time, Mod1_Input, Mod1_Parameter, Mod1_ContinuousState, Mod1_DiscreteState, &
-                             Mod1_ConstraintState, Mod1_OtherState, Mod1OT_tmp, ErrStat, ErrMsg )
-       Coef(2,1) = -((Mod1OT_tmp%PointMesh%TranslationDisp(1,1) - Mod1_Motion(1))/eps)
-       Coef(3,1) = -((Mod1OT_tmp%PointMesh%TranslationVel(1,1) - Mod1_Motion(2))/eps)
-       Coef(4,1) = -((Mod1OT_tmp%PointMesh%TranslationAcc(1,1) - Mod1_Motion(3))/eps)
-       Mod1_Input%PointMesh%Force(1,1) = Mod1_Force
+       DO j=1,3
+           BD1_Input%PointLoad%Force(j,1) = BD1_Input%PointLoad%Force(j,1) + eps
+           CALL BD1_CalcOutput( time, BD1_Input, BD1_Parameter, BD1_ContinuousState, BD1_DiscreteState, &
+                    BD1_ConstraintState, BD1_OtherState, BD1OT_tmp, ErrStat, ErrMsg )    
+           DO k=1,3
+               Coef(6+k,j) = -((BD1OT_tmp%BldMotion%TranslationDisp(k,BD1_Parameter%node_total) - &
+                              BD1_Output%BldMotion%TranslationDisp(k,BD1_Parameter%node_total))/eps)
+               Coef(12+k,j) = -((BD1OT_tmp%BldMotion%TranslationVel(k,BD1_Parameter%node_total) - &
+                              BD1_Output%BldMotion%TranslationVel(k,BD1_Parameter%node_total))/eps)
+               Coef(15+k,j) = -((BD1OT_tmp%BldMotion%RotationVel(k,BD1_Parameter%node_total) - &
+                              BD1_Output%BldMotion%RotationVel(k,BD1_Parameter%node_total))/eps)
+               Coef(18+k,j) = -((BD1OT_tmp%BldMotion%TranslationAcc(k,BD1_Parameter%node_total) - &
+                              BD1_Output%BldMotion%TranslationAcc(k,BD1_Parameter%node_total))/eps)
+               Coef(21+k,j) = -((BD1OT_tmp%BldMotion%RotationAcc(k,BD1_Parameter%node_total) - &
+                              BD1_Output%BldMotion%RotationAcc(k,BD1_Parameter%node_total))/eps)
+           ENDDO
+           CALL BD1_CrvExtractCrv(BD1OT_tmp%BldMotion%Orientation(1:3,1:3,BD1_Parameter%node_total),temp_cc)
+           temp_c0 = MATMUL(BD1_Parameter%GlbRot(1:3,1:3),BD1_Parameter%uuN0(4:6))
+           CALL BD1_CrvCompose(tempBD1_p,tempBD_c0,tempBD_cc,1)
+           DO k=1,3
+               Coef(9+k,j) = -((tempBD1_p(k) - tempBD1_rr(k))/eps)
+           ENDDO
+           CALL BD1_CopyInput(BD1Input_tmp,BD1_Input,MESH_NEWCOPY,ErrStat,ErrMsg)
+       ENDDO
+       DO j=1,3
+           BD1_Input%PointLoad%Moment(j,1) = BD1_Input%PointLoad%Moment(j,1) + eps
+           CALL BD1_CalcOutput( time, BD1_Input, BD1_Parameter, BD1_ContinuousState, BD1_DiscreteState, &
+                    BD1_ConstraintState, BD1_OtherState, BD1OT_tmp, ErrStat, ErrMsg )    
+           DO k=1,3
+               Coef(6+k,j+3) = -((BD1OT_tmp%BldMotion%TranslationDisp(k,BD1_Parameter%node_total) - &
+                              BD1_Output%BldMotion%TranslationDisp(k,BD1_Parameter%node_total))/eps)
+               Coef(12+k,j+3) = -((BD1OT_tmp%BldMotion%TranslationVel(k,BD1_Parameter%node_total) - &
+                              BD1_Output%BldMotion%TranslationVel(k,BD1_Parameter%node_total))/eps)
+               Coef(15+k,j+3) = -((BD1OT_tmp%BldMotion%RotationVel(k,BD1_Parameter%node_total) - &
+                              BD1_Output%BldMotion%RotationVel(k,BD1_Parameter%node_total))/eps)
+               Coef(18+k,j+3) = -((BD1OT_tmp%BldMotion%TranslationAcc(k,BD1_Parameter%node_total) - &
+                              BD1_Output%BldMotion%TranslationAcc(k,BD1_Parameter%node_total))/eps)
+               Coef(21+k,j+3) = -((BD1OT_tmp%BldMotion%RotationAcc(k,BD1_Parameter%node_total) - &
+                              BD1_Output%BldMotion%RotationAcc(k,BD1_Parameter%node_total))/eps)
+           ENDDO
+           CALL BD1_CrvExtractCrv(BD1OT_tmp%BldMotion%Orientation(1:3,1:3,BD1_Parameter%node_total),temp_cc)
+           temp_c0 = MATMUL(BD1_Parameter%GlbRot(1:3,1:3),BD1_Parameter%uuN0(4:6))
+           CALL BD1_CrvCompose(tempBD1_p,tempBD_c0,tempBD_cc,1)
+           DO k=1,3
+               Coef(9+k,j+3) = -((tempBD1_p(k) - tempBD1_rr(k))/eps)
+           ENDDO
+           CALL BD1_CopyInput(BD1Input_tmp,BD1_Input,MESH_NEWCOPY,ErrStat,ErrMsg)
+       ENDDO
  
-       CALL ludcmp(Coef,4,indx,d)
-       CALL lubksb(Coef,4,indx,RHS,uinc)
+       CALL ludcmp(Coef,24,indx,d)
+       CALL lubksb(Coef,24,indx,RHS,uinc)
 
        IF(BD_Norm(uinc) .LE. TOLF) RETURN
-       Mod1_Input%PointMesh%Force(1,1) = Mod1_Input%PointMesh%Force(1,1) + uinc(1)
-       BD_Input%RootMotion%TranslationDisp(1,1) = BD_Input%RootMotion%TranslationDisp(1,1) + uinc(2)
-       BD_Input%RootMotion%TranslationVel(1,1) = BD_Input%RootMotion%TranslationVel(1,1) + uinc(3)
-       BD_Input%RootMotion%TranslationAcc(1,1) = BD_Input%RootMotion%TranslationAcc(1,1) + uinc(4)
+       BD1_Input%PointLoad%Force(1:3,BD1_Parameter%node_total) = &
+            BD1_Input%PointLoad%Force(1:3,BD1_Parameter%node_total) + uinc(1:3)
+       BD1_Input%PointLoad%Moment(1:3,BD1_Parameter%node_total) = &
+            BD1_Input%PointLoad%Moment(1:3,BD1_Parameter%node_total) + uinc(4:6)
+       BD_Input%RootMotion%TranslationDisp(1:3,1) = BD_Input%RootMotion%TranslationDisp(1:3,1) + uinc(7:9)
+       BD_Input%RootMotion%TranslationVel(1:3,1) = BD_Input%RootMotion%TranslationVel(1:3,1) + uinc(13:15)
+       BD_Input%RootMotion%RotationVel(1:3,1) = BD_Input%RootMotion%RotationVel(1:3,1) + uinc(16:18)
+       BD_Input%RootMotion%TranslationAcc(1:3,1) = BD_Input%RootMotion%TranslationAcc(1:3,1) + uinc(19:21)
+       BD_Input%RootMotion%RotationAcc(1:3,1) = BD_Input%RootMotion%RotationAcc(1:3,1) + uinc(22:24)
+       CALL CrvCompose(tempBD_p,uinc(10:12),tempBD_rr,0)
+       CALL CrvMatrixR(tempBD_p,BD_Input%RootMotion%Orientation(1:3,1:3,1))
       
 !WRITE(*,*) 'Mod1 Input Force:',Mod1_Input%PointMesh%Force(1,1)
        IF(i .EQ. iter_max) THEN
@@ -218,7 +292,7 @@ CALL Mod1_CopyOutput(Mod1_Output, Mod1OT_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
    ENDDO
 
 
-END SUBROUTINE Mod1_BD_InputOutputSolve
+END SUBROUTINE BD1_BD_InputOutputSolve
 !----------------------------------------------------------------------------------------------------------------------------------
    SUBROUTINE BD_InputClean(BD_Input)
 
