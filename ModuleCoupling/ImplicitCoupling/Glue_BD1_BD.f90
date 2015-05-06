@@ -82,7 +82,7 @@ SUBROUTINE BD1_BD_InputOutputSolve(time, &
 
    TYPE(BD1_InputType),           INTENT(INOUT) :: BD1_Input
    TYPE(BD1_ParameterType),       INTENT(IN   ) :: BD1_Parameter
-   TYPE(BD1_ContinuousStateType), INTENT(IN   ) :: BD1_ContinuousState
+   TYPE(BD1_ContinuousStateType), INTENT(INOUT) :: BD1_ContinuousState
    TYPE(BD1_DiscreteStateType),   INTENT(IN   ) :: BD1_DiscreteState
    TYPE(BD1_ConstraintStateType), INTENT(INOUT) :: BD1_ConstraintState
    TYPE(BD1_OtherStateType),      INTENT(INOUT) :: BD1_OtherState
@@ -104,25 +104,33 @@ SUBROUTINE BD1_BD_InputOutputSolve(time, &
    CHARACTER(*),                 INTENT(  OUT)  :: ErrMsg      ! Error message if ErrStat /= ErrID_None
    REAL(DbKi),                   INTENT(IN   )  :: time        ! Current simulation time in seconds
 
-   REAL(ReKi)                                   :: BD_Force
-   REAL(ReKi)                                   :: BD_RootMotion(3)
-   REAL(ReKi)                                   :: Mod1_Force
-   REAL(ReKi)                                   :: Mod1_Motion(3)
-   REAL(ReKi)                                   :: RHS(4)
-   REAL(ReKi)                                   :: Coef(4,4)
+   REAL(ReKi)                                   :: RHS(24)
+   REAL(ReKi)                                   :: Coef(24,24)
    REAL(ReKi)                                   :: eps
    REAL(ReKi)                                   :: d
-   REAL(ReKi)                                   :: uinc(4)
+   REAL(ReKi)                                   :: uinc(24)
+   REAL(ReKi)                                   :: temp_c0(3)
+   REAL(ReKi)                                   :: temp_cc(3)
+   REAL(ReKi)                                   :: temp3(3)
+   REAL(ReKi)                                   :: tempBD_rr(3)
+   REAL(ReKi)                                   :: tempBD1_rr(3)
    REAL(ReKi),                        PARAMETER :: TOLF = 1.0D-02
-   INTEGER(IntKi)                               :: indx(4)
+   INTEGER(IntKi)                               :: indx(24)
    INTEGER(IntKi)                               :: i
+   INTEGER(IntKi)                               :: j
+   INTEGER(IntKi)                               :: k
    INTEGER(IntKi),                    PARAMETER :: iter_max = 10
    TYPE(BD_OutputType)                          :: OT_tmp
    TYPE(BD1_OutputType)                         :: BD1OT_tmp
+   TYPE(BD_InputType)                           :: BDInput_tmp
+   TYPE(BD1_InputType)                          :: BD1Input_tmp
    ! Solve input-output relations; this section of code corresponds to Eq. (35) in Gasmi et al. (2013)
    ! This code will be specific to the underlying modules; could be placed in a separate routine.
    ! Note that Module2 has direct feedthrough, but Module1 does not. Thus, Module1 should be called first.
 
+   BD_Input%PointLoad%Force(2,BD_Parameter%node_total) = 100.0D0*SIN(time)
+   CALL BD_CopyOutput(BD_Output,OT_tmp,MESH_NEWCOPY,ErrStat,ErrMsg)
+   CALL BD1_CopyOutput(BD1_Output,BD1OT_tmp,MESH_NEWCOPY,ErrStat,ErrMsg)
    eps = 0.01D+00
    DO i=1,iter_max
 !WRITE(*,*) 'i=',i
@@ -139,16 +147,16 @@ SUBROUTINE BD1_BD_InputOutputSolve(time, &
        CALL BD1_CopyInput(BD1_Input,BD1Input_tmp,MESH_NEWCOPY,ErrStat,ErrMsg)
 
        RHS(:) = 0.0D0
-       RHS(1:3) = -(BD1_Input%TipForce%Force(1:3,1) - BD_Output%ReactoinForce%Force(1:3,1))
-       RHS(4:6) = -(BD1_Input%TipForce%Moment(1:3,1) - BD_Output%ReactoinForce%Moment(1:3,1))
+       RHS(1:3) = -(BD1_Input%PointLoad%Force(1:3,BD1_Parameter%node_total) - BD_Output%ReactionForce%Force(1:3,1))
+       RHS(4:6) = -(BD1_Input%PointLoad%Moment(1:3,BD1_Parameter%node_total) - BD_Output%ReactionForce%Moment(1:3,1))
        RHS(7:9) = -(BD_Input%RootMotion%TranslationDisp(1:3,1) - &
                     BD1_Output%BldMotion%TranslationDisp(1:3,BD1_Parameter%node_total))
        CALL BD_CrvExtractCrv(BD_Input%RootMotion%Orientation(1:3,1:3,1),temp_cc)
-       temp_c0(1:3) = MATMUL(BD_Parameter%GlbRot(1:3,1:3),BD_Parameter%uuN0(4:6))
-       CALL BD_CrvCompose(tempBD_rr,temp_c0,temp_cc,1)
-       CALL BD1_CrvExtractCrv(BD1_Output%BldMotion%Orientation(1:3,1:3,BD1_Parameter%node_total),tempBD_cc)
-       tempBD_c0(1:3) = MATMUL(BD1_Parameter%GlbRot(1:3,1:3),BD1_Parameter%uuN0(4:6))
-       CALL BD1_CrvCompose(tempBD1_rr,tempBD_c0,tempBD_cc,1)
+       temp_c0(1:3) = MATMUL(BD_Parameter%GlbRot(1:3,1:3),BD_Parameter%uuN0(4:6,1))
+       CALL BD_CrvCompose(tempBD_rr,temp_cc,temp_c0,2)
+       CALL BD1_CrvExtractCrv(BD1_Output%BldMotion%Orientation(1:3,1:3,BD1_Parameter%node_total),temp_cc)
+       temp_c0(1:3) = MATMUL(BD1_Parameter%GlbRot(1:3,1:3),BD1_Parameter%uuN0(4:6,1))
+       CALL BD1_CrvCompose(tempBD1_rr,temp_cc,temp_c0,2)
        RHS(10:12) = -(tempBD_rr(1:3) - tempBD1_rr(1:3))
        RHS(13:15) = -(BD_Input%RootMotion%TranslationVel(1:3,1) - &
                       BD1_Output%BldMotion%TranslationVel(1:3,BD1_Parameter%node_total))
@@ -165,18 +173,17 @@ SUBROUTINE BD1_BD_InputOutputSolve(time, &
        ENDDO
        DO j=1,3
            BD_Input%RootMotion%TranslationDisp(j,1) = BD_Input%RootMotion%TranslationDisp(j,1) + eps
-!           CALL BD_CopyOutput(BD_Output, OT_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
            CALL BD_CalcOutput( time, BD_Input, BD_Parameter, BD_ContinuousState, BD_DiscreteState, &
                         BD_ConstraintState, BD_OtherState, OT_tmp, ErrStat, ErrMsg )
            Coef(1:3,6+j) = -((OT_tmp%ReactionForce%Force(1:3,1)-BD_Output%ReactionForce%Force(1:3,1))/eps)
            Coef(4:6,6+j) = -((OT_tmp%ReactionForce%Moment(1:3,1)-BD_Output%ReactionForce%Moment(1:3,1))/eps)
            CALL BD_CopyInput(BDInput_tmp,BD_Input,MESH_NEWCOPY,ErrStat,ErrMsg)
        ENDDO
-       temp_c0(1:3) = MATMUL(BD_Parameter%GlbRot(1:3,1:3),BD_Parameter%uuN0(4:6))
+       temp_c0(1:3) = MATMUL(BD_Parameter%GlbRot(1:3,1:3),BD_Parameter%uuN0(4:6,1))
        DO j=1,3
            temp_cc(:) = tempBD_rr(:)
            temp_cc(j) = temp_cc(j) + eps
-           CALL BD_CrvCompose(temp3,tempBD_cc,tempBD_c0,0)
+           CALL BD_CrvCompose(temp3,temp_cc,temp_c0,0)
            CALL BD_CrvMatrixR(temp3,BD_Input%RootMotion%Orientation(1:3,1:3,1))
            CALL BD_CalcOutput( time, BD_Input, BD_Parameter, BD_ContinuousState, BD_DiscreteState, &
                         BD_ConstraintState, BD_OtherState, OT_tmp, ErrStat, ErrMsg )
@@ -218,7 +225,7 @@ SUBROUTINE BD1_BD_InputOutputSolve(time, &
        ENDDO
 
        DO j=1,3
-           BD1_Input%PointLoad%Force(j,1) = BD1_Input%PointLoad%Force(j,1) + eps
+           BD1_Input%PointLoad%Force(j,BD1_Parameter%node_total) = BD1_Input%PointLoad%Force(j,BD1_Parameter%node_total) + eps
            CALL BD1_CalcOutput( time, BD1_Input, BD1_Parameter, BD1_ContinuousState, BD1_DiscreteState, &
                     BD1_ConstraintState, BD1_OtherState, BD1OT_tmp, ErrStat, ErrMsg )    
            DO k=1,3
@@ -234,15 +241,15 @@ SUBROUTINE BD1_BD_InputOutputSolve(time, &
                               BD1_Output%BldMotion%RotationAcc(k,BD1_Parameter%node_total))/eps)
            ENDDO
            CALL BD1_CrvExtractCrv(BD1OT_tmp%BldMotion%Orientation(1:3,1:3,BD1_Parameter%node_total),temp_cc)
-           temp_c0 = MATMUL(BD1_Parameter%GlbRot(1:3,1:3),BD1_Parameter%uuN0(4:6))
-           CALL BD1_CrvCompose(tempBD1_p,tempBD_c0,tempBD_cc,1)
+           temp_c0 = MATMUL(BD1_Parameter%GlbRot(1:3,1:3),BD1_Parameter%uuN0(4:6,1))
+           CALL BD1_CrvCompose(temp3,temp_cc,temp_c0,2)
            DO k=1,3
-               Coef(9+k,j) = -((tempBD1_p(k) - tempBD1_rr(k))/eps)
+               Coef(9+k,j) = -((temp3(k) - tempBD1_rr(k))/eps)
            ENDDO
            CALL BD1_CopyInput(BD1Input_tmp,BD1_Input,MESH_NEWCOPY,ErrStat,ErrMsg)
        ENDDO
        DO j=1,3
-           BD1_Input%PointLoad%Moment(j,1) = BD1_Input%PointLoad%Moment(j,1) + eps
+           BD1_Input%PointLoad%Moment(j,BD1_Parameter%node_total) = BD1_Input%PointLoad%Moment(j,BD1_Parameter%node_total) + eps
            CALL BD1_CalcOutput( time, BD1_Input, BD1_Parameter, BD1_ContinuousState, BD1_DiscreteState, &
                     BD1_ConstraintState, BD1_OtherState, BD1OT_tmp, ErrStat, ErrMsg )    
            DO k=1,3
@@ -258,10 +265,10 @@ SUBROUTINE BD1_BD_InputOutputSolve(time, &
                               BD1_Output%BldMotion%RotationAcc(k,BD1_Parameter%node_total))/eps)
            ENDDO
            CALL BD1_CrvExtractCrv(BD1OT_tmp%BldMotion%Orientation(1:3,1:3,BD1_Parameter%node_total),temp_cc)
-           temp_c0 = MATMUL(BD1_Parameter%GlbRot(1:3,1:3),BD1_Parameter%uuN0(4:6))
-           CALL BD1_CrvCompose(tempBD1_p,tempBD_c0,tempBD_cc,1)
+           temp_c0 = MATMUL(BD1_Parameter%GlbRot(1:3,1:3),BD1_Parameter%uuN0(4:6,1))
+           CALL BD1_CrvCompose(temp3,temp_cc,temp_c0,2) 
            DO k=1,3
-               Coef(9+k,j+3) = -((tempBD1_p(k) - tempBD1_rr(k))/eps)
+               Coef(9+k,j+3) = -((temp3(k) - tempBD1_rr(k))/eps)
            ENDDO
            CALL BD1_CopyInput(BD1Input_tmp,BD1_Input,MESH_NEWCOPY,ErrStat,ErrMsg)
        ENDDO
@@ -269,7 +276,9 @@ SUBROUTINE BD1_BD_InputOutputSolve(time, &
        CALL ludcmp(Coef,24,indx,d)
        CALL lubksb(Coef,24,indx,RHS,uinc)
 
+WRITE(*,*) 'Mid Force:',BD_Output%ReactionForce%Force(:,1)
        IF(BD_Norm(uinc) .LE. TOLF) RETURN
+
        BD1_Input%PointLoad%Force(1:3,BD1_Parameter%node_total) = &
             BD1_Input%PointLoad%Force(1:3,BD1_Parameter%node_total) + uinc(1:3)
        BD1_Input%PointLoad%Moment(1:3,BD1_Parameter%node_total) = &
@@ -279,10 +288,11 @@ SUBROUTINE BD1_BD_InputOutputSolve(time, &
        BD_Input%RootMotion%RotationVel(1:3,1) = BD_Input%RootMotion%RotationVel(1:3,1) + uinc(16:18)
        BD_Input%RootMotion%TranslationAcc(1:3,1) = BD_Input%RootMotion%TranslationAcc(1:3,1) + uinc(19:21)
        BD_Input%RootMotion%RotationAcc(1:3,1) = BD_Input%RootMotion%RotationAcc(1:3,1) + uinc(22:24)
-       CALL CrvCompose(tempBD_p,uinc(10:12),tempBD_rr,0)
-       CALL CrvMatrixR(tempBD_p,BD_Input%RootMotion%Orientation(1:3,1:3,1))
+       CALL BD_CrvCompose(temp3,uinc(10:12),tempBD_rr,0)
+       temp_c0(:) = MATMUL(BD_Parameter%GlbRot(1:3,1:3),BD_Parameter%uuN0(4:6,1))
+       CALL BD_CrvCompose(temp3,temp3,temp_c0,0)
+       CALL BD_CrvMatrixR(temp3,BD_Input%RootMotion%Orientation(1:3,1:3,1))
       
-!WRITE(*,*) 'Mod1 Input Force:',Mod1_Input%PointMesh%Force(1,1)
        IF(i .EQ. iter_max) THEN
            WRITE(*,*) "InputOutputSolve does not converge after the maximum number of iterations"
 !           RETURN
@@ -293,32 +303,15 @@ SUBROUTINE BD1_BD_InputOutputSolve(time, &
 
 
 END SUBROUTINE BD1_BD_InputOutputSolve
-!----------------------------------------------------------------------------------------------------------------------------------
-   SUBROUTINE BD_InputClean(BD_Input)
 
-   TYPE(BD_InputType),           INTENT(INOUT) :: BD_Input
-
-   BD_Input%RootMotion%TranslationDisp(2:3,1) = 0.0D0
-   BD_Input%RootMotion%TranslationVel(2:3,1)  = 0.0D0
-!   BD_Input%RootMotion%TranslationAcc(2:3,1)  = 0.0D0
-   BD_Input%RootMotion%Orientation(:,:,:) = 0.0D0
-   BD_Input%RootMotion%Orientation(1,1,1) = 1.0D0
-   BD_Input%RootMotion%Orientation(2,2,1) = 1.0D0
-   BD_Input%RootMotion%Orientation(3,3,1) = 1.0D0
-   BD_Input%RootMotion%RotationVel(:,:)   = 0.0D0
-   BD_Input%RootMotion%RotationAcc(:,:)   = 0.0D0
-
-   END SUBROUTINE BD_InputClean
-
-!----------------------------------------------------------------------------------------------------------------------------------
-END MODULE Mod1_BD_MappingModule
+END MODULE BD1_BD_MappingModule
 !----------------------------------------------------------------------------------------------------------------------------------
 PROGRAM MAIN
 
-   use Mod1_BD_MappingModule
+   USE BD1_BD_MappingModule
 
-   USE Module1
-   USE Module1_Types
+   USE BeamDyn1
+   USE BeamDyn1_Types
 
    USE BeamDyn
    USE BeamDyn_Types
@@ -343,36 +336,37 @@ PROGRAM MAIN
    INTEGER(IntKi)                     :: pc_max           ! 1:explicit loose; 2:pc loose
    INTEGER(IntKi)                     :: pc               ! counter for pc iterations
 
-   INTEGER(IntKi)                     :: Mod1_interp_order     ! order of interpolation/extrapolation
+   INTEGER(IntKi)                     :: BD1_interp_order     ! order of interpolation/extrapolation
    INTEGER(IntKi)                     :: BD_interp_order     ! order of interpolation/extrapolation
 
    INTEGER(IntKi)                     :: MaxPtsInMap      ! the maximum number of points in a mapping
    
    ! Module1 Derived-types variables; see Registry_Module1.txt for details
 
-   TYPE(Mod1_InitInputType)           :: Mod1_InitInput
-   TYPE(Mod1_ParameterType)           :: Mod1_Parameter
-   TYPE(Mod1_ContinuousStateType)     :: Mod1_ContinuousState
-   TYPE(Mod1_ContinuousStateType)     :: Mod1_ContinuousStateDeriv
-   TYPE(Mod1_InitOutputType)          :: Mod1_InitOutput
-   TYPE(Mod1_DiscreteStateType)       :: Mod1_DiscreteState
-   TYPE(Mod1_ConstraintStateType)     :: Mod1_ConstraintState
-   TYPE(Mod1_OtherStateType)          :: Mod1_OtherState
+   TYPE(BD1_InitInputType)           :: BD1_InitInput
+   TYPE(BD1_ParameterType)           :: BD1_Parameter
+   TYPE(BD1_ContinuousStateType)     :: BD1_ContinuousState
+   TYPE(BD1_ContinuousStateType)     :: BD1_ContinuousStateDeriv
+   TYPE(BD1_InitOutputType)          :: BD1_InitOutput
+   TYPE(BD1_DiscreteStateType)       :: BD1_DiscreteState
+   TYPE(BD1_ConstraintStateType)     :: BD1_ConstraintState
+   TYPE(BD1_OtherStateType)          :: BD1_OtherState
 
-   TYPE(Mod1_InputType),Dimension(:),ALLOCATABLE   :: Mod1_Input
-   REAL(DbKi) , DIMENSION(:), ALLOCATABLE          :: Mod1_InputTimes
+   TYPE(BD1_InputType),Dimension(:),ALLOCATABLE   :: BD1_Input
+   REAL(DbKi) , DIMENSION(:), ALLOCATABLE         :: BD1_InputTimes
 
-   TYPE(Mod1_OutputType),Dimension(:),ALLOCATABLE  :: Mod1_Output
-   REAL(DbKi) , DIMENSION(:), ALLOCATABLE          :: Mod1_OutputTimes
+   TYPE(BD1_OutputType),Dimension(:),ALLOCATABLE  :: BD1_Output
+   REAL(DbKi) , DIMENSION(:), ALLOCATABLE         :: BD1_OutputTimes
 
-   TYPE(Mod1_InputType)   :: u1    ! local variable for extrapolated inputs
-   TYPE(Mod1_OutputType)  :: y1    ! local variable for extrapolated outputs
+   TYPE(BD1_InputType)   :: u1    ! local variable for extrapolated inputs
+   TYPE(BD1_OutputType)  :: y1    ! local variable for extrapolated outputs
 
    ! Module 1 deived data typed needed in pc-coupling; predicted states
 
-   TYPE(Mod1_ContinuousStateType)     :: Mod1_ContinuousState_pred
-   TYPE(Mod1_DiscreteStateType)       :: Mod1_DiscreteState_pred
-   TYPE(Mod1_ConstraintStateType)     :: Mod1_ConstraintState_pred
+   TYPE(BD1_ContinuousStateType)     :: BD1_ContinuousState_pred
+   TYPE(BD1_DiscreteStateType)       :: BD1_DiscreteState_pred
+   TYPE(BD1_ConstraintStateType)     :: BD1_ConstraintState_pred
+   TYPE(BD1_OtherStateType)          :: BD1_OtherState_pred
 
    ! Module2 Derived-types variables; see Registry_Module2.txt
 
@@ -405,10 +399,8 @@ PROGRAM MAIN
    REAL(ReKi):: temp_R(3,3)
    REAL(ReKi):: temp_vec(3)
    REAL(ReKi):: temp_cc(3)
-   INTEGER(IntKi),PARAMETER:: QiDisUnit = 20
-   INTEGER(IntKi),PARAMETER:: BDForce = 30
-   INTEGER(IntKi),PARAMETER:: Mod1Disp = 40
-   INTEGER(IntKi),PARAMETER:: Mod1Vel = 50
+   INTEGER(IntKi),PARAMETER:: QiTipDisp = 20
+   INTEGER(IntKi),PARAMETER:: QiMidDisp = 30
 
    ! -------------------------------------------------------------------------
    ! MAPPING STUFF; Likely needs to be added to ModMesh
@@ -417,10 +409,8 @@ PROGRAM MAIN
 !   TYPE(MeshMapType) :: Map_Mod2_P_Mod1_P
 !   TYPE(MeshMapType) :: Map_Mod1_P_Mod2_P
 
-   OPEN(unit = QiDisUnit, file = 'QiDisp_AM2.out', status = 'REPLACE',ACTION = 'WRITE')
-   OPEN(unit = BDForce, file = 'Qi_Force.out', status = 'REPLACE',ACTION = 'WRITE')
-   OPEN(unit = Mod1Disp, file = 'Qi_Mod1Disp.out', status = 'REPLACE',ACTION = 'WRITE')
-   OPEN(unit = Mod1Vel, file = 'Qi_Mod1Vel.out', status = 'REPLACE',ACTION = 'WRITE')
+   OPEN(unit = QiTipDisp, file = 'Qi_Tip_Disp.out', status = 'REPLACE',ACTION = 'WRITE')
+   OPEN(unit = QiMidDisp, file = 'Qi_Mid_Disp.out', status = 'REPLACE',ACTION = 'WRITE')
    ! -------------------------------------------------------------------------
    ! Initialization of glue-code time-step variables
    ! -------------------------------------------------------------------------
@@ -441,14 +431,14 @@ PROGRAM MAIN
 
    ! define polynomial-order for ModName_Input_ExtrapInterp and ModName_Output_ExtrapInterp
    ! Must be 0, 1, or 2
-   Mod1_interp_order = 2
+   BD1_interp_order = 2
    BD_interp_order   = 2
 
    !Module1: allocate Input and Output arrays; used for interpolation and extrapolation
-   ALLOCATE(Mod1_Input(Mod1_interp_order + 1))
-   ALLOCATE(Mod1_InputTimes(Mod1_interp_order + 1)) 
-   ALLOCATE(Mod1_Output(Mod1_interp_order + 1))
-   ALLOCATE(Mod1_OutputTimes(Mod1_interp_order + 1))
+   ALLOCATE(BD1_Input(BD1_interp_order + 1))
+   ALLOCATE(BD1_InputTimes(BD1_interp_order + 1)) 
+   ALLOCATE(BD1_Output(BD1_interp_order + 1))
+   ALLOCATE(BD1_OutputTimes(BD1_interp_order + 1))
 
    ! Module2: allocate Input and Output arrays; used for interpolation and extrapolation
    ALLOCATE(BD_Input(BD_interp_order + 1))
@@ -463,45 +453,63 @@ PROGRAM MAIN
    !  defined coupling interval.
    ! -------------------------------------------------------------------------
 
-   CALL Mod1_Init( Mod1_InitInput, Mod1_Input(1), Mod1_Parameter, Mod1_ContinuousState, Mod1_DiscreteState, &
-                   Mod1_ConstraintState, Mod1_OtherState, Mod1_Output(1), dt_global, Mod1_InitOutput, ErrStat, ErrMsg )
+   BD1_InitInput%InputFile = 'GA2_Debug_BD1.inp'
+   BD1_InitInput%RootName  = TRIM(BD1_Initinput%InputFile)
+   ALLOCATE(BD1_InitInput%gravity(3)) 
+   BD1_InitInput%gravity(1) = 0.0D0 !-9.80665
+   BD1_InitInput%gravity(2) = 0.0D0 
+   BD1_InitInput%gravity(3) = 0.0D0
+   ALLOCATE(BD1_InitInput%GlbPos(3)) 
+   BD1_InitInput%GlbPos(1) = 0.0D+00
+   BD1_InitInput%GlbPos(2) = 0.0D+00
+   BD1_InitInput%GlbPos(3) = 0.0D+00
+   ALLOCATE(BD1_InitInput%GlbRot(3,3)) 
+   BD1_InitInput%GlbRot(:,:) = 0.0D0
+   temp_vec(1) = 0.0
+   temp_vec(2) = 0.0
+   temp_vec(3) = 0.0
+   CALL BD1_CrvMatrixR(temp_vec,temp_R)
+   BD1_InitInput%GlbRot(1:3,1:3) = temp_R(1:3,1:3)
 
-   call Mod1_CopyInput(  Mod1_Input(1), u1, MESH_NEWCOPY, ErrStat, ErrMsg )
-   call Mod1_CopyOutput( Mod1_Output(1), y1, MESH_NEWCOPY, ErrStat, ErrMsg )
+   CALL BD1_Init( BD1_InitInput, BD1_Input(1), BD1_Parameter, BD1_ContinuousState, BD1_DiscreteState, &
+                   BD1_ConstraintState, BD1_OtherState, BD1_Output(1), dt_global, BD1_InitOutput, ErrStat, ErrMsg )
+
+   CALL BD1_CopyInput(  BD1_Input(1), u1, MESH_NEWCOPY, ErrStat, ErrMsg )
+   CALL BD1_CopyOutput( BD1_Output(1), y1, MESH_NEWCOPY, ErrStat, ErrMsg )
 
 
    ! We fill Mod1_InputTimes with negative times, but the Mod1_Input values are identical for each of those times; this allows
    ! us to use, e.g., quadratic interpolation that effectively acts as a zeroth-order extrapolation and first-order extrapolation
    ! for the first and second time steps.  (The interpolation order in the ExtrapInput routines are determined as
    ! order = SIZE(Mod1_Input)
-   DO i = 1, Mod1_interp_order + 1
-      Mod1_InputTimes(i) = t_initial - (i - 1) * dt_global
-      Mod1_OutputTimes(i) = t_initial - (i - 1) * dt_global
+   DO i = 1, BD1_interp_order + 1
+      BD1_InputTimes(i) = t_initial - (i - 1) * dt_global
+      BD1_OutputTimes(i) = t_initial - (i - 1) * dt_global
    ENDDO
 
 !WRITE(*,*) 'Mod1_InputTimes:',Mod1_InputTimes(:)
 
-   DO i = 1, Mod1_interp_order
-     Call Mod1_CopyInput (Mod1_Input(i),  Mod1_Input(i+1),  MESH_NEWCOPY, Errstat, ErrMsg)
-     Call Mod1_CopyOutput (Mod1_Output(i),  Mod1_Output(i+1),  MESH_NEWCOPY, Errstat, ErrMsg)
+   DO i = 1, BD1_interp_order
+     CALL BD1_CopyInput (BD1_Input(i),  BD1_Input(i+1),  MESH_NEWCOPY, Errstat, ErrMsg)
+     CALL BD1_CopyOutput (BD1_Output(i),  BD1_Output(i+1),  MESH_NEWCOPY, Errstat, ErrMsg)
    ENDDO 
 
 !   BD_InitInput%InputFile = 'Siemens_53_Input.inp'
-   BD_InitInput%InputFile = 'GA2_Debug.inp'
+   BD_InitInput%InputFile = 'GA2_Debug_BD.inp'
    BD_InitInput%RootName  = TRIM(BD_Initinput%InputFile)
    ALLOCATE(BD_InitInput%gravity(3)) 
    BD_InitInput%gravity(1) = 0.0D0 !-9.80665
    BD_InitInput%gravity(2) = 0.0D0 
    BD_InitInput%gravity(3) = 0.0D0
    ALLOCATE(BD_InitInput%GlbPos(3)) 
-   BD_InitInput%GlbPos(1) = 1.0D+00
-   BD_InitInput%GlbPos(2) = 0.0D+01
-   BD_InitInput%GlbPos(3) = 0.0D0
+   BD_InitInput%GlbPos(1) = 5.0D+00
+   BD_InitInput%GlbPos(2) = 0.0D+00
+   BD_InitInput%GlbPos(3) = 0.0D+00
    ALLOCATE(BD_InitInput%GlbRot(3,3)) 
    BD_InitInput%GlbRot(:,:) = 0.0D0
    temp_vec(1) = 0.0
    temp_vec(2) = 0.0
-   temp_vec(3) = 4.0D0*TAN((3.1415926D0/2.0D0)/4.0D0)
+   temp_vec(3) = 0.0 !4.0D0*TAN((3.1415926D0/2.0D0)/4.0D0)
    CALL BD_CrvMatrixR(temp_vec,temp_R)
    BD_InitInput%GlbRot(1:3,1:3) = temp_R(1:3,1:3)
 
@@ -515,8 +523,8 @@ PROGRAM MAIN
    ENDDO
 
    DO i = 1, BD_interp_order
-     Call BD_CopyInput (BD_Input(i),  BD_Input(i+1),  MESH_NEWCOPY, Errstat, ErrMsg)
-     Call BD_CopyOutput (BD_Output(i),  BD_Output(i+1), MESH_NEWCOPY, Errstat, ErrMsg)
+     CALL BD_CopyInput (BD_Input(i),  BD_Input(i+1),  MESH_NEWCOPY, Errstat, ErrMsg)
+     CALL BD_CopyOutput (BD_Output(i),  BD_Output(i+1), MESH_NEWCOPY, Errstat, ErrMsg)
    ENDDO
 
       ! Initialize the meshes and/or allocatable arrays in inputs (u2) and outputs (y2) (required fro ExtrapInterp routines)
@@ -538,9 +546,9 @@ PROGRAM MAIN
    ! write headers for output columns:
 
    ! write initial condition for q1
-   CALL Mod1_BD_InputOutputSolve(t_global, &
-                   Mod1_Input(1), Mod1_Parameter, Mod1_ContinuousState, Mod1_DiscreteState, &
-                   Mod1_ConstraintState, Mod1_OtherState, Mod1_Output(1), &
+   CALL BD1_BD_InputOutputSolve(t_global, &
+                   BD1_Input(1), BD1_Parameter, BD1_ContinuousState, BD1_DiscreteState, &
+                   BD1_ConstraintState, BD1_OtherState, BD1_Output(1), &
                    BD_Input(1), BD_Parameter, BD_ContinuousState, BD_DiscreteState, &
                    BD_ConstraintState, BD_OtherState, BD_Output(1),  &
 !                   Map_Mod1_P_Mod2_P, Map_Mod2_P_Mod1_P, &
@@ -553,19 +561,13 @@ WRITE(*,*) "Time Step: ", n_t_global
       ! This code will be specific to the underlying modules
 
       CALL BD_CrvExtractCrv(BD_OutPut(1)%BldMotion%Orientation(1:3,1:3,BD_Parameter%node_total),temp_cc)
-      WRITE(QiDisUnit,6000) t_global,&
+      WRITE(QiTipDisp,6000) t_global,&
                             &BD_OutPut(1)%BldMotion%TranslationDisp(1:3,BD_Parameter%node_total),&
                             &temp_cc(1:3)
-!      WRITE(QiDisUnit,6000) t_global,&
-!                            &BD_ContinuousState%q(BD_Parameter%dof_total-5:BD_Parameter%dof_total)
-      WRITE(BDForce,6000) t_global,&
-                           &BD_OutPut(1)%ReactionForce%Force(1:3,1),&
-                           &BD_OutPut(1)%ReactionForce%Moment(1:3,1)
-      WRITE(Mod1Disp,6000) t_global,&
-                           &Mod1_OutPut(1)%PointMesh%TranslationDisp(1:3,1)
-      WRITE(Mod1Vel,6000) t_global,&
-                           &Mod1_OutPut(1)%PointMesh%TranslationVel(1:3,1),&
-                           &Mod1_Output(1)%PointMesh%TranslationAcc(1:3,1)
+      CALL BD1_CrvExtractCrv(BD1_OutPut(1)%BldMotion%Orientation(1:3,1:3,BD1_Parameter%node_total),temp_cc)
+      WRITE(QiMidDisp,6000) t_global,&
+                            &BD1_OutPut(1)%BldMotion%TranslationDisp(1:3,BD1_Parameter%node_total),&
+                            &temp_cc(1:3)
 !WRITE(*,*) 'BD_Input%Disp:',BD_Input(1)%RootMotion%TranslationDisp(:,1)
 !WRITE(*,*) 'BD_Input%Disp:',BD_Input(2)%RootMotion%TranslationDisp(:,1)
 !WRITE(*,*) 'BD_Input%Disp:',BD_Input(3)%RootMotion%TranslationDisp(:,1)
@@ -580,33 +582,33 @@ WRITE(*,*) "Time Step: ", n_t_global
 !WRITE(*,*) 'Mod1_Input%Force:',Mod1_Input(3)%PointMesh%Force(:,1)
 
       ! after all InputOutputSolves, we can reset the mapping flags on the meshes:
-         Mod1_Input(1)%PointMesh%RemapFlag    = .FALSE. 
-         Mod1_Output(1)%PointMesh%RemapFlag   = .FALSE.
+         BD1_Input(1)%RootMotion%RemapFlag    = .FALSE. 
+         BD1_Output(1)%ReactionForce%RemapFlag   = .FALSE.
          BD_Input(1)%RootMotion%RemapFlag      = .FALSE. 
          BD_Output(1)%ReactionForce%RemapFlag = .FALSE.
 
       ! extrapolate inputs and outputs to t + dt; will only be used by modules with an implicit dependence on input data.
 
-      CALL Mod1_Input_ExtrapInterp(Mod1_Input, Mod1_InputTimes, u1, t_global + dt_global, ErrStat, ErrMsg)
+      CALL BD1_Input_ExtrapInterp(BD1_Input, BD1_InputTimes, u1, t_global + dt_global, ErrStat, ErrMsg)
 
 !WRITE(*,*) 'u1%Force:',u1%PointMesh%Force(:,1)
 
-      CALL Mod1_Output_ExtrapInterp(Mod1_Output, Mod1_OutputTimes, y1, t_global + dt_global, ErrStat, ErrMsg)
+      CALL BD1_Output_ExtrapInterp(BD1_Output, BD1_OutputTimes, y1, t_global + dt_global, ErrStat, ErrMsg)
 
       ! Shift "window" of the Mod1_Input and Mod1_Output
 
-      DO i = Mod1_interp_order, 1, -1
-         CALL Mod1_CopyInput (Mod1_Input(i),  Mod1_Input(i+1),  MESH_UPDATECOPY, Errstat, ErrMsg)
-         CALL Mod1_CopyOutput (Mod1_Output(i),  Mod1_Output(i+1),  MESH_UPDATECOPY, Errstat, ErrMsg)
-         Mod1_InputTimes(i+1) = Mod1_InputTimes(i)
-         Mod1_OutputTimes(i+1) = Mod1_OutputTimes(i)
+      DO i = BD1_interp_order, 1, -1
+         CALL BD1_CopyInput (BD1_Input(i),  BD1_Input(i+1),  MESH_UPDATECOPY, Errstat, ErrMsg)
+         CALL BD1_CopyOutput (BD1_Output(i),  BD1_Output(i+1),  MESH_UPDATECOPY, Errstat, ErrMsg)
+         BD1_InputTimes(i+1) = BD1_InputTimes(i)
+         BD1_OutputTimes(i+1) = BD1_OutputTimes(i)
       ENDDO
 !WRITE(*,*) 'Mod1_InputTimes:',Mod1_InputTimes(:)
 
-      CALL Mod1_CopyInput (u1,  Mod1_Input(1),  MESH_UPDATECOPY, Errstat, ErrMsg)
-      CALL Mod1_CopyOutput (y1,  Mod1_Output(1),  MESH_UPDATECOPY, Errstat, ErrMsg)
-      Mod1_InputTimes(1) = t_global + dt_global
-      Mod1_OutputTimes(1) = t_global + dt_global
+      CALL BD1_CopyInput (u1,  BD1_Input(1),  MESH_UPDATECOPY, Errstat, ErrMsg)
+      CALL BD1_CopyOutput (y1,  BD1_Output(1),  MESH_UPDATECOPY, Errstat, ErrMsg)
+      BD1_InputTimes(1) = t_global + dt_global
+      BD1_OutputTimes(1) = t_global + dt_global
 
       ! extrapolate inputs and outputs to t + dt; will only be used by modules with an implicit dependence on input data.
 
@@ -630,7 +632,7 @@ WRITE(*,*) "Time Step: ", n_t_global
       BD_InputTimes(1) = t_global + dt_global
       BD_OutputTimes(1) = t_global + dt_global
 
-      do pc = 1, pc_max
+      DO pc = 1, pc_max
 
          !----------------------------------------------------------------------------------------
          ! Module 1
@@ -638,15 +640,15 @@ WRITE(*,*) "Time Step: ", n_t_global
 
          ! copy ContinuousState to ContinuousState_pred; don't modify ContinuousState until completion of PC iterations
 
-         CALL Mod1_CopyContState   (Mod1_ContinuousState, Mod1_ContinuousState_pred, 0, Errstat, ErrMsg)
+         CALL BD1_CopyContState   (BD1_ContinuousState, BD1_ContinuousState_pred, 0, Errstat, ErrMsg)
 
-         CALL Mod1_CopyConstrState (Mod1_ConstraintState, Mod1_ConstraintState_pred, 0, Errstat, ErrMsg)
+         CALL BD1_CopyConstrState (BD1_ConstraintState, BD1_ConstraintState_pred, 0, Errstat, ErrMsg)
 
-         CALL Mod1_CopyDiscState   (Mod1_DiscreteState,   Mod1_DiscreteState_pred,   0, Errstat, ErrMsg)
+         CALL BD1_CopyDiscState   (BD1_DiscreteState,   BD1_DiscreteState_pred,   0, Errstat, ErrMsg)
 
-         CALL Mod1_UpdateStates( t_global, n_t_global, Mod1_Input, Mod1_InputTimes, Mod1_Parameter, Mod1_ContinuousState_pred, &
-                                 Mod1_DiscreteState_pred, Mod1_ConstraintState_pred, &
-                                 Mod1_OtherState, ErrStat, ErrMsg )
+         CALL BD1_UpdateStates( t_global, n_t_global, BD1_Input, BD1_InputTimes, BD1_Parameter, BD1_ContinuousState_pred, &
+                                 BD1_DiscreteState_pred, BD1_ConstraintState_pred, &
+                                 BD1_OtherState, ErrStat, ErrMsg )
 
          !----------------------------------------------------------------------------------------
          ! Module 2
@@ -673,11 +675,11 @@ WRITE(*,*) "Time Step: ", n_t_global
          ! If correction iteration is to be taken, solve intput-output equations; otherwise move on
          !-----------------------------------------------------------------------------------------
 
-         if (pc .LE. pc_max) then
+         IF (pc .LE. pc_max) THEN
 
-            call Mod1_BD_InputOutputSolve( t_global + dt_global, &
-                                             Mod1_Input(1), Mod1_Parameter, Mod1_ContinuousState_pred, Mod1_DiscreteState_pred, &
-                                             Mod1_ConstraintState_pred, Mod1_OtherState, Mod1_Output(1), &
+            CALL BD1_BD_InputOutputSolve( t_global + dt_global, &
+                                             BD1_Input(1), BD1_Parameter, BD1_ContinuousState_pred, BD1_DiscreteState_pred, &
+                                             BD1_ConstraintState_pred, BD1_OtherState, BD1_Output(1), &
                                              BD_Input(1), BD_Parameter, BD_ContinuousState_pred, BD_DiscreteState_pred, &
                                              BD_ConstraintState_pred, BD_OtherState_pred, BD_Output(1),  &
 !                                             Map_Mod1_P_Mod2_P, Map_Mod2_P_Mod1_P, &
@@ -685,20 +687,21 @@ WRITE(*,*) "Time Step: ", n_t_global
 
             
             ! after all InputOutputSolves, we can reset the mapping flags on the meshes:
-            Mod1_Input(1)%PointMesh%RemapFlag  = .FALSE. 
-            Mod1_Output(1)%PointMesh%RemapFlag = .FALSE.
+            BD1_Input(1)%RootMotion%RemapFlag  = .FALSE. 
+            BD1_Output(1)%ReactionForce%RemapFlag = .FALSE.
             BD_Input(1)%RootMotion%RemapFlag      = .FALSE. 
             BD_Output(1)%ReactionForce%RemapFlag = .FALSE.
             
-         endif
+         ENDIF 
 
-      enddo
+      ENDDO
 
       ! Save all final variables
 
-      CALL Mod1_CopyContState   (Mod1_ContinuousState_pred,  Mod1_ContinuousState, 0, Errstat, ErrMsg)
-      CALL Mod1_CopyConstrState (Mod1_ConstraintState_pred,  Mod1_ConstraintState, 0, Errstat, ErrMsg)
-      CALL Mod1_CopyDiscState   (Mod1_DiscreteState_pred,    Mod1_DiscreteState,   0, Errstat, ErrMsg)
+      CALL BD1_CopyContState   (BD1_ContinuousState_pred,  BD1_ContinuousState, 0, Errstat, ErrMsg)
+      CALL BD1_CopyConstrState (BD1_ConstraintState_pred,  BD1_ConstraintState, 0, Errstat, ErrMsg)
+      CALL BD1_CopyDiscState   (BD1_DiscreteState_pred,    BD1_DiscreteState,   0, Errstat, ErrMsg)
+      CALL BD1_CopyOtherState  (BD1_OtherState_pred,   BD1_OtherState,   0, Errstat, ErrMsg)
 
       CALL BD_CopyContState   (BD_ContinuousState_pred, BD_ContinuousState, 0, Errstat, ErrMsg)
       CALL BD_CopyConstrState (BD_ConstraintState_pred, BD_ConstraintState, 0, Errstat, ErrMsg)
@@ -716,7 +719,7 @@ WRITE(*,*) "Time Step: ", n_t_global
       ! print discrete q_1(t) solution to standard out
 
 
-   END DO
+   ENDDO
 
 
    ! calculate final time normalized rms error
@@ -727,16 +730,15 @@ WRITE(*,*) "Time Step: ", n_t_global
    ! -------------------------------------------------------------------------
 
 
-   CALL Mod1_End(  Mod1_Input(1), Mod1_Parameter, Mod1_ContinuousState, Mod1_DiscreteState, &
-                   Mod1_ConstraintState, Mod1_OtherState, Mod1_Output(1), ErrStat, ErrMsg )
+   CALL BD1_End(  BD1_Input(1), BD1_Parameter, BD1_ContinuousState, BD1_DiscreteState, &
+                   BD1_ConstraintState, BD1_OtherState, BD1_Output(1), ErrStat, ErrMsg )
 
-   do i = 2, Mod1_interp_order+1
-      CALL Mod1_DestroyInput(Mod1_Input(i), ErrStat, ErrMsg )
-      CALL Mod1_DestroyOutput(Mod1_Output(i), ErrStat, ErrMsg )
-   enddo
-
-   DEALLOCATE(Mod1_InputTimes)
-   DEALLOCATE(Mod1_OutputTimes)
+   DO i = 2, BD1_interp_order+1
+      CALL BD1_DestroyInput(BD1_Input(i), ErrStat, ErrMsg )
+      CALL BD1_DestroyOutput(BD1_Output(i), ErrStat, ErrMsg )
+   ENDDO
+   DEALLOCATE(BD1_InputTimes)
+   DEALLOCATE(BD1_OutputTimes)
 
    CALL BD_End(  BD_Input(1), BD_Parameter, BD_ContinuousState, BD_DiscreteState, &
                  BD_ConstraintState, BD_OtherState, BD_Output(1), ErrStat, ErrMsg )
@@ -750,10 +752,8 @@ WRITE(*,*) "Time Step: ", n_t_global
    DEALLOCATE(BD_Output)
 
    6000 FORMAT (ES12.5,6ES21.12)
-   CLOSE (QiDisUnit)
-   CLOSE (BDForce)
-   CLOSE (Mod1Disp)
-   CLOSE (Mod1Vel)
+   CLOSE (QiTipDisp)
+   CLOSE (QiMidDisp)
    ! -------------------------------------------------------------------------
    ! Deallocate arrays associated with mesh mapping
    ! -------------------------------------------------------------------------
