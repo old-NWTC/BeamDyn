@@ -4638,7 +4638,9 @@ END SUBROUTINE ludcmp
    IF (flag .EQ. 0) THEN
        ! Transform Root Motion from Global to Local (Blade) frame
        u%RootMotion%TranslationDisp(:,1) = MATMUL(TRANSPOSE(RotTen),u%RootMotion%TranslationDisp(:,1))
-       u%RootMotion%Orientation(:,:,1) = MATMUL(u%RootMotion%Orientation(:,:,1),TRANSPOSE(RotTen))
+!       u%RootMotion%Orientation(:,:,1) = MATMUL(u%RootMotion%Orientation(:,:,1),TRANSPOSE(RotTen))
+!       u%RootMotion%Orientation(:,:,1) = MATMUL(u%RootMotion%Orientation(:,:,1),RotTen)
+!       u%RootMotion%Orientation(:,:,1) = MATMUL(TRANSPOSE(RotTen),u%RootMotion%Orientation(:,:,1))
        u%RootMotion%Orientation(:,:,1) = MATMUL(u%RootMotion%Orientation(:,:,1),RotTen)
        u%RootMotion%Orientation(:,:,1) = MATMUL(TRANSPOSE(RotTen),u%RootMotion%Orientation(:,:,1))
        CALL BD_MotionTensor(RotTen,Pos,temp66,1)
@@ -4684,7 +4686,7 @@ END SUBROUTINE ludcmp
 ! Routine for computing derivatives of continuous states.
 !........................................................................................................................
 
-   TYPE(BD_InputType),           INTENT(IN   ):: u           ! Inputs at t
+   TYPE(BD_InputType),           INTENT(INOUT):: u           ! Inputs at t
    TYPE(BD_ParameterType),       INTENT(IN   ):: p           ! Parameters
    TYPE(BD_ContinuousStateType), INTENT(INOUT):: x           ! Continuous states at t
    TYPE(BD_OtherStateType),      INTENT(INOUT):: OtherState  ! Other/optimization states
@@ -4696,14 +4698,19 @@ END SUBROUTINE ludcmp
    REAL(ReKi)                                 :: temp66(6,6)
    REAL(ReKi)                                 :: temp6(6)
    REAL(ReKi)                                 :: temp3(3)
+   TYPE(BD_InputType)                         :: u_tmp
+   INTEGER(IntKi)               :: ErrStat2                     ! Temporary Error status
+   CHARACTER(36)       :: ErrMsg2                      ! Temporary Error message
  
+   CALL BD_CopyInput(u, u_tmp, MESH_NEWCOPY, ErrStat2, ErrMsg2)
+   CALL BD_InputGlobalLocal(p,u_tmp,0)
    !Initialize displacements and rotations
    temp3(:) = 0.0D0
    temp3(:) = u%RootMotion%TranslationDisp(:,1)
    temp3(:) = MATMUL(TRANSPOSE(p%GlbRot),temp3)
    DO i=1,p%node_total
        temp_id = (i-1)*p%dof_node
-       x%q(temp_id+1:temp_id+3) = temp3(1:3)
+       x%q(temp_id+1:temp_id+3) = u_tmp%RootMotion%TranslationDisp(1:3,1)
        x%q(temp_id+4:temp_id+6) = 0.0D0
 !       x%q(temp_id+1:temp_id+6) = 0.0D0
    ENDDO
@@ -4716,17 +4723,22 @@ END SUBROUTINE ludcmp
        x%dqdt(temp_id+4:temp_id+6) = 0.0D0
 !       x%dqdt(temp_id+2) = -1.0D0
    ENDDO
+
+      ! Initial velocities and angular velocities
+!   DO i=1,p%elem_total
+!       DO j=1,p%node_elem
+!           temp_id = (i-1)*p%dof_node*p%node_elem+(j-1)*p%dof_node
+!           temp_id2= (j-1)*p%dof_node
+!!           x%dqdt(temp_id+1:temp_id+3) = u%RootMotion%TranslationVel(1:3,1) + &
+!!                 &MATMUL(Tilde(u%RootMotion%RotationVel(1:3,1)),p%uuN0(temp_id2+1:temp_id2+3,i))
+!           x%dqdt(temp_id+1:temp_id+3) = &
+!           MATMUL(Tilde(u%RootMotion%RotationVel(1:3,1)),p%GlbPos(1:3)+MATMUL(p%GlbRot,p%uuN0(temp_id2+1:temp_id2+3,i)))
+!           x%dqdt(temp_id+4:temp_id+6) = u%RootMotion%RotationVel(1:3,1)
+!           CALL MotionTensor(p%GlbRot,p%GlbPos,temp66,1)
+!           x%dqdt(temp_id+1:temp_id+6) = MATMUL(temp66,x%dqdt(temp_id+1:temp_id+6))
+!       ENDDO
+!   ENDDO
    
-   !Initialize acceleration and angular acceleration
-!   temp6(:) = 0.0D0
-!   temp6(1:3) = u%RootMotion%TranslationAcc(:,1)
-!   temp6(4:6) = u%RootMotion%RotationAcc(:,1)
-!   CALL BD_MotionTensor(p%GlbRot,p%GlbPos,temp66,1)
-!   temp6(:) = MATMUL(temp66,temp6)
-!   OtherState%Acc(1:3) = temp6(1:3)
-!   OtherState%Acc(4:6) = temp6(4:6)
-!   
-!   CALL BD_CalcAcc(u,p,x,OtherState)
 
    END SUBROUTINE BD_CalcIC
 

@@ -276,7 +276,7 @@ SUBROUTINE BD1_BD_InputOutputSolve(time, &
        CALL ludcmp(Coef,24,indx,d)
        CALL lubksb(Coef,24,indx,RHS,uinc)
 
-WRITE(*,*) 'Mid Force:',BD_Output%ReactionForce%Force(:,1)
+WRITE(*,*) 'Mid Force:',BD_Output%ReactionForce%Force(:,1),BD_Output%ReactionForce%Moment(:,1)
        IF(BD_Norm(uinc) .LE. TOLF) RETURN
 
        BD1_Input%PointLoad%Force(1:3,BD1_Parameter%node_total) = &
@@ -556,7 +556,7 @@ PROGRAM MAIN
 
    DO n_t_global = 0, n_t_final
 WRITE(*,*) "Time Step: ", n_t_global
-!IF(n_t_global .EQ. 1) STOP
+!IF(n_t_global .EQ. 5) STOP
       ! Solve input-output relations; this section of code corresponds to Eq. (35) in Gasmi et al. (2013)
       ! This code will be specific to the underlying modules
 
