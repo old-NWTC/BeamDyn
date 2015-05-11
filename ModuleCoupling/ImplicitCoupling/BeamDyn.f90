@@ -527,8 +527,11 @@ CONTAINS
    u%RootMotion%RotationVel(:,:)   = 0.0D0
    u%RootMotion%RotationAcc(:,:)   = 0.0D0
 
-!   u%RootMotion%TranslationDisp(1,1) = 0.1D0
-!  u%RootMotion%TranslationDisp(1,1) = 0.0D0
+   u%RootMotion%TranslationDisp(1:3,1) = InitInp%RootDisp(1:3)
+   u%RootMotion%Orientation(1:3,1:3,1) = InitInp%RootOri(1:3,1:3)
+   u%RootMotion%TranslationVel(1:3,1) = InitInp%RootVel(1:3)
+   u%RootMotion%RotationVel(1:3,1)   = InitInp%RootVel(4:6)
+   
 
    DO i=1,u%PointLoad%ElemTable(ELEMENT_POINT)%nelem
        j = u%PointLoad%ElemTable(ELEMENT_POINT)%Elements(i)%ElemNodes(1)
@@ -4355,8 +4358,10 @@ END SUBROUTINE ludcmp
    x%q(1:3) = u%RootMotion%TranslationDisp(1:3,1)
    ! Root rotations
    CALL BD_CrvExtractCrv(u%RootMotion%Orientation(1:3,1:3,1),x%q(4:6))
-   CALL BD_CrvExtractCrv(p%GlbRot(1:3,1:3),temp_cc(1:3))
-   CALL BD_CrvCompose(x%q(4:6),x%q(4:6),temp_cc,0)
+!   CALL BD_CrvExtractCrv(p%GlbRot(1:3,1:3),temp_cc(1:3))
+   temp_cc(:) = MATMUL(p%GlbRot,p%uuN0(4:6,1))
+   CALL BD_CrvCompose(x%q(4:6),x%q(4:6),temp_cc,2)
+   x%q(4:6) = MATMUL(TRANSPOSE(p%GlbRot),x%q(4:6))
    ! Root velocities/angular velocities and accelerations/angular accelerations
    x%dqdt(1:3) = u%RootMotion%TranslationVel(1:3,1)
    x%dqdt(4:6) = u%Rootmotion%RotationVel(1:3,1)
@@ -4641,8 +4646,8 @@ END SUBROUTINE ludcmp
 !       u%RootMotion%Orientation(:,:,1) = MATMUL(u%RootMotion%Orientation(:,:,1),TRANSPOSE(RotTen))
 !       u%RootMotion%Orientation(:,:,1) = MATMUL(u%RootMotion%Orientation(:,:,1),RotTen)
 !       u%RootMotion%Orientation(:,:,1) = MATMUL(TRANSPOSE(RotTen),u%RootMotion%Orientation(:,:,1))
-       u%RootMotion%Orientation(:,:,1) = MATMUL(u%RootMotion%Orientation(:,:,1),RotTen)
-       u%RootMotion%Orientation(:,:,1) = MATMUL(TRANSPOSE(RotTen),u%RootMotion%Orientation(:,:,1))
+!       u%RootMotion%Orientation(:,:,1) = MATMUL(u%RootMotion%Orientation(:,:,1),RotTen)
+!       u%RootMotion%Orientation(:,:,1) = MATMUL(TRANSPOSE(RotTen),u%RootMotion%Orientation(:,:,1))
        CALL BD_MotionTensor(RotTen,Pos,temp66,1)
        temp6(:) = 0.0D0
        temp6(1:3) = u%RootMotion%TranslationVel(1:3,1)
@@ -4694,10 +4699,12 @@ END SUBROUTINE ludcmp
    ! local variables
    INTEGER(IntKi)                             :: i
    INTEGER(IntKi)                             :: j
+   INTEGER(IntKi)                             :: k
    INTEGER(IntKi)                             :: temp_id 
    REAL(ReKi)                                 :: temp66(6,6)
    REAL(ReKi)                                 :: temp6(6)
    REAL(ReKi)                                 :: temp3(3)
+   REAL(ReKi)                                 :: temp_p0(3)
    TYPE(BD_InputType)                         :: u_tmp
    INTEGER(IntKi)               :: ErrStat2                     ! Temporary Error status
    CHARACTER(36)       :: ErrMsg2                      ! Temporary Error message
@@ -4705,40 +4712,53 @@ END SUBROUTINE ludcmp
    CALL BD_CopyInput(u, u_tmp, MESH_NEWCOPY, ErrStat2, ErrMsg2)
    CALL BD_InputGlobalLocal(p,u_tmp,0)
    !Initialize displacements and rotations
-   temp3(:) = 0.0D0
-   temp3(:) = u%RootMotion%TranslationDisp(:,1)
-   temp3(:) = MATMUL(TRANSPOSE(p%GlbRot),temp3)
    DO i=1,p%node_total
        temp_id = (i-1)*p%dof_node
        x%q(temp_id+1:temp_id+3) = u_tmp%RootMotion%TranslationDisp(1:3,1)
-       x%q(temp_id+4:temp_id+6) = 0.0D0
-!       x%q(temp_id+1:temp_id+6) = 0.0D0
+   ENDDO
+   CALL BD_CrvExtractCrv(u_tmp%RootMotion%Orientation(1:3,1:3,1),temp3)
+   DO i=1,p%elem_total
+       IF( i .EQ. 1) THEN
+           k = 1
+       ELSE
+           k = 2
+       ENDIF
+       DO j=k,p%node_elem
+           temp_id = (j-1)*p%dof_node
+           temp_p0 = MATMUL(p%GlbRot,p%uuN0(temp_id+4:temp_id+6,i))
+           temp_id = ((i-1)*(p%node_elem-1)+j-1)*p%dof_node
+           CALL BD_CrvCompose(x%q(temp_id+4:temp_id+6),temp3,temp_p0,2)
+           x%q(temp_id+4:temp_id+6) = MATMUL(TRANSPOSE(p%GlbRot),x%q(temp_id+4:temp_id+6))
+       ENDDO
    ENDDO
    
    !Initialize velocities and angular velocities
-       x%dqdt(:) = 0.0D0
-   DO i=1,p%node_total
-       temp_id = (i-1)*p%dof_node
-       x%dqdt(temp_id+1:temp_id+3) = 0.0D0
-       x%dqdt(temp_id+4:temp_id+6) = 0.0D0
-!       x%dqdt(temp_id+2) = -1.0D0
-   ENDDO
-
-      ! Initial velocities and angular velocities
-!   DO i=1,p%elem_total
-!       DO j=1,p%node_elem
-!           temp_id = (i-1)*p%dof_node*p%node_elem+(j-1)*p%dof_node
-!           temp_id2= (j-1)*p%dof_node
-!!           x%dqdt(temp_id+1:temp_id+3) = u%RootMotion%TranslationVel(1:3,1) + &
-!!                 &MATMUL(Tilde(u%RootMotion%RotationVel(1:3,1)),p%uuN0(temp_id2+1:temp_id2+3,i))
-!           x%dqdt(temp_id+1:temp_id+3) = &
-!           MATMUL(Tilde(u%RootMotion%RotationVel(1:3,1)),p%GlbPos(1:3)+MATMUL(p%GlbRot,p%uuN0(temp_id2+1:temp_id2+3,i)))
-!           x%dqdt(temp_id+4:temp_id+6) = u%RootMotion%RotationVel(1:3,1)
-!           CALL MotionTensor(p%GlbRot,p%GlbPos,temp66,1)
-!           x%dqdt(temp_id+1:temp_id+6) = MATMUL(temp66,x%dqdt(temp_id+1:temp_id+6))
-!       ENDDO
+   x%dqdt(:) = 0.0D0
+!   DO i=1,p%node_total
+!       temp_id = (i-1)*p%dof_node
+!       x%dqdt(temp_id+1:temp_id+3) = 0.0D0
+!       x%dqdt(temp_id+4:temp_id+6) = 0.0D0
+!!       x%dqdt(temp_id+2) = -1.0D0
 !   ENDDO
-   
+
+   ! Initial velocities and angular velocities
+   CALL BD_MotionTensor(p%GlbRot,p%GlbPos,temp66,1)
+   DO i=1,p%elem_total
+       IF( i .EQ. 1) THEN
+           k = 1
+       ELSE
+           k = 2
+       ENDIF
+       DO j=k,p%node_elem
+           temp_id = (j-1)*p%dof_node
+           temp3(:) = p%GlbPos(:) + MATMUL(p%GlbRot,p%uuN0(temp_id+1:temp_id+3,i))
+           temp6(1:3) = u%RootMotion%TranslationVel(:,1) + &
+                        MATMUL(BD_Tilde(u%RootMotion%RotationVel(:,1)),temp3)
+           temp6(4:6) = u%RootMotion%RotationVel(1:3,1)
+           temp_id = ((i-1)*(p%node_elem-1)+j-1)*p%dof_node
+           x%dqdt(temp_id+1:temp_id+6) = MATMUL(temp66,temp6)
+       ENDDO
+   ENDDO
 
    END SUBROUTINE BD_CalcIC
 

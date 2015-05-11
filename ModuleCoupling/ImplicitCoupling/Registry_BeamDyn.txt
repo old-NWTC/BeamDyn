@@ -16,6 +16,9 @@ typedef BeamDyn/BD InitInputType CHARACTER(1024) RootName  - - - "RootName for w
 typedef BeamDyn/BD InitInputType ReKi            gravity  {:} - - "Gravitational acceleration" m/s^2
 typedef BeamDyn/BD InitInputType ReKi            GlbPos   {:} - - "Initial Position Vector of the local blade coordinate system"
 typedef BeamDyn/BD InitInputType ReKi            GlbRot   {:}{:} - - "Initial direction cosine matrix of the loacl blade coordinate system"
+typedef BeamDyn/BD InitInputType ReKi            RootDisp {:} - - "Initial root displacement"
+typedef BeamDyn/BD InitInputType ReKi            RootOri  {:}{:} - - "Initial root orientation"
+typedef BeamDyn/BD InitInputType ReKi            RootVel  {:} - - "Initial root velocities and angular veolcities"
 
 # Define outputs that the initialization routine may need here:
 # e.g., the name of the input file, the file root name, etc.

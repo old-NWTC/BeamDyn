@@ -40,6 +40,9 @@ IMPLICIT NONE
     REAL(ReKi) , DIMENSION(:), ALLOCATABLE  :: gravity      ! Gravitational acceleration [m/s^2]
     REAL(ReKi) , DIMENSION(:), ALLOCATABLE  :: GlbPos      ! Initial Position Vector of the local blade coordinate system [-]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: GlbRot      ! Initial direction cosine matrix of the loacl blade coordinate system [-]
+    REAL(ReKi) , DIMENSION(:), ALLOCATABLE  :: RootDisp      ! Initial root displacement [-]
+    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: RootOri      ! Initial root orientation [-]
+    REAL(ReKi) , DIMENSION(:), ALLOCATABLE  :: RootVel      ! Initial root velocities and angular veolcities [-]
   END TYPE BD_InitInputType
 ! =======================
 ! =========  BD_InitOutputType  =======
@@ -198,6 +201,47 @@ IF (ALLOCATED(SrcInitInputData%GlbRot)) THEN
    END IF
    DstInitInputData%GlbRot = SrcInitInputData%GlbRot
 ENDIF
+IF (ALLOCATED(SrcInitInputData%RootDisp)) THEN
+   i1_l = LBOUND(SrcInitInputData%RootDisp,1)
+   i1_u = UBOUND(SrcInitInputData%RootDisp,1)
+   IF (.NOT. ALLOCATED(DstInitInputData%RootDisp)) THEN 
+      ALLOCATE(DstInitInputData%RootDisp(i1_l:i1_u),STAT=ErrStat)
+      IF (ErrStat /= 0) THEN 
+         ErrStat = ErrID_Fatal 
+         ErrMsg = 'BD_CopyInitInput: Error allocating DstInitInputData%RootDisp.'
+         RETURN
+      END IF
+   END IF
+   DstInitInputData%RootDisp = SrcInitInputData%RootDisp
+ENDIF
+IF (ALLOCATED(SrcInitInputData%RootOri)) THEN
+   i1_l = LBOUND(SrcInitInputData%RootOri,1)
+   i1_u = UBOUND(SrcInitInputData%RootOri,1)
+   i2_l = LBOUND(SrcInitInputData%RootOri,2)
+   i2_u = UBOUND(SrcInitInputData%RootOri,2)
+   IF (.NOT. ALLOCATED(DstInitInputData%RootOri)) THEN 
+      ALLOCATE(DstInitInputData%RootOri(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat)
+      IF (ErrStat /= 0) THEN 
+         ErrStat = ErrID_Fatal 
+         ErrMsg = 'BD_CopyInitInput: Error allocating DstInitInputData%RootOri.'
+         RETURN
+      END IF
+   END IF
+   DstInitInputData%RootOri = SrcInitInputData%RootOri
+ENDIF
+IF (ALLOCATED(SrcInitInputData%RootVel)) THEN
+   i1_l = LBOUND(SrcInitInputData%RootVel,1)
+   i1_u = UBOUND(SrcInitInputData%RootVel,1)
+   IF (.NOT. ALLOCATED(DstInitInputData%RootVel)) THEN 
+      ALLOCATE(DstInitInputData%RootVel(i1_l:i1_u),STAT=ErrStat)
+      IF (ErrStat /= 0) THEN 
+         ErrStat = ErrID_Fatal 
+         ErrMsg = 'BD_CopyInitInput: Error allocating DstInitInputData%RootVel.'
+         RETURN
+      END IF
+   END IF
+   DstInitInputData%RootVel = SrcInitInputData%RootVel
+ENDIF
  END SUBROUTINE BD_CopyInitInput
 
  SUBROUTINE BD_DestroyInitInput( InitInputData, ErrStat, ErrMsg )
@@ -216,6 +260,15 @@ IF (ALLOCATED(InitInputData%GlbPos)) THEN
 ENDIF
 IF (ALLOCATED(InitInputData%GlbRot)) THEN
    DEALLOCATE(InitInputData%GlbRot)
+ENDIF
+IF (ALLOCATED(InitInputData%RootDisp)) THEN
+   DEALLOCATE(InitInputData%RootDisp)
+ENDIF
+IF (ALLOCATED(InitInputData%RootOri)) THEN
+   DEALLOCATE(InitInputData%RootOri)
+ENDIF
+IF (ALLOCATED(InitInputData%RootVel)) THEN
+   DEALLOCATE(InitInputData%RootVel)
 ENDIF
  END SUBROUTINE BD_DestroyInitInput
 
@@ -256,6 +309,9 @@ ENDIF
   Re_BufSz    = Re_BufSz    + SIZE( InData%gravity )  ! gravity 
   Re_BufSz    = Re_BufSz    + SIZE( InData%GlbPos )  ! GlbPos 
   Re_BufSz    = Re_BufSz    + SIZE( InData%GlbRot )  ! GlbRot 
+  Re_BufSz    = Re_BufSz    + SIZE( InData%RootDisp )  ! RootDisp 
+  Re_BufSz    = Re_BufSz    + SIZE( InData%RootOri )  ! RootOri 
+  Re_BufSz    = Re_BufSz    + SIZE( InData%RootVel )  ! RootVel 
   IF ( Re_BufSz  .GT. 0 ) ALLOCATE( ReKiBuf(  Re_BufSz  ) )
   IF ( Db_BufSz  .GT. 0 ) ALLOCATE( DbKiBuf(  Db_BufSz  ) )
   IF ( Int_BufSz .GT. 0 ) ALLOCATE( IntKiBuf( Int_BufSz ) )
@@ -270,6 +326,18 @@ ENDIF
   IF ( ALLOCATED(InData%GlbRot) ) THEN
     IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%GlbRot))-1 ) =  PACK(InData%GlbRot ,.TRUE.)
     Re_Xferred   = Re_Xferred   + SIZE(InData%GlbRot)
+  ENDIF
+  IF ( ALLOCATED(InData%RootDisp) ) THEN
+    IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%RootDisp))-1 ) =  PACK(InData%RootDisp ,.TRUE.)
+    Re_Xferred   = Re_Xferred   + SIZE(InData%RootDisp)
+  ENDIF
+  IF ( ALLOCATED(InData%RootOri) ) THEN
+    IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%RootOri))-1 ) =  PACK(InData%RootOri ,.TRUE.)
+    Re_Xferred   = Re_Xferred   + SIZE(InData%RootOri)
+  ENDIF
+  IF ( ALLOCATED(InData%RootVel) ) THEN
+    IF ( .NOT. OnlySize ) ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%RootVel))-1 ) =  PACK(InData%RootVel ,.TRUE.)
+    Re_Xferred   = Re_Xferred   + SIZE(InData%RootVel)
   ENDIF
  END SUBROUTINE BD_PackInitInput
 
@@ -323,6 +391,24 @@ ENDIF
     OutData%GlbRot = UNPACK(ReKiBuf( Re_Xferred:Re_Xferred+(SIZE(OutData%GlbRot))-1 ),mask2,OutData%GlbRot)
   DEALLOCATE(mask2)
     Re_Xferred   = Re_Xferred   + SIZE(OutData%GlbRot)
+  ENDIF
+  IF ( ALLOCATED(OutData%RootDisp) ) THEN
+  ALLOCATE(mask1(SIZE(OutData%RootDisp,1))); mask1 = .TRUE.
+    OutData%RootDisp = UNPACK(ReKiBuf( Re_Xferred:Re_Xferred+(SIZE(OutData%RootDisp))-1 ),mask1,OutData%RootDisp)
+  DEALLOCATE(mask1)
+    Re_Xferred   = Re_Xferred   + SIZE(OutData%RootDisp)
+  ENDIF
+  IF ( ALLOCATED(OutData%RootOri) ) THEN
+  ALLOCATE(mask2(SIZE(OutData%RootOri,1),SIZE(OutData%RootOri,2))); mask2 = .TRUE.
+    OutData%RootOri = UNPACK(ReKiBuf( Re_Xferred:Re_Xferred+(SIZE(OutData%RootOri))-1 ),mask2,OutData%RootOri)
+  DEALLOCATE(mask2)
+    Re_Xferred   = Re_Xferred   + SIZE(OutData%RootOri)
+  ENDIF
+  IF ( ALLOCATED(OutData%RootVel) ) THEN
+  ALLOCATE(mask1(SIZE(OutData%RootVel,1))); mask1 = .TRUE.
+    OutData%RootVel = UNPACK(ReKiBuf( Re_Xferred:Re_Xferred+(SIZE(OutData%RootVel))-1 ),mask1,OutData%RootVel)
+  DEALLOCATE(mask1)
+    Re_Xferred   = Re_Xferred   + SIZE(OutData%RootVel)
   ENDIF
   Re_Xferred   = Re_Xferred-1
   Db_Xferred   = Db_Xferred-1
