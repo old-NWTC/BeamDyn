@@ -430,6 +430,19 @@ PROGRAM MAIN
    temp_vec(3) = 4.0D0*TAN((3.1415926D0/2.0D0)/4.0D0)
    CALL BD_CrvMatrixR(temp_vec,temp_R)
    BD_InitInput%GlbRot(1:3,1:3) = temp_R(1:3,1:3)
+   ALLOCATE(BD_InitInput%RootDisp(3))
+   BD_InitInput%RootDisp(1) = 0.1D+00
+   BD_InitInput%RootDisp(2) = 0.0D+00
+   BD_InitInput%RootDisp(3) = 0.0D+00
+   ALLOCATE(BD_InitInput%RootOri(3,3))
+   BD_InitInput%RootOri(:,:) = 0.0D0
+   temp_vec(1) = 0.0
+   temp_vec(2) = 0.0
+   temp_vec(3) = 0.0
+   CALL BD_CrvMatrixR(temp_vec,temp_R)
+   BD_InitInput%RootOri(1:3,1:3) = temp_R(1:3,1:3)
+   ALLOCATE(BD_InitInput%RootVel(6))
+   BD_InitInput%RootVel(:) = 0.0D+00
 
    CALL BD_Init( BD_InitInput, BD_Input(1), BD_Parameter, BD_ContinuousState, BD_DiscreteState, &
                  BD_ConstraintState, BD_OtherState, BD_Output(1), dt_global, BD_InitOutput, ErrStat, ErrMsg )
@@ -478,9 +491,9 @@ WRITE(*,*) "Time Step: ", n_t_global
       ! Solve input-output relations; this section of code corresponds to Eq. (35) in Gasmi et al. (2013)
       ! This code will be specific to the underlying modules
 
-      CALL BD_CrvExtractCrv(BD_OutPut(1)%BldMotion%Orientation(1:3,1:3,BD_Parameter%node_total),temp_cc)
+      CALL BD_CrvExtractCrv(BD_OutPut(1)%BldMotion%Orientation(1:3,1:3,BD_Parameter%node_elem*BD_Parameter%elem_total),temp_cc)
       WRITE(QiDisUnit,6000) t_global,&
-                            &BD_OutPut(1)%BldMotion%TranslationDisp(1:3,BD_Parameter%node_total),&
+                            &BD_OutPut(1)%BldMotion%TranslationDisp(1:3,BD_Parameter%node_elem*BD_Parameter%elem_total),&
                             &temp_cc(1:3)
 !      WRITE(QiDisUnit,6000) t_global,&
 !                            &BD_ContinuousState%q(BD_Parameter%dof_total-5:BD_Parameter%dof_total)
