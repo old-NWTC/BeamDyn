@@ -139,10 +139,10 @@ WRITE(*,*) 'i=',i
 !WRITE(*,*) BD1_ContinuousState%dqdt
        CALL BD_CalcOutput( time, BD_Input, BD_Parameter, BD_ContinuousState, BD_DiscreteState, &
                     BD_ConstraintState, BD_OtherState, BD_Output, ErrStat, ErrMsg )
-!WRITE(*,*) 'TIME',time
+WRITE(*,*) 'TIME',time
 !WRITE(*,*) 'Original BD Root Force:'
-!WRITE(*,*) BD_Output%ReactionForce%Force(1:3,1)
-!WRITE(*,*) BD_Output%ReactionForce%Moment(1:3,1)
+WRITE(*,*) BD_Output%ReactionForce%Force(1:3,1)
+WRITE(*,*) BD_Output%ReactionForce%Moment(1:3,1)
        CALL BD_CopyInput(BD_Input,BDInput_tmp,MESH_NEWCOPY,ErrStat,ErrMsg)
        CALL BD_CopyInput(BD1_Input,BD1Input_tmp,MESH_NEWCOPY,ErrStat,ErrMsg)
 
@@ -267,8 +267,8 @@ WRITE(*,*) 'i=',i
                               BD1_Output%BldMotion%TranslationAcc(k,BD1_Parameter%node_total))/eps)
                Coef(21+k,j+3) = -((BD1OT_tmp%BldMotion%RotationAcc(k,BD1_Parameter%node_total) - &
                               BD1_Output%BldMotion%RotationAcc(k,BD1_Parameter%node_total))/eps)
-WRITE(*,*) 'Coef'
-WRITE(*,*) Coef(21+k,j+3)
+!WRITE(*,*) 'Coef'
+!WRITE(*,*) Coef(21+k,j+3)
            ENDDO
            CALL BD_CrvExtractCrv(BD1OT_tmp%BldMotion%Orientation(1:3,1:3,BD1_Parameter%node_total),temp_cc)
            temp_c0 = MATMUL(BD1_Parameter%GlbRot(1:3,1:3),BD1_Parameter%uuN0(4:6,1))
@@ -594,7 +594,7 @@ PROGRAM MAIN
 
    DO n_t_global = 0, n_t_final
 WRITE(*,*) "Time Step: ", n_t_global
-IF(n_t_global .EQ. 2) STOP
+IF(n_t_global .EQ. 1) STOP
       ! Solve input-output relations; this section of code corresponds to Eq. (35) in Gasmi et al. (2013)
       ! This code will be specific to the underlying modules
 
