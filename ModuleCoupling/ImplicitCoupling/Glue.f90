@@ -282,14 +282,14 @@ WRITE(*,*) BD_Output%ReactionForce%Moment(1:3,1)
        CALL ludcmp(Coef,24,indx,d)
        CALL lubksb(Coef,24,indx,RHS,uinc)
 
-!WRITE(*,*) 'uinc:'
-!WRITE(*,*) uinc(:)
-!WRITE(*,*) 'BD1 Input Force'
-!WRITE(*,*) BD1_Input%PointLoad%Force(1:3,BD1_Parameter%node_total),BD1_Input%PointLoad%Moment(1:3,BD1_Parameter%node_total)
-!WRITE(*,*) 'BD Input Disp'
-!WRITE(*,*) BD_Input%RootMotion%TranslationDisp(1:3,1)
-!WRITE(*,*) 'BD Input Rot'
-!WRITE(*,*) tempBD_rr
+WRITE(*,*) 'uinc:'
+WRITE(*,*) uinc(:)
+WRITE(*,*) 'BD1 Input Force'
+WRITE(*,*) BD1_Input%PointLoad%Force(1:3,BD1_Parameter%node_total),BD1_Input%PointLoad%Moment(1:3,BD1_Parameter%node_total)
+WRITE(*,*) 'BD Input Disp'
+WRITE(*,*) BD_Input%RootMotion%TranslationDisp(1:3,1)
+WRITE(*,*) 'BD Input Rot'
+WRITE(*,*) tempBD_rr
        IF(BD_Norm(uinc) .LE. TOLF) RETURN
 
        BD1_Input%PointLoad%Force(1:3,BD1_Parameter%node_total) = &
@@ -428,7 +428,7 @@ PROGRAM MAIN
    ! -------------------------------------------------------------------------
 
    t_initial = 0.d0
-   t_final   = 1.0D+00
+   t_final   = 1.0D-01
 
    pc_max = 2  ! Number of predictor-corrector iterations; 1 corresponds to an explicit calculation where UpdateStates
                ! is called only once  per time step for each module; inputs and outputs are extrapolated in time and
@@ -594,7 +594,7 @@ PROGRAM MAIN
 
    DO n_t_global = 0, n_t_final
 WRITE(*,*) "Time Step: ", n_t_global
-IF(n_t_global .EQ. 1) STOP
+!IF(n_t_global .EQ. 2) STOP
       ! Solve input-output relations; this section of code corresponds to Eq. (35) in Gasmi et al. (2013)
       ! This code will be specific to the underlying modules
 

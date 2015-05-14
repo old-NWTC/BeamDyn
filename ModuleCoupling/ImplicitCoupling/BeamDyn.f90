@@ -4440,6 +4440,7 @@ END SUBROUTINE ludcmp
        ENDDO
        RHS(:) = RHS(:) + F_PointLoad(:)
 
+
        errf = 0.0D0
        feqv = 0.0D0
        DO j=1,dof_total-6
@@ -4457,7 +4458,6 @@ END SUBROUTINE ludcmp
        DO j=1,dof_total-6
            ai(j+6) = ai_temp(j)
        ENDDO
-
        IF(i==1) THEN
            Eref = SQRT(DOT_PRODUCT(ai_temp,feqv))*TOLF
            IF(Eref .LE. TOLF) RETURN
