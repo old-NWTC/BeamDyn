@@ -128,19 +128,28 @@ SUBROUTINE BD1_BD_InputOutputSolve(time, &
    BD_Input%PointLoad%Force(3,BD_Parameter%node_total) = 1.0D+05*SIN(20.0D0*time)
    CALL BD_CopyOutput(BD_Output,OT_tmp,MESH_NEWCOPY,ErrStat,ErrMsg)
    CALL BD_CopyOutput(BD1_Output,BD1OT_tmp,MESH_NEWCOPY,ErrStat,ErrMsg)
+WRITE(*,*) 'TIME',time
    eps = 0.01D+00
    DO i=1,iter_max
 WRITE(*,*) 'i=',i
+
+WRITE(*,*) 'BD1_Cont%q'
+WRITE(*,*) BD1_ContinuousState%q
+WRITE(*,*) 'BD1_Cont%dqdt'
+WRITE(*,*) BD1_ContinuousState%dqdt
+WRITE(*,*) 'BD1_Other%Acc'
+WRITE(*,*) BD1_OtherState%Acc(:)
        CALL BD_CalcOutput( time, BD1_Input, BD1_Parameter, BD1_ContinuousState, BD1_DiscreteState, &
                     BD1_ConstraintState, BD1_OtherState, BD1_Output, ErrStat, ErrMsg )
-!WRITE(*,*) 'BD1_Cont%q'
-!WRITE(*,*) BD1_ContinuousState%q
-!WRITE(*,*) 'BD1_Cont%dqdt'
-!WRITE(*,*) BD1_ContinuousState%dqdt
+WRITE(*,*) 'BD_Cont%q'
+WRITE(*,*) BD_ContinuousState%q
+WRITE(*,*) 'BD_Cont%dqdt'
+WRITE(*,*) BD_ContinuousState%dqdt
+WRITE(*,*) 'BD_Other%Acc'
+WRITE(*,*) BD_OtherState%Acc(:)
        CALL BD_CalcOutput( time, BD_Input, BD_Parameter, BD_ContinuousState, BD_DiscreteState, &
                     BD_ConstraintState, BD_OtherState, BD_Output, ErrStat, ErrMsg )
-WRITE(*,*) 'TIME',time
-!WRITE(*,*) 'Original BD Root Force:'
+WRITE(*,*) 'Original BD Reaction Force:'
 WRITE(*,*) BD_Output%ReactionForce%Force(1:3,1)
 WRITE(*,*) BD_Output%ReactionForce%Moment(1:3,1)
        CALL BD_CopyInput(BD_Input,BDInput_tmp,MESH_NEWCOPY,ErrStat,ErrMsg)
@@ -253,12 +262,8 @@ WRITE(*,*) BD_Output%ReactionForce%Moment(1:3,1)
            CALL BD_CalcOutput( time, BD1_Input, BD1_Parameter, BD1_ContinuousState, BD1_DiscreteState, &
                     BD1_ConstraintState, BD1_OtherState, BD1OT_tmp, ErrStat, ErrMsg )    
            DO k=1,3
-!WRITE(*,*) BD1OT_tmp%BldMotion%TranslationDisp(k,BD1_Parameter%node_total)
-!WRITE(*,*) BD1_Output%BldMotion%TranslationDisp(k,BD1_Parameter%node_total)
                Coef(6+k,j+3) = -((BD1OT_tmp%BldMotion%TranslationDisp(k,BD1_Parameter%node_total) - &
                               BD1_Output%BldMotion%TranslationDisp(k,BD1_Parameter%node_total))/eps)
-!WRITE(*,*) 'Coef'
-!WRITE(*,*) Coef(6+k,j+3)
                Coef(12+k,j+3) = -((BD1OT_tmp%BldMotion%TranslationVel(k,BD1_Parameter%node_total) - &
                               BD1_Output%BldMotion%TranslationVel(k,BD1_Parameter%node_total))/eps)
                Coef(15+k,j+3) = -((BD1OT_tmp%BldMotion%RotationVel(k,BD1_Parameter%node_total) - &
@@ -267,8 +272,6 @@ WRITE(*,*) BD_Output%ReactionForce%Moment(1:3,1)
                               BD1_Output%BldMotion%TranslationAcc(k,BD1_Parameter%node_total))/eps)
                Coef(21+k,j+3) = -((BD1OT_tmp%BldMotion%RotationAcc(k,BD1_Parameter%node_total) - &
                               BD1_Output%BldMotion%RotationAcc(k,BD1_Parameter%node_total))/eps)
-!WRITE(*,*) 'Coef'
-!WRITE(*,*) Coef(21+k,j+3)
            ENDDO
            CALL BD_CrvExtractCrv(BD1OT_tmp%BldMotion%Orientation(1:3,1:3,BD1_Parameter%node_total),temp_cc)
            temp_c0 = MATMUL(BD1_Parameter%GlbRot(1:3,1:3),BD1_Parameter%uuN0(4:6,1))
@@ -287,9 +290,11 @@ WRITE(*,*) uinc(:)
 WRITE(*,*) 'BD1 Input Force'
 WRITE(*,*) BD1_Input%PointLoad%Force(1:3,BD1_Parameter%node_total),BD1_Input%PointLoad%Moment(1:3,BD1_Parameter%node_total)
 WRITE(*,*) 'BD Input Disp'
-WRITE(*,*) BD_Input%RootMotion%TranslationDisp(1:3,1)
-WRITE(*,*) 'BD Input Rot'
-WRITE(*,*) tempBD_rr
+WRITE(*,*) BD_Input%RootMotion%TranslationDisp(1:3,1),tempBD_rr
+WRITE(*,*) 'BD Input Vel'
+WRITE(*,*) BD_Input%RootMotion%TranslationVel(1:3,1),BD_Input%RootMotion%RotationVel(1:3,1)
+WRITE(*,*) 'BD Input Acc'
+WRITE(*,*) BD_Input%RootMotion%TranslationAcc(1:3,1),BD_Input%RootMotion%RotationAcc(1:3,1)
        IF(BD_Norm(uinc) .LE. TOLF) RETURN
 
        BD1_Input%PointLoad%Force(1:3,BD1_Parameter%node_total) = &
@@ -412,6 +417,8 @@ PROGRAM MAIN
    INTEGER(IntKi),PARAMETER:: QiTipDisp = 20
    INTEGER(IntKi),PARAMETER:: QiMidDisp = 30
    INTEGER(IntKi),PARAMETER:: QiMidForce = 40
+   INTEGER(IntKi),PARAMETER:: QiMidVel = 50
+   INTEGER(IntKi),PARAMETER:: QiMidAcc = 60
 
    ! -------------------------------------------------------------------------
    ! MAPPING STUFF; Likely needs to be added to ModMesh
@@ -423,6 +430,8 @@ PROGRAM MAIN
    OPEN(unit = QiTipDisp, file = 'Qi_Tip_Disp.out', status = 'REPLACE',ACTION = 'WRITE')
    OPEN(unit = QiMidDisp, file = 'Qi_Mid_Disp.out', status = 'REPLACE',ACTION = 'WRITE')
    OPEN(unit = QiMidForce, file = 'Qi_Mid_Force.out', status = 'REPLACE',ACTION = 'WRITE')
+   OPEN(unit = QiMidVel, file = 'Qi_Mid_Vel.out', status = 'REPLACE',ACTION = 'WRITE')
+   OPEN(unit = QiMidAcc, file = 'Qi_Mid_Acc.out', status = 'REPLACE',ACTION = 'WRITE')
    ! -------------------------------------------------------------------------
    ! Initialization of glue-code time-step variables
    ! -------------------------------------------------------------------------
@@ -594,7 +603,7 @@ PROGRAM MAIN
 
    DO n_t_global = 0, n_t_final
 WRITE(*,*) "Time Step: ", n_t_global
-!IF(n_t_global .EQ. 2) STOP
+!IF(n_t_global .EQ. 1) STOP
       ! Solve input-output relations; this section of code corresponds to Eq. (35) in Gasmi et al. (2013)
       ! This code will be specific to the underlying modules
 
@@ -609,6 +618,12 @@ WRITE(*,*) "Time Step: ", n_t_global
       WRITE(QiMidForce,6000) t_global,&
                              &BD_OutPut(1)%ReactionForce%Force(1:3,1),&
                              &BD_OutPut(1)%ReactionForce%Moment(1:3,1)
+      WRITE(QiMidVel,6000) t_global,&
+                             &BD1_OutPut(1)%BldMotion%TranslationVel(1:3,BD1_Parameter%node_total),&
+                             &BD1_OutPut(1)%BldMotion%RotationVel(1:3,BD1_Parameter%node_total)
+      WRITE(QiMidAcc,6000) t_global,&
+                             &BD1_OutPut(1)%BldMotion%TranslationAcc(1:3,BD1_Parameter%node_total),&
+                             &BD1_OutPut(1)%BldMotion%RotationAcc(1:3,BD1_Parameter%node_total)
 !WRITE(*,*) 'BD_Input%Disp:',BD_Input(1)%RootMotion%TranslationDisp(:,1)
 !WRITE(*,*) 'BD_Input%Disp:',BD_Input(2)%RootMotion%TranslationDisp(:,1)
 !WRITE(*,*) 'BD_Input%Disp:',BD_Input(3)%RootMotion%TranslationDisp(:,1)
@@ -690,7 +705,6 @@ WRITE(*,*) "Time Step: ", n_t_global
          CALL BD_UpdateStates( t_global, n_t_global, BD1_Input, BD1_InputTimes, BD1_Parameter, BD1_ContinuousState_pred, &
                                  BD1_DiscreteState_pred, BD1_ConstraintState_pred, &
                                  BD1_OtherState, ErrStat, ErrMsg )
-
          !----------------------------------------------------------------------------------------
          ! Module 2
          !----------------------------------------------------------------------------------------
