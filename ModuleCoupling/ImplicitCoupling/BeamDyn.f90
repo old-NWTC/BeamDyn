@@ -661,6 +661,7 @@ CONTAINS
            OtherState%Acc(4:6) = u_tmp%RootMotion%RotationAcc(1:3,1)
            CALL BD_CalcAcc(u_tmp,p,x,OtherState)
            OtherState%Xcc(:) = OtherState%Acc(:)
+           CALL BD_DestroyInput(u_tmp, ErrStat, ErrMsg )
        ENDIF
        CALL BD_GA2( t, n, u, utimes, p, x, xd, z, OtherState, ErrStat, ErrMsg )
    ELSEIF(p%analysis_type == 1) THEN
@@ -782,6 +783,10 @@ CONTAINS
        y%BldForce%Force(1:3,i) = temp6(1:3)
        y%BldForce%Moment(1:3,i) = temp6(4:6)
    ENDDO
+
+   CALL BD_DestroyInput(u_tmp, ErrStat, ErrMsg)
+   CALL BD_DestroyContState(x_tmp, ErrStat, ErrMsg )
+   CALL BD_DestroyOtherState(OS_tmp, ErrStat, ErrMsg )
 
    END SUBROUTINE BD_CalcOutput
    !----------------------------------------------------------------------------------------------------------------------------------
@@ -1252,7 +1257,7 @@ END SUBROUTINE BD_UpdateDiscState
            CALL BD_DissipativeForce(beta,Stif,vvv,vvp,E1,Fc,Fd,Sd,Od,Pd,Qd,betaC,Gd,Xd,Yd)
        ENDIF
        CALL BD_GravityForce(mmm,mEta,gravity,Fg)
-       Fd(:) = Fd(:) - Fg(:)
+       Fd(:) = Fd(:) - Fg(:) - DistrLoad_GL(:,igp)
 
        DO i=1,node_elem
            DO j=1,node_elem
@@ -3562,6 +3567,7 @@ END SUBROUTINE ludcmp
            x%q(:) = 0.0D0
        ENDIF
    ENDDO
+   CALL BD_DestroyInput(u_interp, ErrStat, ErrMsg )
 
 
    END SUBROUTINE BD_Static
@@ -4760,6 +4766,7 @@ END SUBROUTINE ludcmp
            x%dqdt(temp_id+1:temp_id+6) = MATMUL(temp66,temp6)
        ENDDO
    ENDDO
+   CALL BD_DestroyInput(u_tmp, ErrStat2, ErrMsg2 )
 
    END SUBROUTINE BD_CalcIC
 

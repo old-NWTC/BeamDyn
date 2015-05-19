@@ -113,7 +113,7 @@ SUBROUTINE Mod1_BD_InputOutputSolve(time, &
    REAL(ReKi)                                   :: eps
    REAL(ReKi)                                   :: d
    REAL(ReKi)                                   :: uinc(4)
-   REAL(ReKi),                        PARAMETER :: TOLF = 1.0D-02
+   REAL(ReKi),                        PARAMETER :: TOLF = 1.0D-05
    INTEGER(IntKi)                               :: indx(4)
    INTEGER(IntKi)                               :: i
    INTEGER(IntKi),                    PARAMETER :: iter_max = 10
@@ -335,6 +335,7 @@ PROGRAM MAIN
    INTEGER(IntKi),PARAMETER:: BDForce = 30
    INTEGER(IntKi),PARAMETER:: Mod1Disp = 40
    INTEGER(IntKi),PARAMETER:: Mod1Vel = 50
+   INTEGER(IntKi),PARAMETER:: Mod1Acc = 60
 
    ! -------------------------------------------------------------------------
    ! MAPPING STUFF; Likely needs to be added to ModMesh
@@ -347,6 +348,7 @@ PROGRAM MAIN
    OPEN(unit = BDForce, file = 'Qi_Force.out', status = 'REPLACE',ACTION = 'WRITE')
    OPEN(unit = Mod1Disp, file = 'Qi_Mod1Disp.out', status = 'REPLACE',ACTION = 'WRITE')
    OPEN(unit = Mod1Vel, file = 'Qi_Mod1Vel.out', status = 'REPLACE',ACTION = 'WRITE')
+   OPEN(unit = Mod1Acc, file = 'Qi_Mod1Acc.out', status = 'REPLACE',ACTION = 'WRITE')
    ! -------------------------------------------------------------------------
    ! Initialization of glue-code time-step variables
    ! -------------------------------------------------------------------------
@@ -693,6 +695,7 @@ WRITE(*,*) "Time Step: ", n_t_global
    CLOSE (BDForce)
    CLOSE (Mod1Disp)
    CLOSE (Mod1Vel)
+   CLOSE (Mod1Acc)
    ! -------------------------------------------------------------------------
    ! Deallocate arrays associated with mesh mapping
    ! -------------------------------------------------------------------------

@@ -125,33 +125,34 @@ SUBROUTINE BD1_BD_InputOutputSolve(time, &
    ! This code will be specific to the underlying modules; could be placed in a separate routine.
    ! Note that Module2 has direct feedthrough, but Module1 does not. Thus, Module1 should be called first.
 
-   BD_Input%PointLoad%Force(3,BD_Parameter%node_total) = 1.0D+05*SIN(20.0D0*time)
+!   BD_Input%PointLoad%Force(3,BD_Parameter%node_total) = 1.0D+05*SIN(0.2*time)
+   BD_Input%PointLoad%Force(3,BD_Parameter%node_total) = 0.5*(1.0D0-COS(0.2*time))*1.0D+05
    CALL BD_CopyOutput(BD_Output,OT_tmp,MESH_NEWCOPY,ErrStat,ErrMsg)
    CALL BD_CopyOutput(BD1_Output,BD1OT_tmp,MESH_NEWCOPY,ErrStat,ErrMsg)
-WRITE(*,*) 'TIME',time
+!WRITE(*,*) 'TIME',time
    eps = 0.01D+00
    DO i=1,iter_max
-WRITE(*,*) 'i=',i
+!WRITE(*,*) 'i=',i
 
-WRITE(*,*) 'BD1_Cont%q'
-WRITE(*,*) BD1_ContinuousState%q
-WRITE(*,*) 'BD1_Cont%dqdt'
-WRITE(*,*) BD1_ContinuousState%dqdt
-WRITE(*,*) 'BD1_Other%Acc'
-WRITE(*,*) BD1_OtherState%Acc(:)
+!WRITE(*,*) 'BD1_Cont%q'
+!WRITE(*,*) BD1_ContinuousState%q
+!WRITE(*,*) 'BD1_Cont%dqdt'
+!WRITE(*,*) BD1_ContinuousState%dqdt
+!WRITE(*,*) 'BD1_Other%Acc'
+!WRITE(*,*) BD1_OtherState%Acc(:)
        CALL BD_CalcOutput( time, BD1_Input, BD1_Parameter, BD1_ContinuousState, BD1_DiscreteState, &
                     BD1_ConstraintState, BD1_OtherState, BD1_Output, ErrStat, ErrMsg )
-WRITE(*,*) 'BD_Cont%q'
-WRITE(*,*) BD_ContinuousState%q
-WRITE(*,*) 'BD_Cont%dqdt'
-WRITE(*,*) BD_ContinuousState%dqdt
-WRITE(*,*) 'BD_Other%Acc'
-WRITE(*,*) BD_OtherState%Acc(:)
+!WRITE(*,*) 'BD_Cont%q'
+!WRITE(*,*) BD_ContinuousState%q
+!WRITE(*,*) 'BD_Cont%dqdt'
+!WRITE(*,*) BD_ContinuousState%dqdt
+!WRITE(*,*) 'BD_Other%Acc'
+!WRITE(*,*) BD_OtherState%Acc(:)
        CALL BD_CalcOutput( time, BD_Input, BD_Parameter, BD_ContinuousState, BD_DiscreteState, &
                     BD_ConstraintState, BD_OtherState, BD_Output, ErrStat, ErrMsg )
-WRITE(*,*) 'Original BD Reaction Force:'
-WRITE(*,*) BD_Output%ReactionForce%Force(1:3,1)
-WRITE(*,*) BD_Output%ReactionForce%Moment(1:3,1)
+!WRITE(*,*) 'Original BD Reaction Force:'
+!WRITE(*,*) BD_Output%ReactionForce%Force(1:3,1)
+!WRITE(*,*) BD_Output%ReactionForce%Moment(1:3,1)
        CALL BD_CopyInput(BD_Input,BDInput_tmp,MESH_NEWCOPY,ErrStat,ErrMsg)
        CALL BD_CopyInput(BD1_Input,BD1Input_tmp,MESH_NEWCOPY,ErrStat,ErrMsg)
 
@@ -285,17 +286,23 @@ WRITE(*,*) BD_Output%ReactionForce%Moment(1:3,1)
        CALL ludcmp(Coef,24,indx,d)
        CALL lubksb(Coef,24,indx,RHS,uinc)
 
-WRITE(*,*) 'uinc:'
-WRITE(*,*) uinc(:)
-WRITE(*,*) 'BD1 Input Force'
-WRITE(*,*) BD1_Input%PointLoad%Force(1:3,BD1_Parameter%node_total),BD1_Input%PointLoad%Moment(1:3,BD1_Parameter%node_total)
-WRITE(*,*) 'BD Input Disp'
-WRITE(*,*) BD_Input%RootMotion%TranslationDisp(1:3,1),tempBD_rr
-WRITE(*,*) 'BD Input Vel'
-WRITE(*,*) BD_Input%RootMotion%TranslationVel(1:3,1),BD_Input%RootMotion%RotationVel(1:3,1)
-WRITE(*,*) 'BD Input Acc'
-WRITE(*,*) BD_Input%RootMotion%TranslationAcc(1:3,1),BD_Input%RootMotion%RotationAcc(1:3,1)
-       IF(BD_Norm(uinc) .LE. TOLF) RETURN
+!WRITE(*,*) 'uinc:'
+!WRITE(*,*) uinc(:)
+!WRITE(*,*) 'BD1 Input Force'
+!WRITE(*,*) BD1_Input%PointLoad%Force(1:3,BD1_Parameter%node_total),BD1_Input%PointLoad%Moment(1:3,BD1_Parameter%node_total)
+!WRITE(*,*) 'BD Input Disp'
+!WRITE(*,*) BD_Input%RootMotion%TranslationDisp(1:3,1),tempBD_rr
+!WRITE(*,*) 'BD Input Vel'
+!WRITE(*,*) BD_Input%RootMotion%TranslationVel(1:3,1),BD_Input%RootMotion%RotationVel(1:3,1)
+!WRITE(*,*) 'BD Input Acc'
+!WRITE(*,*) BD_Input%RootMotion%TranslationAcc(1:3,1),BD_Input%RootMotion%RotationAcc(1:3,1)
+       IF(BD_Norm(uinc) .LE. TOLF) THEN
+           CALL BD_DestroyInput(BDInput_tmp, ErrStat, ErrMsg )
+           CALL BD_DestroyInput(BD1Input_tmp, ErrStat, ErrMsg )
+           CALL BD_DestroyOutput(OT_tmp, ErrStat, ErrMsg )
+           CALL BD_DestroyOutput(BD1OT_tmp, ErrStat, ErrMsg )
+           RETURN
+       ENDIF
 
        BD1_Input%PointLoad%Force(1:3,BD1_Parameter%node_total) = &
             BD1_Input%PointLoad%Force(1:3,BD1_Parameter%node_total) + uinc(1:3)
@@ -313,7 +320,10 @@ WRITE(*,*) BD_Input%RootMotion%TranslationAcc(1:3,1),BD_Input%RootMotion%Rotatio
       
        IF(i .EQ. iter_max) THEN
            WRITE(*,*) "InputOutputSolve does not converge after the maximum number of iterations"
-!           RETURN
+           CALL BD_DestroyInput(BDInput_tmp, ErrStat, ErrMsg )
+           CALL BD_DestroyInput(BD1Input_tmp, ErrStat, ErrMsg )
+           CALL BD_DestroyOutput(OT_tmp, ErrStat, ErrMsg )
+           CALL BD_DestroyOutput(BD1OT_tmp, ErrStat, ErrMsg )
            STOP 
        ENDIF
 
@@ -437,7 +447,7 @@ PROGRAM MAIN
    ! -------------------------------------------------------------------------
 
    t_initial = 0.d0
-   t_final   = 1.0D-01
+   t_final   = 8.0D-00
 
    pc_max = 2  ! Number of predictor-corrector iterations; 1 corresponds to an explicit calculation where UpdateStates
                ! is called only once  per time step for each module; inputs and outputs are extrapolated in time and

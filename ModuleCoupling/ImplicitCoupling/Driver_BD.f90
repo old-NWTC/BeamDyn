@@ -99,14 +99,14 @@ PROGRAM MAIN
    ! -------------------------------------------------------------------------
 
    t_initial = 0.0D+00
-   t_final   = 1.0D-01
+   t_final   = 8.0D-00
 
    pc_max = 1  ! Number of predictor-corrector iterations; 1 corresponds to an explicit calculation where UpdateStates 
                ! is called only once  per time step for each module; inputs and outputs are extrapolated in time and 
                ! are available to modules that have an implicit dependence on other-module data
 
    ! specify time increment; currently, all modules will be time integrated with this increment size
-   dt_global = 1.0D-03*1.0D0
+   dt_global = 1.0D-03
 
    n_t_final = ((t_final - t_initial) / dt_global )
 
@@ -130,12 +130,12 @@ PROGRAM MAIN
    !  in the modules, i.e., that both modules are called at the same glue-code  
    !  defined coupling interval.
    ! -------------------------------------------------------------------------
-    OPEN(unit = QiTipDisp, file = 'Qi_Tip_Disp.out', status = 'REPLACE',ACTION = 'WRITE')
-    OPEN(unit = QiMidDisp, file = 'Qi_Mid_Disp.out', status = 'REPLACE',ACTION = 'WRITE')
-    OPEN(unit = QiMidForce, file = 'Qi_Mid_Force.out', status = 'REPLACE',ACTION = 'WRITE')
-    OPEN(unit = QiMidAcc, file = 'Qi_Mid_Acc.out', status = 'REPLACE',ACTION = 'WRITE')
-    OPEN(unit = QiMidVel, file = 'Qi_Mid_Vel.out', status = 'REPLACE',ACTION = 'WRITE')
-    OPEN(unit = QiRootUnit,file = 'QiRoot_AM2.out', status = 'REPLACE',ACTION = 'WRITE')
+!    OPEN(unit = QiTipDisp, file = 'Qi_Tip_Disp.out', status = 'REPLACE',ACTION = 'WRITE')
+!    OPEN(unit = QiMidDisp, file = 'Qi_Mid_Disp.out', status = 'REPLACE',ACTION = 'WRITE')
+!    OPEN(unit = QiMidForce, file = 'Qi_Mid_Force.out', status = 'REPLACE',ACTION = 'WRITE')
+!    OPEN(unit = QiMidAcc, file = 'Qi_Mid_Acc.out', status = 'REPLACE',ACTION = 'WRITE')
+!    OPEN(unit = QiMidVel, file = 'Qi_Mid_Vel.out', status = 'REPLACE',ACTION = 'WRITE')
+!    OPEN(unit = QiRootUnit,file = 'QiRoot_AM2.out', status = 'REPLACE',ACTION = 'WRITE')
     OPEN(unit = QiReacUnit,file = 'QiReac_AM2.out', status = 'REPLACE',ACTION = 'WRITE')
 
 
@@ -144,8 +144,8 @@ PROGRAM MAIN
 !   BD_InitInput%InputFile = 'BeamDyn_Input_5MW_New.inp'
 !   BD_InitInput%InputFile = 'Siemens_53_Input.inp'
 !BD_InitInput%InputFile = 'Coupling_Debug.inp'
-!   BD_InitInput%InputFile = 'GA2_Debug.inp'
-   BD_InitInput%InputFile = 'BDyn.inp'
+   BD_InitInput%InputFile = 'GA2_Debug.inp'
+!   BD_InitInput%InputFile = 'BDyn.inp'
 !   BD_InitInput%InputFile = 'BeamDyn_Input_DTU10MW.inp'
 !   BD_InitInput%InputFile = 'BeamDyn_Input_Sample.inp'
 !   BD_InitInput%InputFile = 'BeamDyn_Input_Composite.inp'
@@ -290,23 +290,24 @@ WRITE(*,*) "Time Step: ", n_t_global
 !CALL CrvMatrixH(BD_ContinuousState%q(4:6),temp_H)
 !WRITE(QiHUnit,7000) t_global,temp_H(1,1),temp_H(1,2),temp_H(1,3),temp_H(2,1),temp_H(2,2),temp_H(2,3),&
 !                    temp_H(3,1),temp_H(3,2),temp_H(3,3)      
-CALL BD_CrvExtractCrv(BD_OutPut(1)%BldMotion%Orientation(1:3,1:3,BD_Parameter%node_elem*BD_Parameter%elem_total),temp_cc)
-      WRITE(QiTipDisp,6000) t_global,&
-                           &BD_OutPut(1)%BldMotion%TranslationDisp(1:3,BD_Parameter%node_elem*BD_Parameter%elem_total),&
-                           &temp_cc(1:3)
-CALL BD_CrvExtractCrv(BD_OutPut(1)%BldMotion%Orientation(1:3,1:3,BD_Parameter%node_elem),temp_cc)
-      WRITE(QiMidDisp,6000) t_global,&
-                           &BD_OutPut(1)%BldMotion%TranslationDisp(1:3,BD_Parameter%node_elem),&
-                           &temp_cc(1:3)
-      WRITE(QiMidAcc,6000) t_global,&
-                           &BD_OutPut(1)%BldMotion%TranslationAcc(1:3,BD_Parameter%node_elem),&
-                           &BD_OutPut(1)%BldMotion%RotationAcc(1:3,BD_Parameter%node_elem)
-      WRITE(QiMidVel,6000) t_global,&
-                           &BD_OutPut(1)%BldMotion%TranslationVel(1:3,BD_Parameter%node_elem),&
-                           &BD_OutPut(1)%BldMotion%RotationVel(1:3,BD_Parameter%node_elem)
-      WRITE(QiMidForce,6000) t_global,&
-                           &BD_OutPut(1)%BldForce%Force(1:3,3),&
-                           &BD_OutPut(1)%BldForce%Moment(1:3,3)
+
+!CALL BD_CrvExtractCrv(BD_OutPut(1)%BldMotion%Orientation(1:3,1:3,BD_Parameter%node_elem*BD_Parameter%elem_total),temp_cc)
+!      WRITE(QiTipDisp,6000) t_global,&
+!                           &BD_OutPut(1)%BldMotion%TranslationDisp(1:3,BD_Parameter%node_elem*BD_Parameter%elem_total),&
+!                           &temp_cc(1:3)
+!CALL BD_CrvExtractCrv(BD_OutPut(1)%BldMotion%Orientation(1:3,1:3,BD_Parameter%node_elem),temp_cc)
+!      WRITE(QiMidDisp,6000) t_global,&
+!                           &BD_OutPut(1)%BldMotion%TranslationDisp(1:3,BD_Parameter%node_elem),&
+!                           &temp_cc(1:3)
+!      WRITE(QiMidAcc,6000) t_global,&
+!                           &BD_OutPut(1)%BldMotion%TranslationAcc(1:3,BD_Parameter%node_elem),&
+!                           &BD_OutPut(1)%BldMotion%RotationAcc(1:3,BD_Parameter%node_elem)
+!      WRITE(QiMidVel,6000) t_global,&
+!                           &BD_OutPut(1)%BldMotion%TranslationVel(1:3,BD_Parameter%node_elem),&
+!                           &BD_OutPut(1)%BldMotion%RotationVel(1:3,BD_Parameter%node_elem)
+!      WRITE(QiMidForce,6000) t_global,&
+!                           &BD_OutPut(1)%BldForce%Force(1:3,3),&
+!                           &BD_OutPut(1)%BldForce%Moment(1:3,3)
 !                             BD_OtherState%Acc(13:18)
 !                           &temp_cc(1:3)
 !                           &BD_OutPut(1)%BldMotion%TranslationVel(1:3,BD_Parameter%node_total),&
@@ -322,11 +323,12 @@ CALL BD_CrvExtractCrv(BD_OutPut(1)%BldMotion%Orientation(1:3,1:3,BD_Parameter%no
 !      WRITE(QiTipDisp,6000) t_global,BD_ContinuousState%q(25),BD_ContinuousState%q(26),&
 !                           &BD_ContinuousState%q(27),BD_ContinuousState%q(28),&
 !                           &BD_ContinuousState%q(29),BD_ContinuousState%q(30)
-      WRITE(QiRootUnit,6000) t_global,&
-!                           &BD_OutPut(1)%ReactionForce%Force(1:3,1),&
-!                           &BD_OutPut(1)%ReactionForce%Moment(1:3,1)
-                           &BD_OutPut(1)%BldForce%Force(1:3,1),&
-                           &BD_OutPut(1)%BldForce%Moment(1:3,1)
+!      WRITE(QiRootUnit,6000) t_global,&
+!                           &BD_OutPut(1)%BldForce%Force(1:3,1),&
+!                           &BD_OutPut(1)%BldForce%Moment(1:3,1)
+      WRITE(QiReacUnit,6000) t_global,&
+                           &BD_OutPut(1)%ReactionForce%Force(1:3,1),&
+                           &BD_OutPut(1)%ReactionForce%Moment(1:3,1)
 
 !      WRITE(QiReacUnit,6000) t_global,&
 !                           &BD_OutPut(1)%ReactionForce%Force(1:3,1),&
@@ -383,12 +385,12 @@ WRITE(*,*) 'Time: ', finish-start
    DEALLOCATE(BD_InitInput%gravity)
 
    6000 FORMAT (ES12.5,6ES21.12)
-   CLOSE (QiTipDisp)
-   CLOSE (QiRootUnit)
+!   CLOSE (QiTipDisp)
+!   CLOSE (QiRootUnit)
    CLOSE (QiReacUnit)
-   CLOSE (QiMidDisp)
-   CLOSE (QiMidForce)
-   CLOSE (QiMidAcc)
+!   CLOSE (QiMidDisp)
+!   CLOSE (QiMidForce)
+!   CLOSE (QiMidAcc)
 
 7000 FORMAT (ES12.5,9ES21.12)
 !CLOSE (QiHUnit)
@@ -459,7 +461,8 @@ END PROGRAM MAIN
    u%PointLoad%Force(:,:)  = 0.0D0
    u%PointLoad%Moment(:,:) = 0.0D0
    
-   u%PointLoad%Force(3,p%node_total) = 1.0D+05*SIN(20.0D+00*t)
+!   u%PointLoad%Force(3,p%node_total) = 1.0D+05*SIN(0.2*t)
+   u%PointLoad%Force(3,p%node_total) = 1.0D+05*0.5*(1.0D0-COS(0.2*t))
 
    ! LINE2 mesh: DistrLoad
    u%DistrLoad%Force(:,:)  = 0.0D0
