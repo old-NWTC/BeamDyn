@@ -2294,7 +2294,6 @@ END SUBROUTINE ludcmp
 
        CALL BD_GyroForce(mEta,rho,uuu,vvv,Fb)
        CALL BD_GravityForce(mmm,mEta,gravity,Fg)
-
        CALL BD_ElasticForce(E1,RR0,kapa,Stif,cet,Fc,Fd,Oe,Pe,Qe)
        IF(damp_flag .NE. 0) THEN
            CALL BD_DissipativeForce(beta,Stif,vvv,vvp,E1,Fc,Fd,Sd,Od,Pd,Qd,betaC,Gd,Xd,Yd)
@@ -2857,6 +2856,12 @@ END SUBROUTINE ludcmp
        Stif(:,:) = 0.0D0
        Stif(1:6,1:6) = EStif0_GL(1:6,1:6,igp)
        CALL BD_GaussPointData(hhx,hpx,Nuuu,Nrrr,uu0,E10,node_elem,dof_node,uuu,uup,E1,RR0,kapa,Stif,cet)       
+!WRITE(*,*) 'uuu'
+!WRITE(*,*) uuu
+!WRITE(*,*) 'E1'
+!WRITE(*,*) E1
+!WRITE(*,*) 'kapa'
+!WRITE(*,*) kapa
        mmm  = 0.0D0
        mEta = 0.0D0
        rho  = 0.0D0
@@ -2866,6 +2871,12 @@ END SUBROUTINE ludcmp
        rho(1:3,1:3) = EMass0_GL(4:6,4:6,igp)
        CALL BD_GaussPointDataMass(hhx,hpx,Nvvv,Naaa,RR0,node_elem,dof_node,vvv,aaa,vvp,mmm,mEta,rho)
        CALL BD_ElasticForce(E1,RR0,kapa,Stif,cet,Fc,Fd,Oe,Pe,Qe)
+!WRITE(*,*) 'Fc'
+!WRITE(*,*) Fc
+!WRITE(*,*) 'Fd'
+!WRITE(*,*) Fd
+!WRITE(*,*) 'aaa'
+!WRITE(*,*) aaa
        IF(damp_flag .EQ. 1) THEN
            CALL BD_DissipativeForce(beta,Stif,vvv,vvp,E1,Fc,Fd,Sd,Od,Pd,Qd,betaC,Gd,Xd,Yd)
        ENDIF
@@ -2874,6 +2885,12 @@ END SUBROUTINE ludcmp
        CALL BD_GravityForce(mmm,mEta,gravity,Fg)
        Fg(:) = Fg(:) + DistrLoad_GL(:,igp)
 
+!WRITE(*,*) 'Fi'
+!WRITE(*,*) Fi
+!WRITE(*,*) 'Fb'
+!WRITE(*,*) Fb
+!WRITE(*,*) 'Fg'
+!WRITE(*,*) Fg
        DO i=1,node_elem
            DO j=1,dof_node
                temp_id1 = (i-1) * dof_node+j
@@ -4465,6 +4482,7 @@ END SUBROUTINE ludcmp
        DO j=1,dof_total-6
            ai(j+6) = ai_temp(j)
        ENDDO
+       CALL BD_UpdateDynamicGA2(ai,uuNf,vvNf,aaNf,xxNf,coef,node_total,dof_node)
        IF(i==1) THEN
            Eref = SQRT(DOT_PRODUCT(ai_temp,feqv))*TOLF
            IF(Eref .LE. TOLF) RETURN
@@ -4474,7 +4492,8 @@ END SUBROUTINE ludcmp
            Enorm = SQRT(DOT_PRODUCT(ai_temp,feqv))
            IF(Enorm .LE. Eref) RETURN
        ENDIF    
-       CALL BD_UpdateDynamicGA2(ai,uuNf,vvNf,aaNf,xxNf,coef,node_total,dof_node)
+!WRITE(*,*) 'inc'
+!WRITE(*,*) ai
            
        IF(i==niter) THEN
            WRITE(*,*) "Solution does not converge after the maximum number of iterations"

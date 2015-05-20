@@ -126,7 +126,7 @@ SUBROUTINE BD1_BD_InputOutputSolve(time, &
    ! Note that Module2 has direct feedthrough, but Module1 does not. Thus, Module1 should be called first.
 
 !   BD_Input%PointLoad%Force(3,BD_Parameter%node_total) = 1.0D+05*SIN(0.2*time)
-   BD_Input%PointLoad%Force(3,BD_Parameter%node_total) = 0.5*(1.0D0-COS(0.2*time))*1.0D+05
+   BD_Input%PointLoad%Force(3,BD_Parameter%node_total) = 0.5*(1.0D0-COS(0.2*time))*1.0D+03
    CALL BD_CopyOutput(BD_Output,OT_tmp,MESH_NEWCOPY,ErrStat,ErrMsg)
    CALL BD_CopyOutput(BD1_Output,BD1OT_tmp,MESH_NEWCOPY,ErrStat,ErrMsg)
 !WRITE(*,*) 'TIME',time
