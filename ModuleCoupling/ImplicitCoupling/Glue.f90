@@ -111,7 +111,7 @@ SUBROUTINE BD1_BD_InputOutputSolve(time, &
    REAL(ReKi)                                   :: temp3(3)
    REAL(ReKi)                                   :: tempBD_rr(3)
    REAL(ReKi)                                   :: tempBD1_rr(3)
-   REAL(ReKi),                        PARAMETER :: TOLF = 1.0D-02
+   REAL(ReKi),                        PARAMETER :: TOLF = 1.0D-10
    INTEGER(IntKi)                               :: indx(24)
    INTEGER(IntKi)                               :: i
    INTEGER(IntKi)                               :: j
@@ -121,18 +121,23 @@ SUBROUTINE BD1_BD_InputOutputSolve(time, &
    TYPE(BD_OutputType)                         :: BD1OT_tmp
    TYPE(BD_InputType)                           :: BDInput_tmp
    TYPE(BD_InputType)                          :: BD1Input_tmp
+   TYPE(BD_InputType)                          :: BD1InputRea_tmp
    ! Solve input-output relations; this section of code corresponds to Eq. (35) in Gasmi et al. (2013)
    ! This code will be specific to the underlying modules; could be placed in a separate routine.
    ! Note that Module2 has direct feedthrough, but Module1 does not. Thus, Module1 should be called first.
 
 !   BD_Input%PointLoad%Force(3,BD_Parameter%node_total) = 1.0D+05*SIN(0.2*time)
-   BD_Input%PointLoad%Force(3,BD_Parameter%node_total) = 0.5*(1.0D0-COS(0.2*time))*1.0D+03
+!   BD_Input%PointLoad%Force(3,BD_Parameter%node_total) = 0.5*(1.0D0-COS(0.2*time))*1.0D+03
+   CALL BD_CopyInput(BD1_Input,BD1InputRea_tmp,MESH_NEWCOPY,ErrStat,ErrMsg)
+   BD1InputRea_tmp%PointLoad%Force(:,:) = 0.0D0
+   BD1InputRea_tmp%PointLoad%Moment(:,:) = 0.0D0
+   BD1_Input%PointLoad%Force(3,BD1_Parameter%node_total) = 1.0D+00 + BD1InputRea_tmp%PointLoad
    CALL BD_CopyOutput(BD_Output,OT_tmp,MESH_NEWCOPY,ErrStat,ErrMsg)
    CALL BD_CopyOutput(BD1_Output,BD1OT_tmp,MESH_NEWCOPY,ErrStat,ErrMsg)
 !WRITE(*,*) 'TIME',time
    eps = 0.01D+00
    DO i=1,iter_max
-!WRITE(*,*) 'i=',i
+WRITE(*,*) 'i=',i
 
 !WRITE(*,*) 'BD1_Cont%q'
 !WRITE(*,*) BD1_ContinuousState%q
@@ -177,6 +182,23 @@ SUBROUTINE BD1_BD_InputOutputSolve(time, &
        RHS(22:24) = -(BD_Input%RootMotion%RotationAcc(1:3,1) - &
                       BD1_Output%BldMotion%RotationAcc(1:3,BD1_Parameter%node_total))
     
+!WRITE(*,*) 'RHS(Residual)'
+!WRITE(*,*) RHS
+WRITE(*,*) 'BD1 Input Force'
+WRITE(*,*) BD1_Input%PointLoad%Force(1:3,BD1_Parameter%node_total),BD1_Input%PointLoad%Moment(1:3,BD1_Parameter%node_total)
+WRITE(*,*) 'BD Input Disp'
+WRITE(*,*) BD_Input%RootMotion%TranslationDisp(1:3,1),tempBD_rr
+WRITE(*,*) 'BD Input Vel'
+WRITE(*,*) BD_Input%RootMotion%TranslationVel(1:3,1),BD_Input%RootMotion%RotationVel(1:3,1)
+WRITE(*,*) 'BD Input Acc'
+WRITE(*,*) BD_Input%RootMotion%TranslationAcc(1:3,1),BD_Input%RootMotion%RotationAcc(1:3,1)
+       IF(BD_Norm(RHS) .LE. TOLF) THEN
+           CALL BD_DestroyInput(BDInput_tmp, ErrStat, ErrMsg )
+           CALL BD_DestroyInput(BD1Input_tmp, ErrStat, ErrMsg )
+           CALL BD_DestroyOutput(OT_tmp, ErrStat, ErrMsg )
+           CALL BD_DestroyOutput(BD1OT_tmp, ErrStat, ErrMsg )
+           RETURN
+       ENDIF
        Coef(:,:) = 0.0D0
        DO j=1,24
            Coef(j,j) = 1.0D0
@@ -286,23 +308,15 @@ SUBROUTINE BD1_BD_InputOutputSolve(time, &
        CALL ludcmp(Coef,24,indx,d)
        CALL lubksb(Coef,24,indx,RHS,uinc)
 
-!WRITE(*,*) 'uinc:'
-!WRITE(*,*) uinc(:)
-!WRITE(*,*) 'BD1 Input Force'
-!WRITE(*,*) BD1_Input%PointLoad%Force(1:3,BD1_Parameter%node_total),BD1_Input%PointLoad%Moment(1:3,BD1_Parameter%node_total)
-!WRITE(*,*) 'BD Input Disp'
-!WRITE(*,*) BD_Input%RootMotion%TranslationDisp(1:3,1),tempBD_rr
-!WRITE(*,*) 'BD Input Vel'
-!WRITE(*,*) BD_Input%RootMotion%TranslationVel(1:3,1),BD_Input%RootMotion%RotationVel(1:3,1)
-!WRITE(*,*) 'BD Input Acc'
-!WRITE(*,*) BD_Input%RootMotion%TranslationAcc(1:3,1),BD_Input%RootMotion%RotationAcc(1:3,1)
-       IF(BD_Norm(uinc) .LE. TOLF) THEN
-           CALL BD_DestroyInput(BDInput_tmp, ErrStat, ErrMsg )
-           CALL BD_DestroyInput(BD1Input_tmp, ErrStat, ErrMsg )
-           CALL BD_DestroyOutput(OT_tmp, ErrStat, ErrMsg )
-           CALL BD_DestroyOutput(BD1OT_tmp, ErrStat, ErrMsg )
-           RETURN
-       ENDIF
+WRITE(*,*) 'uinc:'
+WRITE(*,*) uinc(:)
+!       IF(BD_Norm(uinc) .LE. TOLF) THEN
+!           CALL BD_DestroyInput(BDInput_tmp, ErrStat, ErrMsg )
+!           CALL BD_DestroyInput(BD1Input_tmp, ErrStat, ErrMsg )
+!           CALL BD_DestroyOutput(OT_tmp, ErrStat, ErrMsg )
+!           CALL BD_DestroyOutput(BD1OT_tmp, ErrStat, ErrMsg )
+!           RETURN
+!       ENDIF
 
        BD1_Input%PointLoad%Force(1:3,BD1_Parameter%node_total) = &
             BD1_Input%PointLoad%Force(1:3,BD1_Parameter%node_total) + uinc(1:3)
@@ -613,7 +627,7 @@ PROGRAM MAIN
 
    DO n_t_global = 0, n_t_final
 WRITE(*,*) "Time Step: ", n_t_global
-!IF(n_t_global .EQ. 1) STOP
+IF(n_t_global .EQ. 0) STOP
       ! Solve input-output relations; this section of code corresponds to Eq. (35) in Gasmi et al. (2013)
       ! This code will be specific to the underlying modules
 

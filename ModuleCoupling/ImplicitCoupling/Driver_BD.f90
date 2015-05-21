@@ -99,7 +99,7 @@ PROGRAM MAIN
    ! -------------------------------------------------------------------------
 
    t_initial = 0.0D+00
-   t_final   = 5.0D-00
+   t_final   = 8.0D-00
 
    pc_max = 1  ! Number of predictor-corrector iterations; 1 corresponds to an explicit calculation where UpdateStates 
                ! is called only once  per time step for each module; inputs and outputs are extrapolated in time and 
@@ -462,7 +462,7 @@ END PROGRAM MAIN
    u%PointLoad%Moment(:,:) = 0.0D0
    
 !   u%PointLoad%Force(3,p%node_total) = 1.0D+05*SIN(0.2*t)
-   u%PointLoad%Force(3,p%node_total) = 1.0D+05*0.5*(1.0D0-COS(0.2*t))
+   u%PointLoad%Force(3,p%node_total) = 1.0D+03*0.5*(1.0D0-COS(0.2*t))
 
    ! LINE2 mesh: DistrLoad
    u%DistrLoad%Force(:,:)  = 0.0D0

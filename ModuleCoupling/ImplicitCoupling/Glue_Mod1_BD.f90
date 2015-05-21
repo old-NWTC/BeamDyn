@@ -105,16 +105,16 @@ SUBROUTINE Mod1_BD_InputOutputSolve(time, &
    REAL(DbKi),                   INTENT(IN   )  :: time        ! Current simulation time in seconds
 
    REAL(ReKi)                                   :: BD_Force
-   REAL(ReKi)                                   :: BD_RootMotion(3)
+   REAL(ReKi)                                   :: BD_RootAcc
    REAL(ReKi)                                   :: Mod1_Force
-   REAL(ReKi)                                   :: Mod1_Motion(3)
-   REAL(ReKi)                                   :: RHS(4)
-   REAL(ReKi)                                   :: Coef(4,4)
+   REAL(ReKi)                                   :: Mod1_Acc
+   REAL(ReKi)                                   :: RHS(2)
+   REAL(ReKi)                                   :: Coef(2,2)
    REAL(ReKi)                                   :: eps
    REAL(ReKi)                                   :: d
-   REAL(ReKi)                                   :: uinc(4)
-   REAL(ReKi),                        PARAMETER :: TOLF = 1.0D-05
-   INTEGER(IntKi)                               :: indx(4)
+   REAL(ReKi)                                   :: uinc(2)
+   REAL(ReKi),                        PARAMETER :: TOLF = 1.0D-10
+   INTEGER(IntKi)                               :: indx(2)
    INTEGER(IntKi)                               :: i
    INTEGER(IntKi),                    PARAMETER :: iter_max = 10
    TYPE(BD_OutputType)                          :: OT_tmp
@@ -124,6 +124,8 @@ SUBROUTINE Mod1_BD_InputOutputSolve(time, &
    ! Note that Module2 has direct feedthrough, but Module1 does not. Thus, Module1 should be called first.
 
    eps = 0.01D+00
+   BD_Input%RootMotion%TranslationDisp(1,1) = Mod1_Output%PointMesh%TranslationDisp(1,1)
+   BD_Input%RootMotion%TranslationVel(1,1) = Mod1_Output%PointMesh%TranslationVel(1,1)
    DO i=1,iter_max
 !WRITE(*,*) 'i=',i
        CALL Mod1_CalcOutput( time, Mod1_Input, Mod1_Parameter, Mod1_ContinuousState, Mod1_DiscreteState, &
@@ -138,75 +140,40 @@ SUBROUTINE Mod1_BD_InputOutputSolve(time, &
 !WRITE(*,*) BD_Output%BldMotion%TranslationDisp(:,BD_Parameter%node_total)
 
        BD_Force = BD_Output%ReactionForce%Force(1,1)
-       BD_RootMotion(1) = BD_Input%RootMotion%TranslationDisp(1,1)
-       BD_RootMotion(2) = BD_Input%RootMotion%TranslationVel(1,1)
-       BD_RootMotion(3) = BD_Input%RootMotion%TranslationAcc(1,1)
+       BD_RootAcc = BD_Input%RootMotion%TranslationAcc(1,1)
 
        RHS(:) = 0.0D0
        RHS(1) = -(Mod1_Input%PointMesh%Force(1,1) - BD_Output%ReactionForce%Force(1,1))
-       RHS(2) = -(BD_Input%RootMotion%TranslationDisp(1,1) - Mod1_Output%PointMesh%TranslationDisp(1,1))
-       RHS(3) = -(BD_Input%RootMotion%TranslationVel(1,1) - Mod1_Output%PointMesh%TranslationVel(1,1))
-       RHS(4) = -(BD_Input%RootMotion%TranslationAcc(1,1) - Mod1_Output%PointMesh%TranslationAcc(1,1))
+       RHS(2) = -(BD_Input%RootMotion%TranslationAcc(1,1) - Mod1_Output%PointMesh%TranslationAcc(1,1))
     
        Coef(:,:) = 0.0D0
        Coef(1,1) = 1.0D0
-!WRITE(*,*) 'Ori TransDisp:',BD_Input%RootMotion%TranslationDisp(1,1)
-       BD_Input%RootMotion%TranslationDisp(1,1) = BD_Input%RootMotion%TranslationDisp(1,1) + eps
-       CALL BD_InputClean(BD_Input)
-!WRITE(*,*) 'Per TransDisp:',BD_Input%RootMotion%TranslationDisp(1,1)
-CALL BD_CopyOutput(BD_Output, OT_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
-       CALL BD_CalcOutput( time, BD_Input, BD_Parameter, BD_ContinuousState, BD_DiscreteState, &
-                    BD_ConstraintState, BD_OtherState, OT_tmp, ErrStat, ErrMsg )
-!WRITE(*,*) 'Perturbed Disp BD Force:',BD_Output%ReactionForce%Force(1,1)
-       Coef(1,2) = -((OT_tmp%ReactionForce%Force(1,1)-BD_Force)/eps)
-       BD_Input%RootMotion%TranslationDisp(1,1) = BD_RootMotion(1)
-
-       BD_Input%RootMotion%TranslationVel(1,1) = BD_Input%RootMotion%TranslationVel(1,1) + eps
-       CALL BD_InputClean(BD_Input)
-CALL BD_CopyOutput(BD_Output, OT_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
-       CALL BD_CalcOutput( time, BD_Input, BD_Parameter, BD_ContinuousState, BD_DiscreteState, &
-                    BD_ConstraintState, BD_OtherState, OT_tmp, ErrStat, ErrMsg )
-!WRITE(*,*) 'Perturbed Vel BD Force:',BD_Output%ReactionForce%Force(1,1)
-       Coef(1,3) = -((OT_tmp%ReactionForce%Force(1,1)-BD_Force)/eps)
-       BD_Input%RootMotion%TranslationVel(1,1) = BD_RootMotion(2)
 
        BD_Input%RootMotion%TranslationAcc(1,1) = BD_Input%RootMotion%TranslationAcc(1,1) + eps
        CALL BD_InputClean(BD_Input)
 CALL BD_CopyOutput(BD_Output, OT_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
        CALL BD_CalcOutput( time, BD_Input, BD_Parameter, BD_ContinuousState, BD_DiscreteState, &
                     BD_ConstraintState, BD_OtherState, OT_tmp, ErrStat, ErrMsg )
-       Coef(1,4) = -((OT_tmp%ReactionForce%Force(1,1)-BD_Force)/eps)
-       BD_Input%RootMotion%TranslationAcc(1,1) = BD_RootMotion(3)
-
-!WRITE(*,*) Coef(1,2)
-!WRITE(*,*) Coef(1,3)
-!WRITE(*,*) Coef(1,4)
+       Coef(1,2) = -((OT_tmp%ReactionForce%Force(1,1)-BD_Force)/eps)
+       BD_Input%RootMotion%TranslationAcc(1,1) = BD_RootAcc
 
        Coef(2,2) = 1.0D0
-       Coef(3,3) = 1.0D0
-       Coef(4,4) = 1.0D0
        Mod1_Force = Mod1_Input%PointMesh%Force(1,1)
-       Mod1_Motion(1) = Mod1_Output%PointMesh%TranslationDisp(1,1)
-       Mod1_Motion(2) = Mod1_Output%PointMesh%TranslationVel(1,1)
-       Mod1_Motion(3) = Mod1_Output%PointMesh%TranslationAcc(1,1)
+       Mod1_Acc = Mod1_Output%PointMesh%TranslationAcc(1,1)
 
        Mod1_Input%PointMesh%Force(1,1) = Mod1_Input%PointMesh%Force(1,1) + eps
 CALL Mod1_CopyOutput(Mod1_Output, Mod1OT_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
        CALL Mod1_CalcOutput( time, Mod1_Input, Mod1_Parameter, Mod1_ContinuousState, Mod1_DiscreteState, &
                              Mod1_ConstraintState, Mod1_OtherState, Mod1OT_tmp, ErrStat, ErrMsg )
-       Coef(2,1) = -((Mod1OT_tmp%PointMesh%TranslationDisp(1,1) - Mod1_Motion(1))/eps)
-       Coef(3,1) = -((Mod1OT_tmp%PointMesh%TranslationVel(1,1) - Mod1_Motion(2))/eps)
-       Coef(4,1) = -((Mod1OT_tmp%PointMesh%TranslationAcc(1,1) - Mod1_Motion(3))/eps)
+       Coef(2,1) = -((Mod1OT_tmp%PointMesh%TranslationAcc(1,1) - Mod1_Acc)/eps)
        Mod1_Input%PointMesh%Force(1,1) = Mod1_Force
  
-       CALL ludcmp(Coef,4,indx,d)
-       CALL lubksb(Coef,4,indx,RHS,uinc)
+       CALL ludcmp(Coef,2,indx,d)
+       CALL lubksb(Coef,2,indx,RHS,uinc)
 
        IF(BD_Norm(uinc) .LE. TOLF) RETURN
        Mod1_Input%PointMesh%Force(1,1) = Mod1_Input%PointMesh%Force(1,1) + uinc(1)
-       BD_Input%RootMotion%TranslationDisp(1,1) = BD_Input%RootMotion%TranslationDisp(1,1) + uinc(2)
-       BD_Input%RootMotion%TranslationVel(1,1) = BD_Input%RootMotion%TranslationVel(1,1) + uinc(3)
-       BD_Input%RootMotion%TranslationAcc(1,1) = BD_Input%RootMotion%TranslationAcc(1,1) + uinc(4)
+       BD_Input%RootMotion%TranslationAcc(1,1) = BD_Input%RootMotion%TranslationAcc(1,1) + uinc(2)
       
 !WRITE(*,*) 'Mod1 Input Force:',Mod1_Input%PointMesh%Force(1,1)
        IF(i .EQ. iter_max) THEN
@@ -361,7 +328,7 @@ PROGRAM MAIN
                ! are available to modules that have an implicit dependence on other-module data
 
    ! specify time increment; currently, all modules will be time integrated with this increment size
-   dt_global = 1.0D-03
+   dt_global = 1.0D-03*0.1
 
    n_t_final = ((t_final - t_initial) / dt_global )
 
@@ -489,7 +456,7 @@ PROGRAM MAIN
 
    DO n_t_global = 0, n_t_final
 WRITE(*,*) "Time Step: ", n_t_global
-!IF(n_t_global .EQ. 1) STOP
+!IF(n_t_global .EQ. 100) STOP
       ! Solve input-output relations; this section of code corresponds to Eq. (35) in Gasmi et al. (2013)
       ! This code will be specific to the underlying modules
 
