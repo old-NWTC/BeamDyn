@@ -126,8 +126,8 @@ SUBROUTINE BD1_BD_InputOutputSolve(time, &
    ! This code will be specific to the underlying modules; could be placed in a separate routine.
    ! Note that Module2 has direct feedthrough, but Module1 does not. Thus, Module1 should be called first.
 
-   BD_Input%PointLoad%Force(3,BD_Parameter%node_total) = 1.0D+02*SIN(2.0*time)
-!   BD_Input%PointLoad%Force(3,BD_Parameter%node_total) = (1.0D0-COS(20.0*time))*1.0D+03
+!   BD_Input%PointLoad%Force(3,BD_Parameter%node_total) = 1.0D+02*SIN(2.0*time)
+   BD_Input%PointLoad%Force(3,BD_Parameter%node_total) = 0.5*(1.0D0-COS(0.2*time))*1.0D+03
    BD_Input%RootMotion%TranslationDisp(:,1) = BD1_Output%BldMotion%TranslationDisp(:,BD1_Parameter%node_total)
    BD_Input%RootMotion%Orientation(:,:,1) = BD1_Output%BldMotion%Orientation(:,:,BD1_Parameter%node_total)
    BD_Input%RootMotion%TranslationVel(:,1) = BD1_Output%BldMotion%TranslationVel(:,BD1_Parameter%node_total)
@@ -363,6 +363,7 @@ PROGRAM MAIN
    INTEGER(IntKi),PARAMETER:: QiMidForce = 40
    INTEGER(IntKi),PARAMETER:: QiMidVel = 50
    INTEGER(IntKi),PARAMETER:: QiMidAcc = 60
+   INTEGER(IntKi),PARAMETER:: QiRotFor = 70
 
    ! -------------------------------------------------------------------------
    ! MAPPING STUFF; Likely needs to be added to ModMesh
@@ -376,6 +377,7 @@ PROGRAM MAIN
    OPEN(unit = QiMidForce, file = 'Qi_Mid_Force.out', status = 'REPLACE',ACTION = 'WRITE')
    OPEN(unit = QiMidVel, file = 'Qi_Mid_Vel.out', status = 'REPLACE',ACTION = 'WRITE')
    OPEN(unit = QiMidAcc, file = 'Qi_Mid_Acc.out', status = 'REPLACE',ACTION = 'WRITE')
+   OPEN(unit = QiRotFor, file = 'Qi_Rot_For.out', status = 'REPLACE',ACTION = 'WRITE')
    ! -------------------------------------------------------------------------
    ! Initialization of glue-code time-step variables
    ! -------------------------------------------------------------------------
@@ -388,7 +390,7 @@ PROGRAM MAIN
                ! are available to modules that have an implicit dependence on other-module data
 
    ! specify time increment; currently, all modules will be time integrated with this increment size
-   dt_global = 1.0D-03*0.02
+   dt_global = 1.0D-03*0.03
 
    n_t_final = ((t_final - t_initial) / dt_global )
 
@@ -568,6 +570,9 @@ WRITE(*,*) "Time Step: ", n_t_global
       WRITE(QiMidAcc,6000) t_global,&
                              &BD1_OutPut(1)%BldMotion%TranslationAcc(1:3,BD1_Parameter%node_total),&
                              &BD1_OutPut(1)%BldMotion%RotationAcc(1:3,BD1_Parameter%node_total)
+      WRITE(QiRotFor,6000) t_global,&
+                             &BD1_OutPut(1)%ReactionForce%Force(1:3,1),&
+                             &BD1_OutPut(1)%ReactionForce%Moment(1:3,1)
 !WRITE(*,*) 'BD_Input%Disp:',BD_Input(1)%RootMotion%TranslationDisp(:,1)
 !WRITE(*,*) 'BD_Input%Disp:',BD_Input(2)%RootMotion%TranslationDisp(:,1)
 !WRITE(*,*) 'BD_Input%Disp:',BD_Input(3)%RootMotion%TranslationDisp(:,1)
@@ -753,6 +758,7 @@ WRITE(*,*) "Time Step: ", n_t_global
    6000 FORMAT (ES12.5,6ES21.12)
    CLOSE (QiTipDisp)
    CLOSE (QiMidDisp)
+   CLOSE (QiRotFor)
    ! -------------------------------------------------------------------------
    ! Deallocate arrays associated with mesh mapping
    ! -------------------------------------------------------------------------
