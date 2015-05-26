@@ -106,7 +106,7 @@ PROGRAM MAIN
                ! are available to modules that have an implicit dependence on other-module data
 
    ! specify time increment; currently, all modules will be time integrated with this increment size
-   dt_global = 1.0D-03*1.0
+   dt_global = 1.0D-03*0.03
 
    n_t_final = ((t_final - t_initial) / dt_global )
 
@@ -133,7 +133,7 @@ PROGRAM MAIN
     OPEN(unit = QiTipDisp, file = 'Qi_Tip_Disp.out', status = 'REPLACE',ACTION = 'WRITE')
 !    OPEN(unit = QiMidDisp, file = 'Qi_Mid_Disp.out', status = 'REPLACE',ACTION = 'WRITE')
 !    OPEN(unit = QiMidForce, file = 'Qi_Mid_Force.out', status = 'REPLACE',ACTION = 'WRITE')
-!    OPEN(unit = QiMidAcc, file = 'Qi_Mid_Acc.out', status = 'REPLACE',ACTION = 'WRITE')
+    OPEN(unit = QiMidAcc, file = 'Qi_Mid_Acc.out', status = 'REPLACE',ACTION = 'WRITE')
 !    OPEN(unit = QiMidVel, file = 'Qi_Mid_Vel.out', status = 'REPLACE',ACTION = 'WRITE')
     OPEN(unit = QiRootUnit,file = 'QiRoot_AM2.out', status = 'REPLACE',ACTION = 'WRITE')
     OPEN(unit = QiReacUnit,file = 'QiReac_AM2.out', status = 'REPLACE',ACTION = 'WRITE')
@@ -228,7 +228,7 @@ temp_count = 0
 CALL CPU_TIME(start)
    DO n_t_global = 0, n_t_final-1
 WRITE(*,*) "Time Step: ", n_t_global
-!IF(n_t_global == 3) STOP 
+IF(n_t_global == 1) STOP 
 !  This way, when RK4 is called using ExtrapInterp, it will grab the EXACT answers that you defined at the time
 !  step endpionts and midpoint.
 
@@ -250,6 +250,9 @@ CALL BD_CrvExtractCrv(BD_OutPut(2)%BldMotion%Orientation(1:3,1:3,BD_Parameter%no
       WRITE(QiReacUnit,6000) t_global,&
                            &BD_OutPut(2)%ReactionForce%Force(1:3,1),&
                            &BD_OutPut(2)%ReactionForce%Moment(1:3,1)
+      WRITE(QiMidAcc,6000) t_global,&
+                           &BD_OutPut(2)%BldMotion%TranslationAcc(1:3,BD_Parameter%node_elem),&
+                           &BD_OutPut(2)%BldMotion%RotationAcc(1:3,BD_Parameter%node_elem)
 
       DO pc = 1, pc_max
 
@@ -462,7 +465,8 @@ END PROGRAM MAIN
    u%PointLoad%Moment(:,:) = 0.0D0
    
 !   u%PointLoad%Force(3,p%node_total) = 1.0D+05*SIN(0.2*t)
-   u%PointLoad%Force(3,p%node_total) = 1.0D+03*0.5*(1.0D0-COS(0.2*t))
+!   u%PointLoad%Force(3,p%node_total) = 1.0D+03*0.5*(1.0D0-COS(0.2*t))
+   u%PointLoad%Force(3,3) = 1.0D+00
 
    ! LINE2 mesh: DistrLoad
    u%DistrLoad%Force(:,:)  = 0.0D0
