@@ -2154,6 +2154,7 @@ END SUBROUTINE ludcmp
    INTEGER(IntKi)                  :: dof_elem ! Degree of freedom per node
    INTEGER(IntKi)                  :: rot_elem ! Rotational degrees of freedom
    INTEGER(IntKi)                  :: nelem ! number of elements
+   INTEGER(IntKi)                  :: i ! Index counter
    INTEGER(IntKi)                  :: j ! Index counter
    INTEGER(IntKi)                  :: temp_id ! Index counter
    INTEGER(IntKi)                  :: allo_stat ! Allows for an error code return
@@ -2185,6 +2186,12 @@ END SUBROUTINE ludcmp
 
        CALL BD_AssembleStiffK(nelem,node_elem,dof_elem,dof_node,&
                               elm,MassM)
+!DO i=1,18
+!WRITE(*,*) i
+!DO j=1,18
+!   WRITE(*,*) MassM(i,j)
+!ENDDO 
+!ENDDO
        CALL BD_AssembleRHS(nelem,dof_elem,node_elem,dof_node,elf,RHS)
 
    ENDDO
