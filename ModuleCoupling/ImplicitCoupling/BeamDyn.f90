@@ -755,7 +755,6 @@ CONTAINS
                y%BldMotion%RotationAcc(1:3,temp_id2) = temp6(4:6)
            ENDDO
        ENDDO
-!       CALL BD_DynamicSolutionForce(p%uuN0,x%q,x%dqdt,OS_tmp%Acc,                                      &
        CALL BD_DynamicSolutionForce(p%uuN0,x_tmp%q,x_tmp%dqdt,OS_tmp%Acc,                              &
                                     p%Stif0_GL,p%Mass0_GL,p%gravity,u_tmp,                             &
                                     p%damp_flag,p%beta,                                                &
