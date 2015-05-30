@@ -559,6 +559,12 @@ CONTAINS
 
    y%BldMotion%TranslationDisp(:,:) = 0.0D0
    y%BldMotion%Orientation(:,:,:)   = 0.0D0
+   DO i=1,p%elem_total
+       DO j=1,p%node_elem
+           temp_int = (j-1)*p%dof_node
+           CALL BD_CrvMatrixR(p%uuN0(temp_int+4:temp_int+6,i),y%BldMotion%Orientation(:,:,(i-1)*p%node_elem+j))
+       ENDDO
+   ENDDO
    y%BldMotion%TranslationVel(:,:)  = 0.0D0
    y%BldMotion%RotationVel(:,:)     = 0.0D0
    y%BldMotion%TranslationAcc(:,:)  = 0.0D0
@@ -742,17 +748,35 @@ CONTAINS
    CALL BD_InputGlobalLocal(p,u_tmp,0)
    CALL BD_BoundaryGA2(x_tmp,p,u_tmp,t,OS_tmp,ErrStat,ErrMsg)
    IF(p%analysis_type .EQ. 2) THEN
-       CALL BD_CalcAcc(u_tmp,p,x_tmp,OS_tmp)
+!WRITE(*,*) 'u_tmp%a'
+!WRITE(*,*) u_tmp%RootMotion%TranslationDisp(:,1)
+!WRITE(*,*) u_tmp%RootMotion%Orientation(:,:,1)
+!WRITE(*,*) u_tmp%RootMotion%TranslationVel(:,1)
+!WRITE(*,*) u_tmp%RootMotion%RotationVel(:,1)
+!WRITE(*,*) u_tmp%RootMotion%TranslationAcc(:,1)
+!WRITE(*,*) u_tmp%RootMotion%RotationAcc(:,1)
+!WRITE(*,*) u_tmp%PointLoad%Force(:,:)
+!WRITE(*,*) u_tmp%PointLoad%Moment(:,:)
+!       CALL BD_CalcAcc(u_tmp,p,x_tmp,OS_tmp)
+       CALL BD_CalcForceAcc(u_tmp,p,x_tmp,OS_tmp)
+!WRITE(*,*) 'OS_tmp'
+!WRITE(*,*) OS_tmp%Acc(:)
        DO i=1,p%elem_total
            DO j=1,p%node_elem
                temp_id = ((i-1)*(p%node_elem-1)+j-1)*p%dof_node
                temp_id2= (i-1)*p%node_elem+j
-               temp6(:) = 0.0D0
-               temp6(1:3) = OS_tmp%Acc(temp_id+1:temp_id+3)
-               temp6(4:6) = OS_tmp%Acc(temp_id+4:temp_id+6)
-               temp6(:) = MATMUL(MoTens,temp6)
-               y%BldMotion%TranslationAcc(1:3,temp_id2) = temp6(1:3)
-               y%BldMotion%RotationAcc(1:3,temp_id2) = temp6(4:6)
+               IF(i .EQ. 1 .AND. j .EQ. 1) THEN
+                   temp6(:) = 0.0D0
+                   temp6(1:3) = u_tmp%RootMotion%TranslationAcc(1:3,1)
+                   temp6(4:6) = u_tmp%RootMotion%RotationAcc(1:3,1)
+               ELSE                 
+                   temp6(:) = 0.0D0
+                   temp6(1:3) = OS_tmp%Acc(temp_id+1:temp_id+3)
+                   temp6(4:6) = OS_tmp%Acc(temp_id+4:temp_id+6)
+               ENDIF
+                   temp6(:) = MATMUL(MoTens,temp6)
+                   y%BldMotion%TranslationAcc(1:3,temp_id2) = temp6(1:3)
+                   y%BldMotion%RotationAcc(1:3,temp_id2) = temp6(4:6)
            ENDDO
        ENDDO
        CALL BD_DynamicSolutionForce(p%uuN0,x_tmp%q,x_tmp%dqdt,OS_tmp%Acc,                              &
@@ -769,7 +793,8 @@ CONTAINS
    CALL BD_MotionTensor(p%GlbRot,p%GlbPos,MoTens,1)
    temp6(:) = 0.0D0
    IF(p%analysis_type .EQ. 2) THEN
-       temp6(:) = temp_ReactionForce(1:6)
+!       temp6(:) = temp_ReactionForce(1:6)
+       temp6(1:6) = -OS_tmp%Acc(1:6)
        temp6(:) = MATMUL(TRANSPOSE(MoTens),temp6)
        y%ReactionForce%Force(1:3,1) = temp6(1:3)
        y%ReactionForce%Moment(1:3,1) = temp6(4:6)
@@ -1713,9 +1738,6 @@ END SUBROUTINE BD_UpdateDiscState
    INTEGER(IntKi)::i
 
    ! Prepare
-DO i=1,6
-!WRITE(*,*) 'aaa:',i,aaa(i)
-ENDDO
    ome(:) = vvv(4:6)
    omd(:) = aaa(4:6)
    tempV(:) = vvv(1:3)
@@ -4865,6 +4887,100 @@ END SUBROUTINE ludcmp
    ENDDO
 
    END SUBROUTINE BD_SolutionAcc
+   
+   SUBROUTINE BD_CalcForceAcc( u, p, x, OtherState )
+   !
+   ! Routine for computing derivatives of continuous states.
+   !........................................................................................................................
+
+   TYPE(BD_InputType),           INTENT(IN   ):: u           ! Inputs at t
+   TYPE(BD_ParameterType),       INTENT(IN   ):: p           ! Parameters
+   TYPE(BD_ContinuousStateType), INTENT(IN   ):: x           ! Continuous states at t
+   TYPE(BD_OtherStateType),      INTENT(INOUT):: OtherState  ! Other/optimization states
+
+   ! local variables
+   REAL(ReKi)                                 :: Acc(p%dof_total)
+   
+   CALL BD_SolutionForceAcc(p%uuN0,x%q,x%dqdt,p%Stif0_GL,p%Mass0_GL,p%gravity,u,&
+                            p%damp_flag,p%beta,&
+                            p%node_elem,p%dof_node,p%elem_total,p%dof_total,p%node_total,p%ngp,&
+                            Acc)
+   OtherState%Acc(:) = Acc(:)
+
+   END SUBROUTINE BD_CalcForceAcc
+   
+   SUBROUTINE BD_SolutionForceAcc(uuN0,uuN,vvN,Stif0,Mass0,gravity,u,                    &
+                                  damp_flag,beta,                                        &
+                                  node_elem,dof_node,elem_total,dof_total,node_total,ngp,&
+                                  Acc)
+   !***************************************************************************************
+   ! This subroutine calls other subroutines to apply the force, build the beam element 
+   ! stiffness and mass matrices, build nodal force vector.  The output of this subroutine
+   ! is the second time derivative of state "q".   
+   !***************************************************************************************
+   REAL(ReKi),                   INTENT(IN   ):: uuN0(:,:) ! Initial position vector
+   REAL(ReKi),                   INTENT(IN   ):: Stif0(:,:,:) ! Element stiffness matrix
+   REAL(ReKi),                   INTENT(IN   ):: Mass0(:,:,:) ! Element stiffness matrix
+   REAL(ReKi),                   INTENT(IN   ):: gravity(:) ! 
+   TYPE(BD_InputType),           INTENT(IN   ):: u           ! Inputs at t
+   REAL(ReKi),                   INTENT(IN   ):: uuN(:) ! Displacement of Mass 1: m
+   REAL(ReKi),                   INTENT(IN   ):: vvN(:) ! Velocity of Mass 1: m/s
+   INTEGER(IntKi),               INTENT(IN   ):: damp_flag ! Total number of elements
+   REAL(ReKi),                   INTENT(IN   ):: beta(:)
+   INTEGER(IntKi),               INTENT(IN   ):: node_elem ! Node per element
+   INTEGER(IntKi),               INTENT(IN   ):: dof_node ! Degrees of freedom per element
+   INTEGER(IntKi),               INTENT(IN   ):: elem_total ! Total number of elements
+   INTEGER(IntKi),               INTENT(IN   ):: dof_total ! Total number of degrees of freedom
+   INTEGER(IntKi),               INTENT(IN   ):: node_total ! Total number of nodes
+   INTEGER(IntKi),               INTENT(IN   ):: ngp ! Number of Gauss points
+   REAL(ReKi),                   INTENT(  OUT):: Acc(:)
+
+   ! Local variables
+   
+   REAL(ReKi):: MassM(dof_total,dof_total) 
+   REAL(ReKi):: RHS(dof_total)  
+   REAL(ReKi):: F_PointLoad(dof_total) 
+   REAL(ReKi):: sol_temp(dof_total) 
+   REAL(ReKi):: d 
+   INTEGER(IntKi):: indx(dof_total) 
+   INTEGER(IntKi):: j 
+   INTEGER(IntKi):: k 
+   INTEGER(IntKi):: temp_id
+   REAL(ReKi):: temp6(6)
+
+   RHS(:)     = 0.0D0
+   MassM(:,:) = 0.0D0
+
+   CALL BD_GenerateDynamicElementAcc(uuN0,uuN,vvN,Stif0,Mass0,gravity,u,&
+                                     damp_flag,beta,&
+                                     elem_total,node_elem,dof_total,dof_node,ngp,&
+                                     RHS,MassM)
+   DO j=1,node_total
+       temp_id = (j-1)*dof_node
+       F_PointLoad(temp_id+1:temp_id+3) = u%PointLoad%Force(1:3,j)
+       F_PointLoad(temp_id+4:temp_id+6) = u%PointLoad%Moment(1:3,j)
+   ENDDO
+   temp6(1:3) = u%RootMotion%TranslationAcc(1:3,1)
+   temp6(4:6) = u%RootMotion%RotationAcc(1:3,1)
+   RHS(:) = RHS(:) + F_PointLoad(:) 
+   RHS(1:6) = RHS(1:6) - MATMUL(MassM(1:6,1:6),temp6)
+   RHS(7:dof_total) = RHS(7:dof_total) - MATMUL(MassM(7:dof_total,1:6),temp6)
+   DO j=1,dof_total
+       DO k=1,6
+           MassM(j,k) = 0.0D0
+       ENDDO
+   ENDDO
+   DO j=1,6
+       MassM(j,j) = -1.0D0
+   ENDDO
+
+   sol_temp(:) = 0.0D0
+   CALL ludcmp(MassM,dof_total,indx,d)
+   CALL lubksb(MassM,dof_total,indx,RHS,sol_temp)
+
+   Acc(:) = sol_temp
+
+   END SUBROUTINE BD_SolutionForceAcc
 
 
 

@@ -128,7 +128,6 @@ SUBROUTINE BD1_BD_InputOutputSolve(time, &
    ! Note that Module2 has direct feedthrough, but Module1 does not. Thus, Module1 should be called first.
 
    BD1_Input%PointLoad%Force(3,BD1_Parameter%node_total) = 1.0D+00
-   BD_Input%PointLoad%Force(3,1) = 1.0D+00
    BD_Input%RootMotion%TranslationDisp(:,1) = BD1_Output%BldMotion%TranslationDisp(:,BD1_Parameter%node_total)
    BD_Input%RootMotion%Orientation(:,:,1) = BD1_Output%BldMotion%Orientation(:,:,BD1_Parameter%node_total)
    BD_Input%RootMotion%TranslationVel(:,1) = BD1_Output%BldMotion%TranslationVel(:,BD1_Parameter%node_total)
@@ -141,32 +140,43 @@ SUBROUTINE BD1_BD_InputOutputSolve(time, &
 !WRITE(*,*) 'TIME',time
    eps = 0.01D+00
    DO i=1,iter_max
+IF(i == 2) STOP
 WRITE(*,*) 'i=',i
 
-!WRITE(*,*) 'BD1_Cont%q'
-!WRITE(*,*) BD1_ContinuousState%q
-!WRITE(*,*) 'BD1_Cont%dqdt'
-!WRITE(*,*) BD1_ContinuousState%dqdt
-!WRITE(*,*) 'BD1_Other%Acc'
-!WRITE(*,*) BD1_OtherState%Acc(:)
+WRITE(*,*) 'BD1_Cont%q'
+WRITE(*,*) BD1_ContinuousState%q
+WRITE(*,*) 'BD1_Cont%dqdt'
+WRITE(*,*) BD1_ContinuousState%dqdt
+WRITE(*,*) 'BD1_Other%Acc'
+WRITE(*,*) BD1_OtherState%Acc(:)
+WRITE(*,*) 'BD1_Input%PointLoad%Force'
+WRITE(*,*) BD1_Input%PointLoad%Force(1:3,3)
        CALL BD_CalcOutput( time, BD1_Input, BD1_Parameter, BD1_ContinuousState, BD1_DiscreteState, &
                     BD1_ConstraintState, BD1_OtherState, BD1_Output, ErrStat, ErrMsg )
+WRITE(*,*) BD1_Output%BldMotion%TranslationAcc(1:3,BD1_Parameter%node_total)
+WRITE(*,*) BD1_Output%BldMotion%RotationAcc(1:3,BD1_Parameter%node_total)
+WRITE(*,*) BD1_Output%BldMotion%TranslationAcc(1:3,2)
+WRITE(*,*) BD1_Output%BldMotion%RotationAcc(1:3,2)
 WRITE(*,*) BD1_Output%BldMotion%TranslationAcc(1:3,1)
 WRITE(*,*) BD1_Output%BldMotion%RotationAcc(1:3,1)
-!WRITE(*,*) 'BD_Cont%q'
-!WRITE(*,*) BD_ContinuousState%q
-!WRITE(*,*) 'BD_Cont%dqdt'
-!WRITE(*,*) BD_ContinuousState%dqdt
-!WRITE(*,*) 'BD_Other%Acc'
-!WRITE(*,*) BD_OtherState%Acc(:)
-!WRITE(*,*) 'BD_Other%Xcc'
-!WRITE(*,*) BD_OtherState%Xcc(:)
+WRITE(*,*) 'BD_Cont%q'
+WRITE(*,*) BD_ContinuousState%q
+WRITE(*,*) 'BD_Cont%dqdt'
+WRITE(*,*) BD_ContinuousState%dqdt
+WRITE(*,*) 'BD_Other%Acc'
+WRITE(*,*) BD_OtherState%Acc(:)
+WRITE(*,*) 'BD_Other%Xcc'
+WRITE(*,*) BD_OtherState%Xcc(:)
+!BD_Input%RootMotion%TranslationAcc(:,1) = BD1_Output%BldMotion%TranslationAcc(1:3,BD1_Parameter%node_total)
+!BD_OtherState%Acc(3) = BD1_Output%BldMotion%TranslationAcc(3,BD1_Parameter%node_total)
+!BD_OtherState%Acc(9) = -0.04424778761061949
+!BD_OtherState%Acc(15) = 0.088495575221239
        CALL BD_CalcOutput( time, BD_Input, BD_Parameter, BD_ContinuousState, BD_DiscreteState, &
                     BD_ConstraintState, BD_OtherState, BD_Output, ErrStat, ErrMsg )
-!WRITE(*,*) 'Original BD Reaction Force:'
-!WRITE(*,*) BD_Output%ReactionForce%Force(1:3,1)
-!WRITE(*,*) BD_Output%ReactionForce%Moment(1:3,1)
-STOP
+WRITE(*,*) 'Original BD Reaction Force:'
+WRITE(*,*) BD_Output%ReactionForce%Force(1:3,1)
+WRITE(*,*) BD_Output%ReactionForce%Moment(1:3,1)
+!STOP
        CALL BD_CopyInput(BD_Input,BDInput_tmp,MESH_NEWCOPY,ErrStat,ErrMsg)
        CALL BD_CopyInput(BD1_Input,BD1Input_tmp,MESH_NEWCOPY,ErrStat,ErrMsg)
        CALL BD_CopyInput(BD1InputRea_tmp,BD1InputRea_temp,MESH_NEWCOPY,ErrStat,ErrMsg)
@@ -174,11 +184,18 @@ STOP
        RHS(:) = 0.0D0
        RHS(1:3) = -(BD1InputRea_tmp%PointLoad%Force(1:3,BD1_Parameter%node_total) - BD_Output%ReactionForce%Force(1:3,1))
        RHS(4:6) = -(BD1InputRea_tmp%PointLoad%Moment(1:3,BD1_Parameter%node_total) - BD_Output%ReactionForce%Moment(1:3,1))
+WRITE(*,*) 'BD_Input%RootMotion%TranslationAcc(1:3,1)'
+WRITE(*,*) BD_Input%RootMotion%TranslationAcc(1:3,1)
+WRITE(*,*) 'BD1_Output%BldMotion%TranslationAcc(1:3,BD1_Parameter%node_total)'
+WRITE(*,*) BD1_Output%BldMotion%TranslationAcc(1:3,BD1_Parameter%node_total)
        RHS(7:9) = -(BD_Input%RootMotion%TranslationAcc(1:3,1) - &
                       BD1_Output%BldMotion%TranslationAcc(1:3,BD1_Parameter%node_total))
+WRITE(*,*) 'BD_Input%RootMotion%RotationAcc(1:3,1)'
+WRITE(*,*) BD_Input%RootMotion%RotationAcc(1:3,1)
+WRITE(*,*) 'BD1_Output%BldMotion%RotationAcc(1:3,BD1_Parameter%node_total)'
+WRITE(*,*) BD1_Output%BldMotion%RotationAcc(1:3,BD1_Parameter%node_total)
        RHS(10:12) = -(BD_Input%RootMotion%RotationAcc(1:3,1) - &
                       BD1_Output%BldMotion%RotationAcc(1:3,BD1_Parameter%node_total))
-    
 WRITE(*,*) 'RHS(Residual)'
 WRITE(*,*) RHS
 WRITE(*,*) 'BD1 Input Force'
@@ -472,25 +489,6 @@ PROGRAM MAIN
    CALL BD_Init( BD1_InitInput, BD1_Input(1), BD1_Parameter, BD1_ContinuousState, BD1_DiscreteState, &
                    BD1_ConstraintState, BD1_OtherState, BD1_Output(1), dt_global, BD1_InitOutput, ErrStat, ErrMsg )
 
-   CALL BD_CopyInput(  BD1_Input(1), u1, MESH_NEWCOPY, ErrStat, ErrMsg )
-   CALL BD_CopyOutput( BD1_Output(1), y1, MESH_NEWCOPY, ErrStat, ErrMsg )
-
-
-   ! We fill Mod1_InputTimes with negative times, but the Mod1_Input values are identical for each of those times; this allows
-   ! us to use, e.g., quadratic interpolation that effectively acts as a zeroth-order extrapolation and first-order extrapolation
-   ! for the first and second time steps.  (The interpolation order in the ExtrapInput routines are determined as
-   ! order = SIZE(Mod1_Input)
-   DO i = 1, BD1_interp_order + 1
-      BD1_InputTimes(i) = t_initial - (i - 1) * dt_global
-      BD1_OutputTimes(i) = t_initial - (i - 1) * dt_global
-   ENDDO
-
-!WRITE(*,*) 'Mod1_InputTimes:',Mod1_InputTimes(:)
-
-   DO i = 1, BD1_interp_order
-     CALL BD_CopyInput (BD1_Input(i),  BD1_Input(i+1),  MESH_NEWCOPY, Errstat, ErrMsg)
-     CALL BD_CopyOutput (BD1_Output(i),  BD1_Output(i+1),  MESH_NEWCOPY, Errstat, ErrMsg)
-   ENDDO 
 
 !   BD_InitInput%InputFile = 'Siemens_53_Input.inp'
    BD_InitInput%InputFile = 'GA2_Debug_BD.inp'
@@ -528,19 +526,6 @@ PROGRAM MAIN
                  BD_ConstraintState, BD_OtherState, BD_Output(1), dt_global, BD_InitOutput, ErrStat, ErrMsg )
    
 
-   DO i = 1, BD_interp_order + 1
-      BD_InputTimes(i) = t_initial - (i - 1) * dt_global
-      BD_OutputTimes(i) = t_initial - (i - 1) * dt_global
-   ENDDO
-
-   DO i = 1, BD_interp_order
-     CALL BD_CopyInput (BD_Input(i),  BD_Input(i+1),  MESH_NEWCOPY, Errstat, ErrMsg)
-     CALL BD_CopyOutput (BD_Output(i),  BD_Output(i+1), MESH_NEWCOPY, Errstat, ErrMsg)
-   ENDDO
-
-      ! Initialize the meshes and/or allocatable arrays in inputs (u2) and outputs (y2) (required fro ExtrapInterp routines)
-   CALL BD_CopyInput(BD_Input(1), u2, MESH_NEWCOPY, ErrStat, ErrMsg )
-   CALL BD_CopyOutput(BD_Output(1), y2, MESH_NEWCOPY, ErrStat, ErrMsg )  
    
    ! -------------------------------------------------------------------------
    ! Initialize mesh-mapping data
@@ -564,6 +549,40 @@ PROGRAM MAIN
                    BD_ConstraintState, BD_OtherState, BD_Output(1),  &
 !                   Map_Mod1_P_Mod2_P, Map_Mod2_P_Mod1_P, &
                    ErrStat, ErrMsg)
+
+   CALL BD_CopyInput(  BD1_Input(1), u1, MESH_NEWCOPY, ErrStat, ErrMsg )
+   CALL BD_CopyOutput( BD1_Output(1), y1, MESH_NEWCOPY, ErrStat, ErrMsg )
+
+
+   ! We fill Mod1_InputTimes with negative times, but the Mod1_Input values are identical for each of those times; this allows
+   ! us to use, e.g., quadratic interpolation that effectively acts as a zeroth-order extrapolation and first-order extrapolation
+   ! for the first and second time steps.  (The interpolation order in the ExtrapInput routines are determined as
+   ! order = SIZE(Mod1_Input)
+   DO i = 1, BD1_interp_order + 1
+      BD1_InputTimes(i) = t_initial - (i - 1) * dt_global
+      BD1_OutputTimes(i) = t_initial - (i - 1) * dt_global
+   ENDDO
+
+!WRITE(*,*) 'Mod1_InputTimes:',Mod1_InputTimes(:)
+
+   DO i = 1, BD1_interp_order
+     CALL BD_CopyInput (BD1_Input(i),  BD1_Input(i+1),  MESH_NEWCOPY, Errstat, ErrMsg)
+     CALL BD_CopyOutput (BD1_Output(i),  BD1_Output(i+1),  MESH_NEWCOPY, Errstat, ErrMsg)
+   ENDDO 
+
+   DO i = 1, BD_interp_order + 1
+      BD_InputTimes(i) = t_initial - (i - 1) * dt_global
+      BD_OutputTimes(i) = t_initial - (i - 1) * dt_global
+   ENDDO
+
+   DO i = 1, BD_interp_order
+     CALL BD_CopyInput (BD_Input(i),  BD_Input(i+1),  MESH_NEWCOPY, Errstat, ErrMsg)
+     CALL BD_CopyOutput (BD_Output(i),  BD_Output(i+1), MESH_NEWCOPY, Errstat, ErrMsg)
+   ENDDO
+
+      ! Initialize the meshes and/or allocatable arrays in inputs (u2) and outputs (y2) (required fro ExtrapInterp routines)
+   CALL BD_CopyInput(BD_Input(1), u2, MESH_NEWCOPY, ErrStat, ErrMsg )
+   CALL BD_CopyOutput(BD_Output(1), y2, MESH_NEWCOPY, ErrStat, ErrMsg )  
 
    DO n_t_global = 0, n_t_final
 WRITE(*,*) "Time Step: ", n_t_global
