@@ -2207,12 +2207,6 @@ END SUBROUTINE ludcmp
 
        CALL BD_AssembleStiffK(nelem,node_elem,dof_elem,dof_node,&
                               elm,MassM)
-!DO i=1,18
-!WRITE(*,*) i
-!DO j=1,18
-!   WRITE(*,*) MassM(i,j)
-!ENDDO 
-!ENDDO
        CALL BD_AssembleRHS(nelem,dof_elem,node_elem,dof_node,elf,RHS)
 
    ENDDO

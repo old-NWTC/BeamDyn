@@ -135,8 +135,8 @@ PROGRAM MAIN
 !    OPEN(unit = QiMidForce, file = 'Qi_Mid_Force.out', status = 'REPLACE',ACTION = 'WRITE')
     OPEN(unit = QiMidAcc, file = 'Qi_Mid_Acc_Single.out', status = 'REPLACE',ACTION = 'WRITE')
 !    OPEN(unit = QiMidVel, file = 'Qi_Mid_Vel.out', status = 'REPLACE',ACTION = 'WRITE')
-    OPEN(unit = QiRootUnit,file = 'QiRoot_AM2.out', status = 'REPLACE',ACTION = 'WRITE')
-    OPEN(unit = QiReacUnit,file = 'QiReac_AM2.out', status = 'REPLACE',ACTION = 'WRITE')
+    OPEN(unit = QiRootUnit,file = 'QiRoot_Single.out', status = 'REPLACE',ACTION = 'WRITE')
+    OPEN(unit = QiReacUnit,file = 'QiReac_Single.out', status = 'REPLACE',ACTION = 'WRITE')
 
 
 !   BD_InitInput%InputFile = 'BeamDyn_Input_CX100.inp'

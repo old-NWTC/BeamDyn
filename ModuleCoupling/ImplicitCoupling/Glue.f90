@@ -355,6 +355,7 @@ PROGRAM MAIN
 
    ! local variables
    Integer(IntKi)                     :: i               ! counter for various loops
+   Integer(IntKi)                     :: temp               ! counter for various loops
    REAL(ReKi):: temp_R(3,3)
    REAL(ReKi):: temp_vec(3)
    REAL(ReKi):: temp_cc(3)
@@ -390,7 +391,7 @@ PROGRAM MAIN
                ! are available to modules that have an implicit dependence on other-module data
 
    ! specify time increment; currently, all modules will be time integrated with this increment size
-   dt_global = 1.0D-03*0.0025
+   dt_global = 1.0D-03*0.001
 
    n_t_final = ((t_final - t_initial) / dt_global )
 
@@ -469,10 +470,6 @@ PROGRAM MAIN
 
 !WRITE(*,*) 'Mod1_InputTimes:',Mod1_InputTimes(:)
 
-   DO i = 1, BD1_interp_order
-     CALL BD_CopyInput (BD1_Input(i),  BD1_Input(i+1),  MESH_NEWCOPY, Errstat, ErrMsg)
-     CALL BD_CopyOutput (BD1_Output(i),  BD1_Output(i+1),  MESH_NEWCOPY, Errstat, ErrMsg)
-   ENDDO 
 
 !   BD_InitInput%InputFile = 'Siemens_53_Input.inp'
    BD_InitInput%InputFile = 'GA2_Debug_BD.inp'
@@ -515,10 +512,6 @@ PROGRAM MAIN
       BD_OutputTimes(i) = t_initial - (i - 1) * dt_global
    ENDDO
 
-   DO i = 1, BD_interp_order
-     CALL BD_CopyInput (BD_Input(i),  BD_Input(i+1),  MESH_NEWCOPY, Errstat, ErrMsg)
-     CALL BD_CopyOutput (BD_Output(i),  BD_Output(i+1), MESH_NEWCOPY, Errstat, ErrMsg)
-   ENDDO
 
       ! Initialize the meshes and/or allocatable arrays in inputs (u2) and outputs (y2) (required fro ExtrapInterp routines)
    CALL BD_CopyInput(BD_Input(1), u2, MESH_NEWCOPY, ErrStat, ErrMsg )
@@ -547,12 +540,22 @@ PROGRAM MAIN
 !                   Map_Mod1_P_Mod2_P, Map_Mod2_P_Mod1_P, &
                    ErrStat, ErrMsg)
 
+   DO i = 1, BD1_interp_order
+     CALL BD_CopyInput (BD1_Input(i),  BD1_Input(i+1),  MESH_NEWCOPY, Errstat, ErrMsg)
+     CALL BD_CopyOutput (BD1_Output(i),  BD1_Output(i+1),  MESH_NEWCOPY, Errstat, ErrMsg)
+   ENDDO 
+
+   DO i = 1, BD_interp_order
+     CALL BD_CopyInput (BD_Input(i),  BD_Input(i+1),  MESH_NEWCOPY, Errstat, ErrMsg)
+     CALL BD_CopyOutput (BD_Output(i),  BD_Output(i+1), MESH_NEWCOPY, Errstat, ErrMsg)
+   ENDDO
+
    DO n_t_global = 0, n_t_final
 WRITE(*,*) "Time Step: ", n_t_global
-!IF(n_t_global .EQ. 0) STOP
+!IF(n_t_global .EQ. 2000) STOP
       ! Solve input-output relations; this section of code corresponds to Eq. (35) in Gasmi et al. (2013)
       ! This code will be specific to the underlying modules
-
+!IF(mod(n_t_global,1000) .EQ. 0) THEN
       CALL BD_CrvExtractCrv(BD_OutPut(1)%BldMotion%Orientation(1:3,1:3,BD_Parameter%node_total),temp_cc)
       WRITE(QiTipDisp,6000) t_global,&
                             &BD_OutPut(1)%BldMotion%TranslationDisp(1:3,BD_Parameter%node_total),&
@@ -573,6 +576,8 @@ WRITE(*,*) "Time Step: ", n_t_global
       WRITE(QiRotFor,6000) t_global,&
                              &BD1_OutPut(1)%ReactionForce%Force(1:3,1),&
                              &BD1_OutPut(1)%ReactionForce%Moment(1:3,1)
+!WRITE(*,*) 'YES'
+!ENDIF
 !WRITE(*,*) 'BD_Input%Disp:',BD_Input(1)%RootMotion%TranslationDisp(:,1)
 !WRITE(*,*) 'BD_Input%Disp:',BD_Input(2)%RootMotion%TranslationDisp(:,1)
 !WRITE(*,*) 'BD_Input%Disp:',BD_Input(3)%RootMotion%TranslationDisp(:,1)

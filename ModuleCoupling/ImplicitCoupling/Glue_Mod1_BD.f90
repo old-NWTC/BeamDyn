@@ -311,8 +311,8 @@ PROGRAM MAIN
 !   TYPE(MeshMapType) :: Map_Mod2_P_Mod1_P
 !   TYPE(MeshMapType) :: Map_Mod1_P_Mod2_P
 
-   OPEN(unit = QiDisUnit, file = 'QiDisp_AM2.out', status = 'REPLACE',ACTION = 'WRITE')
-   OPEN(unit = BDForce, file = 'Qi_Force.out', status = 'REPLACE',ACTION = 'WRITE')
+   OPEN(unit = QiDisUnit, file = 'QiDisp_Tip_Mod1_BD.out', status = 'REPLACE',ACTION = 'WRITE')
+   OPEN(unit = BDForce, file = 'Qi_Force_Mod1_BD.out', status = 'REPLACE',ACTION = 'WRITE')
    OPEN(unit = Mod1Disp, file = 'Qi_Mod1Disp.out', status = 'REPLACE',ACTION = 'WRITE')
    OPEN(unit = Mod1Vel, file = 'Qi_Mod1Vel.out', status = 'REPLACE',ACTION = 'WRITE')
    OPEN(unit = Mod1Acc, file = 'Qi_Mod1Acc.out', status = 'REPLACE',ACTION = 'WRITE')
