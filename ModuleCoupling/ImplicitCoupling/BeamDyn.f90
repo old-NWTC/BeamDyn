@@ -808,6 +808,11 @@ CONTAINS
        y%BldForce%Moment(1:3,i) = temp6(4:6)
    ENDDO
 
+!   CALL BD_CopyOtherState(OS_tmp, OtherState, MESH_NEWCOPY, ErrStat, ErrMsg)
+!   OtherState%Acc(1:3) = u_tmp%RootMotion%TranslationAcc(1:3,1)
+!   OtherState%Acc(4:6) = u_tmp%RootMotion%RotationAcc(1:3,1)
+!   OtherState%Xcc(:) = OtherState%Acc(:)
+
    CALL BD_DestroyInput(u_tmp, ErrStat, ErrMsg)
    CALL BD_DestroyContState(x_tmp, ErrStat, ErrMsg )
    CALL BD_DestroyOtherState(OS_tmp, ErrStat, ErrMsg )
