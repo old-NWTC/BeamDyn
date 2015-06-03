@@ -140,42 +140,38 @@ SUBROUTINE BD1_BD_InputOutputSolve(time, &
 !WRITE(*,*) 'TIME',time
    eps = 0.01D+00
    DO i=1,iter_max
-IF(i == 2) STOP
-WRITE(*,*) 'i=',i
+!IF(i == 2) STOP
+!WRITE(*,*) 'i=',i
 
-WRITE(*,*) 'BD1_Cont%q'
-WRITE(*,*) BD1_ContinuousState%q
-WRITE(*,*) 'BD1_Cont%dqdt'
-WRITE(*,*) BD1_ContinuousState%dqdt
-WRITE(*,*) 'BD1_Other%Acc'
-WRITE(*,*) BD1_OtherState%Acc(:)
-WRITE(*,*) 'BD1_Input%PointLoad%Force'
-WRITE(*,*) BD1_Input%PointLoad%Force(1:3,3)
+!WRITE(*,*) 'BD1_Cont%q'
+!WRITE(*,*) BD1_ContinuousState%q
+!WRITE(*,*) 'BD1_Cont%dqdt'
+!WRITE(*,*) BD1_ContinuousState%dqdt
+!WRITE(*,*) 'BD1_Other%Acc'
+!WRITE(*,*) BD1_OtherState%Acc(:)
+!WRITE(*,*) 'BD1_Input%PointLoad%Force'
+!WRITE(*,*) BD1_Input%PointLoad%Force(1:3,3)
        CALL BD_CalcOutput( time, BD1_Input, BD1_Parameter, BD1_ContinuousState, BD1_DiscreteState, &
                     BD1_ConstraintState, BD1_OtherState, BD1_Output, ErrStat, ErrMsg )
-WRITE(*,*) BD1_Output%BldMotion%TranslationAcc(1:3,BD1_Parameter%node_total)
-WRITE(*,*) BD1_Output%BldMotion%RotationAcc(1:3,BD1_Parameter%node_total)
-WRITE(*,*) BD1_Output%BldMotion%TranslationAcc(1:3,2)
-WRITE(*,*) BD1_Output%BldMotion%RotationAcc(1:3,2)
-WRITE(*,*) BD1_Output%BldMotion%TranslationAcc(1:3,1)
-WRITE(*,*) BD1_Output%BldMotion%RotationAcc(1:3,1)
-WRITE(*,*) 'BD_Cont%q'
-WRITE(*,*) BD_ContinuousState%q
-WRITE(*,*) 'BD_Cont%dqdt'
-WRITE(*,*) BD_ContinuousState%dqdt
-WRITE(*,*) 'BD_Other%Acc'
-WRITE(*,*) BD_OtherState%Acc(:)
-WRITE(*,*) 'BD_Other%Xcc'
-WRITE(*,*) BD_OtherState%Xcc(:)
-!BD_Input%RootMotion%TranslationAcc(:,1) = BD1_Output%BldMotion%TranslationAcc(1:3,BD1_Parameter%node_total)
-!BD_OtherState%Acc(3) = BD1_Output%BldMotion%TranslationAcc(3,BD1_Parameter%node_total)
-!BD_OtherState%Acc(9) = -0.04424778761061949
-!BD_OtherState%Acc(15) = 0.088495575221239
+!WRITE(*,*) BD1_Output%BldMotion%TranslationAcc(1:3,BD1_Parameter%node_total)
+!WRITE(*,*) BD1_Output%BldMotion%RotationAcc(1:3,BD1_Parameter%node_total)
+!WRITE(*,*) BD1_Output%BldMotion%TranslationAcc(1:3,2)
+!WRITE(*,*) BD1_Output%BldMotion%RotationAcc(1:3,2)
+!WRITE(*,*) BD1_Output%BldMotion%TranslationAcc(1:3,1)
+!WRITE(*,*) BD1_Output%BldMotion%RotationAcc(1:3,1)
+!WRITE(*,*) 'BD_Cont%q'
+!WRITE(*,*) BD_ContinuousState%q
+!WRITE(*,*) 'BD_Cont%dqdt'
+!WRITE(*,*) BD_ContinuousState%dqdt
+!WRITE(*,*) 'BD_Other%Acc'
+!WRITE(*,*) BD_OtherState%Acc(:)
+!WRITE(*,*) 'BD_Other%Xcc'
+!WRITE(*,*) BD_OtherState%Xcc(:)
        CALL BD_CalcOutput( time, BD_Input, BD_Parameter, BD_ContinuousState, BD_DiscreteState, &
                     BD_ConstraintState, BD_OtherState, BD_Output, ErrStat, ErrMsg )
-WRITE(*,*) 'Original BD Reaction Force:'
-WRITE(*,*) BD_Output%ReactionForce%Force(1:3,1)
-WRITE(*,*) BD_Output%ReactionForce%Moment(1:3,1)
+!WRITE(*,*) 'Original BD Reaction Force:'
+!WRITE(*,*) BD_Output%ReactionForce%Force(1:3,1)
+!WRITE(*,*) BD_Output%ReactionForce%Moment(1:3,1)
 !STOP
        CALL BD_CopyInput(BD_Input,BDInput_tmp,MESH_NEWCOPY,ErrStat,ErrMsg)
        CALL BD_CopyInput(BD1_Input,BD1Input_tmp,MESH_NEWCOPY,ErrStat,ErrMsg)
@@ -184,24 +180,10 @@ WRITE(*,*) BD_Output%ReactionForce%Moment(1:3,1)
        RHS(:) = 0.0D0
        RHS(1:3) = -(BD1InputRea_tmp%PointLoad%Force(1:3,BD1_Parameter%node_total) - BD_Output%ReactionForce%Force(1:3,1))
        RHS(4:6) = -(BD1InputRea_tmp%PointLoad%Moment(1:3,BD1_Parameter%node_total) - BD_Output%ReactionForce%Moment(1:3,1))
-WRITE(*,*) 'BD_Input%RootMotion%TranslationAcc(1:3,1)'
-WRITE(*,*) BD_Input%RootMotion%TranslationAcc(1:3,1)
-WRITE(*,*) 'BD1_Output%BldMotion%TranslationAcc(1:3,BD1_Parameter%node_total)'
-WRITE(*,*) BD1_Output%BldMotion%TranslationAcc(1:3,BD1_Parameter%node_total)
        RHS(7:9) = -(BD_Input%RootMotion%TranslationAcc(1:3,1) - &
                       BD1_Output%BldMotion%TranslationAcc(1:3,BD1_Parameter%node_total))
-WRITE(*,*) 'BD_Input%RootMotion%RotationAcc(1:3,1)'
-WRITE(*,*) BD_Input%RootMotion%RotationAcc(1:3,1)
-WRITE(*,*) 'BD1_Output%BldMotion%RotationAcc(1:3,BD1_Parameter%node_total)'
-WRITE(*,*) BD1_Output%BldMotion%RotationAcc(1:3,BD1_Parameter%node_total)
        RHS(10:12) = -(BD_Input%RootMotion%RotationAcc(1:3,1) - &
                       BD1_Output%BldMotion%RotationAcc(1:3,BD1_Parameter%node_total))
-WRITE(*,*) 'RHS(Residual)'
-WRITE(*,*) RHS
-WRITE(*,*) 'BD1 Input Force'
-WRITE(*,*) BD1_Input%PointLoad%Force(1:3,BD1_Parameter%node_total),BD1_Input%PointLoad%Moment(1:3,BD1_Parameter%node_total)
-WRITE(*,*) 'BD Input Acc'
-WRITE(*,*) BD_Input%RootMotion%TranslationAcc(1:3,1),BD_Input%RootMotion%RotationAcc(1:3,1)
        IF(BD_Norm(RHS) .LE. TOLF) THEN
            CALL BD_DestroyInput(BDInput_tmp, ErrStat, ErrMsg )
            CALL BD_DestroyInput(BD1Input_tmp, ErrStat, ErrMsg )
@@ -266,8 +248,8 @@ WRITE(*,*) BD_Input%RootMotion%TranslationAcc(1:3,1),BD_Input%RootMotion%Rotatio
        CALL ludcmp(Coef,12,indx,d)
        CALL lubksb(Coef,12,indx,RHS,uinc)
 
-WRITE(*,*) 'uinc:'
-WRITE(*,*) uinc(:)
+!WRITE(*,*) 'uinc:'
+!WRITE(*,*) uinc(:)
 !       IF(BD_Norm(uinc) .LE. TOLF) THEN
 !           CALL BD_DestroyInput(BDInput_tmp, ErrStat, ErrMsg )
 !           CALL BD_DestroyInput(BD1Input_tmp, ErrStat, ErrMsg )
@@ -425,7 +407,7 @@ PROGRAM MAIN
                ! are available to modules that have an implicit dependence on other-module data
 
    ! specify time increment; currently, all modules will be time integrated with this increment size
-   dt_global = 1.0D-03*0.03
+   dt_global = 1.0D-03*1.0D0
 
    n_t_final = ((t_final - t_initial) / dt_global )
 
@@ -549,6 +531,17 @@ PROGRAM MAIN
                    BD_ConstraintState, BD_OtherState, BD_Output(1),  &
 !                   Map_Mod1_P_Mod2_P, Map_Mod2_P_Mod1_P, &
                    ErrStat, ErrMsg)
+   CALL BD_IniAcc(BD1_Input(1),BD1_Output(1),BD1_Parameter,BD1_OtherState)
+   CALL BD_IniAcc(BD_Input(1),BD_Output(1),BD_Parameter,BD_OtherState)
+!WRITE(*,*) 'BD1 Acc'
+!WRITE(*,*) BD1_OtherState%Acc(:)
+!WRITE(*,*) 'BD1 Xcc'
+!WRITE(*,*) BD1_OtherState%Xcc(:)
+!WRITE(*,*) 'BD Acc'
+!WRITE(*,*) BD_OtherState%Acc(:)
+!WRITE(*,*) 'BD Xcc'
+!WRITE(*,*) BD_OtherState%Xcc(:)
+!STOP
 
    CALL BD_CopyInput(  BD1_Input(1), u1, MESH_NEWCOPY, ErrStat, ErrMsg )
    CALL BD_CopyOutput( BD1_Output(1), y1, MESH_NEWCOPY, ErrStat, ErrMsg )
@@ -563,7 +556,6 @@ PROGRAM MAIN
       BD1_OutputTimes(i) = t_initial - (i - 1) * dt_global
    ENDDO
 
-!WRITE(*,*) 'Mod1_InputTimes:',Mod1_InputTimes(:)
 
    DO i = 1, BD1_interp_order
      CALL BD_CopyInput (BD1_Input(i),  BD1_Input(i+1),  MESH_NEWCOPY, Errstat, ErrMsg)
@@ -586,7 +578,7 @@ PROGRAM MAIN
 
    DO n_t_global = 0, n_t_final
 WRITE(*,*) "Time Step: ", n_t_global
-IF(n_t_global .EQ. 0) STOP
+IF(n_t_global .EQ. 2) STOP
       ! Solve input-output relations; this section of code corresponds to Eq. (35) in Gasmi et al. (2013)
       ! This code will be specific to the underlying modules
 
@@ -651,6 +643,8 @@ IF(n_t_global .EQ. 0) STOP
       CALL BD_CopyOutput (y1,  BD1_Output(1),  MESH_UPDATECOPY, Errstat, ErrMsg)
       BD1_InputTimes(1) = t_global + dt_global
       BD1_OutputTimes(1) = t_global + dt_global
+WRITE(*,*) 'BD1_InputTimes:',BD1_InputTimes(:)
+STOP
 
       ! extrapolate inputs and outputs to t + dt; will only be used by modules with an implicit dependence on input data.
 
@@ -688,9 +682,11 @@ IF(n_t_global .EQ. 0) STOP
 
          CALL BD_CopyDiscState   (BD1_DiscreteState,   BD1_DiscreteState_pred,   0, Errstat, ErrMsg)
 
+         CALL BD_CopyOtherState  (BD1_OtherState,   BD1_OtherState_pred,   0, Errstat, ErrMsg)
+
          CALL BD_UpdateStates( t_global, n_t_global, BD1_Input, BD1_InputTimes, BD1_Parameter, BD1_ContinuousState_pred, &
                                  BD1_DiscreteState_pred, BD1_ConstraintState_pred, &
-                                 BD1_OtherState, ErrStat, ErrMsg )
+                                 BD1_OtherState_pred, ErrStat, ErrMsg )
          !----------------------------------------------------------------------------------------
          ! Module 2
          !----------------------------------------------------------------------------------------
@@ -720,7 +716,7 @@ IF(n_t_global .EQ. 0) STOP
 
             CALL BD1_BD_InputOutputSolve( t_global + dt_global, &
                                              BD1_Input(1), BD1_Parameter, BD1_ContinuousState_pred, BD1_DiscreteState_pred, &
-                                             BD1_ConstraintState_pred, BD1_OtherState, BD1_Output(1), &
+                                             BD1_ConstraintState_pred, BD1_OtherState_pred, BD1_Output(1), &
                                              BD_Input(1), BD_Parameter, BD_ContinuousState_pred, BD_DiscreteState_pred, &
                                              BD_ConstraintState_pred, BD_OtherState_pred, BD_Output(1),  &
 !                                             Map_Mod1_P_Mod2_P, Map_Mod2_P_Mod1_P, &

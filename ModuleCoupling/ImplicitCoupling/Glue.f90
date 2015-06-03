@@ -482,10 +482,6 @@ PROGRAM MAIN
    CALL BD_CopyOutput( BD1_Output(1), y1, MESH_NEWCOPY, ErrStat, ErrMsg )
 
 
-   ! We fill Mod1_InputTimes with negative times, but the Mod1_Input values are identical for each of those times; this allows
-   ! us to use, e.g., quadratic interpolation that effectively acts as a zeroth-order extrapolation and first-order extrapolation
-   ! for the first and second time steps.  (The interpolation order in the ExtrapInput routines are determined as
-   ! order = SIZE(Mod1_Input)
    DO i = 1, BD1_interp_order + 1
       BD1_InputTimes(i) = t_initial - (i - 1) * dt_global
       BD1_OutputTimes(i) = t_initial - (i - 1) * dt_global
@@ -562,6 +558,9 @@ PROGRAM MAIN
                    BD_ConstraintState, BD_OtherState, BD_Output(1),  &
 !                   Map_Mod1_P_Mod2_P, Map_Mod2_P_Mod1_P, &
                    ErrStat, ErrMsg)
+
+   CALL BD_IniAcc(BD1_Input(1),BD1_Output(1),BD1_Parameter,BD1_OtherState)
+   CALL BD_IniAcc(BD_Input(1),BD_Output(1),BD_Parameter,BD_OtherState)
 
    DO i = 1, BD1_interp_order
      CALL BD_CopyInput (BD1_Input(i),  BD1_Input(i+1),  MESH_NEWCOPY, Errstat, ErrMsg)
@@ -678,10 +677,11 @@ ENDIF
          CALL BD_CopyConstrState (BD1_ConstraintState, BD1_ConstraintState_pred, 0, Errstat, ErrMsg)
 
          CALL BD_CopyDiscState   (BD1_DiscreteState,   BD1_DiscreteState_pred,   0, Errstat, ErrMsg)
+         CALL BD_CopyOtherState  (BD1_OtherState,   BD1_OtherState_pred,   0, Errstat, ErrMsg)
 
          CALL BD_UpdateStates( t_global, n_t_global, BD1_Input, BD1_InputTimes, BD1_Parameter, BD1_ContinuousState_pred, &
                                  BD1_DiscreteState_pred, BD1_ConstraintState_pred, &
-                                 BD1_OtherState, ErrStat, ErrMsg )
+                                 BD1_OtherState_pred, ErrStat, ErrMsg )
          !----------------------------------------------------------------------------------------
          ! Module 2
          !----------------------------------------------------------------------------------------
@@ -711,13 +711,12 @@ ENDIF
 
             CALL BD1_BD_InputOutputSolve( t_global + dt_global, &
                                              BD1_Input(1), BD1_Parameter, BD1_ContinuousState_pred, BD1_DiscreteState_pred, &
-                                             BD1_ConstraintState_pred, BD1_OtherState, BD1_Output(1), &
+                                             BD1_ConstraintState_pred, BD1_OtherState_pred, BD1_Output(1), &
                                              BD_Input(1), BD_Parameter, BD_ContinuousState_pred, BD_DiscreteState_pred, &
                                              BD_ConstraintState_pred, BD_OtherState_pred, BD_Output(1),  &
 !                                             Map_Mod1_P_Mod2_P, Map_Mod2_P_Mod1_P, &
                                              ErrStat, ErrMsg)
 
-            
             ! after all InputOutputSolves, we can reset the mapping flags on the meshes:
             BD1_Input(1)%RootMotion%RemapFlag  = .FALSE. 
             BD1_Output(1)%ReactionForce%RemapFlag = .FALSE.

@@ -30,6 +30,7 @@ MODULE BeamDyn
    PUBLIC :: lubksb
    PUBLIC :: BD_MotionTensor
    PUBLIC :: BD_CalcIC
+   PUBLIC :: BD_IniAcc
 
 CONTAINS
 
@@ -660,15 +661,15 @@ CONTAINS
    ErrStat = ErrID_None
    ErrMsg  = "" 
    IF(p%analysis_type == 2) THEN
-       IF(n .EQ. 0) THEN
-           CALL BD_CopyInput(u(2), u_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
-           CALL BD_InputGlobalLocal(p,u_tmp,0)
-           OtherState%Acc(1:3) = u_tmp%RootMotion%TranslationAcc(1:3,1)
-           OtherState%Acc(4:6) = u_tmp%RootMotion%RotationAcc(1:3,1)
-           CALL BD_CalcAcc(u_tmp,p,x,OtherState)
-           OtherState%Xcc(:) = OtherState%Acc(:)
-           CALL BD_DestroyInput(u_tmp, ErrStat, ErrMsg )
-       ENDIF
+!       IF(n .EQ. 0) THEN
+!           CALL BD_CopyInput(u(2), u_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
+!           CALL BD_InputGlobalLocal(p,u_tmp,0)
+!           OtherState%Acc(1:3) = u_tmp%RootMotion%TranslationAcc(1:3,1)
+!           OtherState%Acc(4:6) = u_tmp%RootMotion%RotationAcc(1:3,1)
+!           CALL BD_CalcAcc(u_tmp,p,x,OtherState)
+!           OtherState%Xcc(:) = OtherState%Acc(:)
+!           CALL BD_DestroyInput(u_tmp, ErrStat, ErrMsg )
+!       ENDIF
        CALL BD_GA2( t, n, u, utimes, p, x, xd, z, OtherState, ErrStat, ErrMsg )
    ELSEIF(p%analysis_type == 1) THEN
        CALL BD_Static( t, n, u, utimes, p, x, xd, z, OtherState, ErrStat, ErrMsg )
@@ -4981,6 +4982,41 @@ END SUBROUTINE ludcmp
 
    END SUBROUTINE BD_SolutionForceAcc
 
+   SUBROUTINE BD_IniAcc( u, y, p, OtherState)
+   
+   TYPE(BD_InputType),           INTENT(IN   ):: u           ! Inputs at t
+   TYPE(BD_OutputType),          INTENT(IN   ):: y           ! Inputs at t
+   TYPE(BD_ParameterType),       INTENT(IN   ):: p           ! Parameters
+   TYPE(BD_OtherStateType),      INTENT(INOUT):: OtherState  ! Other/optimization states
+   
+   REAL(ReKi)                                 :: MoTens(6,6)
+   REAL(ReKi)                                 :: temp6(6)
+   INTEGER(IntKi)                             :: i
+   INTEGER(IntKi)                             :: j
+   INTEGER(IntKi)                             :: temp_id
+   INTEGER(IntKi)                             :: temp_id2
+   
+   CALL BD_MotionTensor(p%GlbRot,p%GlbPos,MoTens,1)
+   DO i=1,p%elem_total
+       DO j=1,p%node_elem
+           temp_id = ((i-1)*(p%node_elem-1)+j-1)*p%dof_node
+           temp_id2= (i-1)*p%node_elem+j
+           IF(i .EQ. 1 .AND. j .EQ. 1) THEN
+               temp6(:) = 0.0D0
+               temp6(1:3) = u%RootMotion%TranslationAcc(1:3,1)
+               temp6(4:6) = u%RootMotion%RotationAcc(1:3,1) 
+           ELSE                 
+               temp6(:) = 0.0D0
+               temp6(1:3) = y%BldMotion%TranslationAcc(1:3,temp_id2)
+               temp6(4:6) = y%BldMotion%RotationAcc(1:3,temp_id2)
+               temp6(:) = MATMUL(MoTens,temp6)
+           ENDIF
+           OtherState%Acc(temp_id+1:temp_id+6) = temp6(1:6) 
+       ENDDO
+   ENDDO
+   OtherState%Xcc(:) = OtherState%Acc(:)
+   
+   END SUBROUTINE BD_IniAcc
 
 
 END MODULE BeamDyn
