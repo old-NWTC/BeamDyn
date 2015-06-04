@@ -275,6 +275,14 @@ CALL BD_CrvExtractCrv(BD_OutPut(2)%BldMotion%Orientation(1:3,1:3,BD_Parameter%no
 
       ENDDO
 
+!WRITE(*,*) 'Disp'
+!WRITE(*,*) BD_ContinuousState_pred%q(:)
+!WRITE(*,*) 'Vel'
+!WRITE(*,*) BD_ContinuousState_pred%dqdt(:)
+!WRITE(*,*) 'Acc'
+!WRITE(*,*) BD_OtherState%Acc(:)
+!WRITE(*,*) 'Xcc'
+!WRITE(*,*) BD_OtherState%Xcc(:)
 !   WRITE(QiHUnit,*) n_t_global+1,BD_OtherState%NR_counter
 !   temp_count = temp_count + BD_OtherState%NR_counter
 
@@ -464,8 +472,9 @@ END PROGRAM MAIN
    u%PointLoad%Force(:,:)  = 0.0D0
    u%PointLoad%Moment(:,:) = 0.0D0
    
-!   u%PointLoad%Force(3,p%node_total) = 1.0D+05*SIN(0.2*t)
-   u%PointLoad%Force(3,p%node_total) = 1.0D+03*0.5*(1.0D0-COS(0.2*t))
+!   u%RootMotion%TranslationAcc(3,1) = 1.76991032448401212D-02
+   u%PointLoad%Force(3,p%node_total) = 1.0D+02*SIN(2.0*t)
+!   u%PointLoad%Force(3,p%node_total) = 1.0D+03*0.5*(1.0D0-COS(0.2*t))
 !   u%PointLoad%Force(3,3) = 1.0D+00
 
    ! LINE2 mesh: DistrLoad

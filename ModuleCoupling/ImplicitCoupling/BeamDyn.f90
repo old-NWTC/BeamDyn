@@ -4288,16 +4288,29 @@ END SUBROUTINE ludcmp
    ErrStat = ErrID_None
    ErrMsg  = "" 
 
+!WRITE(*,*) 'u(1)%TipLoad'
+!WRITE(*,*) u(1)%PointLoad%Force(:,3)
+!WRITE(*,*) u(1)%PointLoad%Moment(:,3)
    CALL BD_CopyInput(u(1), u_interp, MESH_NEWCOPY, ErrStat, ErrMsg)
+!WRITE(*,*) 'u_interp%RootAcc'
+!WRITE(*,*) u_interp%RootMotion%TranslationAcc(:,1)
+!WRITE(*,*) u_interp%RootMotion%RotationAcc(:,1)
+!WRITE(*,*) 'u_interp%TipLoad'
+!WRITE(*,*) u_interp%PointLoad%Force(:,3)
+!WRITE(*,*) u_interp%PointLoad%Moment(:,3)
    CALL BD_CopyContState(x, x_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
    CALL BD_CopyOtherState(OtherState, OS_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
-   ! interpolate u to find u_interp = u(t)
-!   CALL BD_Input_ExtrapInterp( u, utimes, u_interp, t+p%dt, ErrStat, ErrMsg )
    CALL BD_TiSchmPredictorStep( x_tmp%q,x_tmp%dqdt,OS_tmp%acc,OS_tmp%xcc,             &
                                 p%coef,p%dt,x%q,x%dqdt,OtherState%acc,OtherState%xcc, &
                                 p%node_total,p%dof_node )
    ! find x at t+dt
    CALL BD_InputGlobalLocal(p,u_interp,0)
+!WRITE(*,*) 'u_interp%RootAcc'
+!WRITE(*,*) u_interp%RootMotion%TranslationAcc(:,1)
+!WRITE(*,*) u_interp%RootMotion%RotationAcc(:,1)
+!WRITE(*,*) 'u_interp%TipLoad'
+!WRITE(*,*) u_interp%PointLoad%Force(:,3)
+!WRITE(*,*) u_interp%PointLoad%Moment(:,3)
    CALL BD_BoundaryGA2(x,p,u_interp,t+p%dt,OtherState,ErrStat,ErrMsg)
    CALL BD_DynamicSolutionGA2( p%uuN0,x%q,x%dqdt,OtherState%acc,OtherState%xcc,&
                                p%Stif0_GL,p%Mass0_GL,p%gravity,u_interp,       &
