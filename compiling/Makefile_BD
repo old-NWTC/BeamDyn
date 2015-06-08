@@ -15,39 +15,40 @@
    # 32-bit or 64-bit?
 BITS = 32
 #BITS = 64
+#OS = Linux
 
 
-   # Location of source files for ModuleName and the NWTC Library.  You will probably need to change these for your system.
-OS = Linux
-# these settings are overridden below
+   # Location of source files.  You will probably need to change these for your system.
+
 ifeq ($(OS),Windows_NT)
-   LIB_DIR  = C:/Users/bjonkman/Documents/DATA/DesignCodes/miscellaneous/nwtc_subs/SVNdirectory/trunk/source
-   REGISTRY = Registry
+   FAST_dir = C:/Users/bjonkman/Documents/DATA/DesignCodes/simulators/FAST/SVNdirectory/branches/BJonkman/
+
+   REGISTRY = $(FAST_dir)/bin/Registry_Win32.exe
+   LAPACK_LINK  = -llapack -lblas -LC:/LAPACK/win32
 else
-   LIB_DIR  = /Users/qwang2/Desktop/BeamDyn/SVN/BJonkman/Source/dependencies/NWTC_Library/
-   REGISTRY = /Users/qwang2/Desktop/BeamDyn/SVN/BJonkman/Source/dependencies/registry.exe
-   NETLIB_DIR = /Users/qwang2/Desktop/BeamDyn/SVN/BJonkman/Source/dependencies/NetLib/
+   FAST_dir=/Users/qwang2/Desktop/BeamDyn/SVN/BJonkman/
+
+   REGISTRY   = $(FAST_dir)Source/dependencies/registry.exe
    LAPACK_LINK  = -llapack -lblas
 endif
 
-MODNAME_DIR = .
+BD_DIR = ../source/
+LIB_DIR = $(FAST_dir)/Source/dependencies/NWTC_Library/
+NETLIB_DIR = $(FAST_dir)/Source/dependencies/NetLib/
+
 
    # Name of compiler to use and flags to use.
 
 FC     = gfortran
-OPT    = 
+OPT    =
 #FFLAGS = -O2 -m$(BITS) -fbacktrace -ffree-line-length-none -x f95-cpp-input  -fcheck=bounds -C
 #FFLAGS = -O3 -fbacktrace -ffree-line-length-none -x f95-cpp-input
 #LDFLAGS = -O2 -m$(BITS)  -fbacktrace $(BLAS_LAPACK_LIBS)
-FFLAGS = $(OPT) -O2 -m32 -fdefault-real-8 -fdefault-double-8 -fbacktrace -ffree-line-length-none -x f95-cpp-input -Wsurprising
+FFLAGS = $(OPT) -O2 -m32 -fdefault-real-8 -fdefault-double-8 -fbacktrace -ffree-line-length-none -x f95-cpp-input -Wsurprising -DDOUBLE_PRECISION
 LDFLAGS = $(OPT) -O2 -m32 -fbacktrace
 
 
    # Precision.
-
-# Use "SingPrec" for single precision and "DoubPrec" for double precision.  You may also need to change an option switch to make constants DP.
-#PREC = SingPrec
-PREC = DoubPrec
 
    #==========================================================#
    # You should not need to change anything beyond this point #
@@ -84,7 +85,7 @@ DEST_DIR    = .
    # Library files.
 
 LIB_SOURCES =           \
-	$(PREC).f90          \
+	SingPrec.f90         \
 	NWTC_Base.f90        \
 	$(SYS_FILE).f90      \
     NWTC_Library_Types.f90   \
@@ -99,38 +100,38 @@ NETLIB_SOURCES=             \
         NWTC_LAPACK.f90
 
 
-MODNAME_SOURCES   =             \
-	BeamDyn.f90             \
-	Glue.f90      \
-	BeamDyn_Types.f90       \
+BD_SOURCES   =      \
+	BeamDyn.f90           \
+	BD_BD_Couple.f90      \
+	BeamDyn_Types.f90     \
 
-vpath %.f90 $(LIB_DIR) $(NETLIB_DIR) $(MODNAME_DIR)
+vpath %.f90 $(LIB_DIR) $(NETLIB_DIR) $(BD_DIR)
 vpath %.mod $(INTER_DIR)
 vpath %.obj $(INTER_DIR)
+vpath %.txt $(BD_DIR)
 
-ALL_SOURCES = $(LIB_SOURCES) $(NETLIB_SOURCES) $(MODNAME_SOURCES)
-tmp_objs1   = $(ALL_SOURCES:.f90=.obj)
-tmp_objs2   = $(tmp_objs1:.F90=.obj)       #note the upper case here (from IceFloe)
-ALL_OBJS    = $(tmp_objs2:.f=.obj)
+ALL_SOURCES = $(LIB_SOURCES) $(NETLIB_SOURCES) $(BD_SOURCES)
+ALL_OBJS    = $(ALL_SOURCES:.f90=.obj)
+ALL_OBJS   := $(ALL_OBJS:.F90=.obj)       #note the upper case here (from IceFloe)
+ALL_OBJS   := $(ALL_OBJS:.f=.obj)
 
-#NETLIB_OBJS    = $(NETLIB_SOURCES:.f90=.obj)
-#LIB_OBJS          = $(LIB_SOURCES:.f90=.obj)
-#MODNAME_OBJS  = $(MODNAME_SOURCES:.f90=.obj)
+
 
    # Rule to do everything.
 all:     default
-default: BeamDyn_Types.f90 $(INTER_DIR) $(DEST_DIR)/$(OUTPUT_NAME)$(EXE_EXT)
+default: $(INTER_DIR) $(DEST_DIR)/$(OUTPUT_NAME)$(EXE_EXT)
 
    # General rule for making the files.
 
 # -B is needed for MinGW version of Gfortran
 %.obj: %.f90
-	$(FC) -I $(INTER_DIR) $(FFLAGS) -g -c $< -o $(INTER_DIR)/$@ -J $(INTER_DIR) #-B $(INTER_DIR)
+	$(FC) -I $(INTER_DIR) $(FFLAGS) -g -c $< -o $(INTER_DIR)/$@ -J $(INTER_DIR)
+#-B $(INTER_DIR)
 
    #  Dependency rules.
 
 #NWTC Library dependency rules:
-NWTC_Base.obj:              $(PREC).obj
+NWTC_Base.obj:              SingPrec.obj
 $(SYS_FILE).obj:            NWTC_Base.obj
 NWTC_Library_Types.obj:     $(SYS_FILE).obj
 NWTC_IO.obj:                NWTC_Library_Types.obj
@@ -142,11 +143,10 @@ NWTC_Library.obj:           ModMesh.obj  ModMesh_Mapping.obj
 
 NWTC_LAPACK.obj:            NWTC_Base.obj
 
-BeamDyn_Types.f90:       Registry_BeamDyn.txt
-BeamDyn_Types.obj:       NWTC_Library.obj
-BeamDyn.obj:             BeamDyn_Types.obj  *.f90
+BeamDyn_Types.obj:       NWTC_Library.obj  $(BD_DIR)/BeamDyn_Types.f90
+BeamDyn.obj:             BeamDyn_Types.obj
 
-Glue.obj: BeamDyn.obj NWTC_Library.obj
+BD_BD_Couple.obj:        BeamDyn.obj NWTC_Library.obj
 
    # Make sure the destination directory for the intermediate files exist.
 
@@ -156,19 +156,19 @@ $(INTER_DIR):
 
    # Run the registry if the input file changes.
 
-BeamDyn_Types.f90:
-	$(REGISTRY) Registry_BeamDyn.txt
+$(BD_DIR)/BeamDyn_Types.f90: $(BD_DIR)/Registry_BeamDyn.txt
+	$(REGISTRY) $< -I $(LIB_DIR) -O $(BD_DIR)
 
 
    # For compiling the driver/glue code.
 
 $(DEST_DIR)/$(OUTPUT_NAME)$(EXE_EXT): $(ALL_OBJS) | $(INTER_DIR)
 	$(FC) $(LDFLAGS) -I $(INTER_DIR) -o $(DEST_DIR)/$(OUTPUT_NAME)$(EXE_EXT) \
-	$(foreach src, $(ALL_OBJS), $(addprefix $(INTER_DIR)/,$(src))) $(MAP_lib) $(LAPACK_LINK)
+	$(foreach src, $(ALL_OBJS), $(addprefix $(INTER_DIR)/,$(src))) $(LAPACK_LINK)
 
    # Cleanup afterwards.
 
 clean:
 	$(DEL_CMD) $(INTER_DIR)$(PATH_SEP)*.mod $(INTER_DIR)$(PATH_SEP)*.obj $(OUTPUT_NAME)$(EXE_EXT) \
-	BeamDyn_Types.f90 *.dat *.out
+	"$(BD_DIR)"$(PATH_SEP)BeamDyn_Types.f90 *.dat *.out
 
