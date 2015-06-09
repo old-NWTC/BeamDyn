@@ -450,33 +450,33 @@ PROGRAM MAIN
 
    BD1_InitInput%InputFile = 'GA2_Debug_BD1.inp'
    BD1_InitInput%RootName  = TRIM(BD1_Initinput%InputFile)
-   ALLOCATE(BD1_InitInput%gravity(3)) 
+   !ALLOCATE(BD1_InitInput%gravity(3)) 
    BD1_InitInput%gravity(1) = 0.0D0 !-9.80665
    BD1_InitInput%gravity(2) = 0.0D0 
    BD1_InitInput%gravity(3) = 0.0D0
-   ALLOCATE(BD1_InitInput%GlbPos(3)) 
+   !ALLOCATE(BD1_InitInput%GlbPos(3)) 
    BD1_InitInput%GlbPos(1) = 0.0D+00
    BD1_InitInput%GlbPos(2) = 0.0D+00
    BD1_InitInput%GlbPos(3) = 0.0D+00
-   ALLOCATE(BD1_InitInput%GlbRot(3,3)) 
-   BD1_InitInput%GlbRot(:,:) = 0.0D0
+   !ALLOCATE(BD1_InitInput%GlbRot(3,3)) 
+   !BD1_InitInput%GlbRot(:,:) = 0.0D0
    temp_vec(1) = 0.0
    temp_vec(2) = 0.0
    temp_vec(3) = 0.0
    CALL BD_CrvMatrixR(temp_vec,temp_R)
    BD1_InitInput%GlbRot(1:3,1:3) = temp_R(1:3,1:3)
-   ALLOCATE(BD1_InitInput%RootDisp(3)) 
+   !ALLOCATE(BD1_InitInput%RootDisp(3)) 
    BD1_InitInput%RootDisp(1) = 0.0D+00
    BD1_InitInput%RootDisp(2) = 0.0D+00
    BD1_InitInput%RootDisp(3) = 0.0D+00
-   ALLOCATE(BD1_InitInput%RootOri(3,3)) 
-   BD1_InitInput%RootOri(:,:) = 0.0D0
+   !ALLOCATE(BD1_InitInput%RootOri(3,3)) 
+   !BD1_InitInput%RootOri(:,:) = 0.0D0
    temp_vec(1) = 0.0
    temp_vec(2) = 0.0
    temp_vec(3) = 0.0
    CALL BD_CrvMatrixR(temp_vec,temp_R)
    BD1_InitInput%RootOri(1:3,1:3) = temp_R(1:3,1:3)
-   ALLOCATE(BD1_InitInput%RootVel(6)) 
+   !ALLOCATE(BD1_InitInput%RootVel(6)) 
    BD1_InitInput%RootVel(:) = 0.0D+00
 
    CALL BD_Init( BD1_InitInput, BD1_Input(1), BD1_Parameter, BD1_ContinuousState, BD1_DiscreteState, &
@@ -497,33 +497,33 @@ PROGRAM MAIN
 !   BD_InitInput%InputFile = 'Siemens_53_Input.inp'
    BD_InitInput%InputFile = 'GA2_Debug_BD.inp'
    BD_InitInput%RootName  = TRIM(BD_Initinput%InputFile)
-   ALLOCATE(BD_InitInput%gravity(3)) 
+   !ALLOCATE(BD_InitInput%gravity(3)) 
    BD_InitInput%gravity(1) = 0.0D0 !-9.80665
    BD_InitInput%gravity(2) = 0.0D0 
    BD_InitInput%gravity(3) = 0.0D0
-   ALLOCATE(BD_InitInput%GlbPos(3)) 
+   !ALLOCATE(BD_InitInput%GlbPos(3)) 
    BD_InitInput%GlbPos(1) = 0.0D+00
    BD_InitInput%GlbPos(2) = 0.0D+00
    BD_InitInput%GlbPos(3) = 0.0D+00
-   ALLOCATE(BD_InitInput%GlbRot(3,3)) 
-   BD_InitInput%GlbRot(:,:) = 0.0D0
+   !ALLOCATE(BD_InitInput%GlbRot(3,3)) 
+   !BD_InitInput%GlbRot(:,:) = 0.0D0
    temp_vec(1) = 0.0
    temp_vec(2) = 0.0
    temp_vec(3) = 0.0 !4.0D0*TAN((3.1415926D0/2.0D0)/4.0D0)
    CALL BD_CrvMatrixR(temp_vec,temp_R)
    BD_InitInput%GlbRot(1:3,1:3) = temp_R(1:3,1:3)
-   ALLOCATE(BD_InitInput%RootDisp(3)) 
+   !ALLOCATE(BD_InitInput%RootDisp(3)) 
    BD_InitInput%RootDisp(1) = 0.0D+00
    BD_InitInput%RootDisp(2) = 0.0D+00
    BD_InitInput%RootDisp(3) = 0.0D+00
-   ALLOCATE(BD_InitInput%RootOri(3,3)) 
-   BD_InitInput%RootOri(:,:) = 0.0D0
+   !ALLOCATE(BD_InitInput%RootOri(3,3)) 
+   !BD_InitInput%RootOri(:,:) = 0.0D0
    temp_vec(1) = 0.0
    temp_vec(2) = 0.0
    temp_vec(3) = 0.0
    CALL BD_CrvMatrixR(temp_vec,temp_R)
    BD_InitInput%RootOri(1:3,1:3) = temp_R(1:3,1:3)
-   ALLOCATE(BD_InitInput%RootVel(6)) 
+   !ALLOCATE(BD_InitInput%RootVel(6)) 
    BD_InitInput%RootVel(:) = 0.0D+00
 
    CALL BD_Init( BD_InitInput, BD_Input(1), BD_Parameter, BD_ContinuousState, BD_DiscreteState, &
