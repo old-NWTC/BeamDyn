@@ -393,6 +393,9 @@ PROGRAM MAIN
    INTEGER(IntKi),PARAMETER:: QiMidAcc = 60
    INTEGER(IntKi),PARAMETER:: QiRotFor = 70
 
+   ErrStat = ErrID_None
+   ErrMsg  = ""
+
    ! -------------------------------------------------------------------------
    ! MAPPING STUFF; Likely needs to be added to ModMesh
    ! -------------------------------------------------------------------------
@@ -602,11 +605,11 @@ WRITE(*,*) "Time Step: ", n_t_global
       ! Solve input-output relations; this section of code corresponds to Eq. (35) in Gasmi et al. (2013)
       ! This code will be specific to the underlying modules
 IF(MOD(n_t_global,1000) .EQ. 0) THEN
-      CALL BD_CrvExtractCrv(BD_OutPut(1)%BldMotion%Orientation(1:3,1:3,BD_Parameter%node_total),temp_cc)
+      CALL BD_CrvExtractCrv(BD_OutPut(1)%BldMotion%Orientation(1:3,1:3,BD_Parameter%node_total),temp_cc,ErrStat,ErrMsg)
       WRITE(QiTipDisp,6000) t_global,&
                             &BD_OutPut(1)%BldMotion%TranslationDisp(1:3,BD_Parameter%node_total),&
                             &temp_cc(1:3)
-      CALL BD_CrvExtractCrv(BD1_OutPut(1)%BldMotion%Orientation(1:3,1:3,BD1_Parameter%node_total),temp_cc)
+      CALL BD_CrvExtractCrv(BD1_OutPut(1)%BldMotion%Orientation(1:3,1:3,BD1_Parameter%node_total),temp_cc,ErrStat,ErrMsg)
       WRITE(QiMidDisp,6000) t_global,&
                             &BD1_OutPut(1)%BldMotion%TranslationDisp(1:3,BD1_Parameter%node_total),&
                             &temp_cc(1:3)
