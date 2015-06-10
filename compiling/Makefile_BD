@@ -32,7 +32,7 @@ else
    LAPACK_LINK  = -llapack -lblas
 endif
 
-BD_DIR = ../source/
+BD_DIR = ../source
 LIB_DIR = $(FAST_dir)/Source/dependencies/NWTC_Library/
 NETLIB_DIR = $(FAST_dir)/Source/dependencies/NetLib/
 
