@@ -186,7 +186,7 @@ SUBROUTINE BD1_BD_InputOutputSolve(time, &
 !WRITE(*,*) BD1_Input%PointLoad%Force(1:3,BD1_Parameter%node_total),BD1_Input%PointLoad%Moment(1:3,BD1_Parameter%node_total)
 !WRITE(*,*) 'BD Input Acc'
 !WRITE(*,*) BD_Input%RootMotion%TranslationAcc(1:3,1),BD_Input%RootMotion%RotationAcc(1:3,1)
-       IF(BD_Norm(RHS) .LE. TOLF) THEN
+       IF(TwoNorm(RHS) .LE. TOLF) THEN
            CALL BD_DestroyInput(BDInput_tmp, ErrStat, ErrMsg )
            CALL BD_DestroyInput(BD1Input_tmp, ErrStat, ErrMsg )
            CALL BD_DestroyOutput(OT_tmp, ErrStat, ErrMsg )
@@ -259,7 +259,7 @@ SUBROUTINE BD1_BD_InputOutputSolve(time, &
 
 !WRITE(*,*) 'uinc:'
 !WRITE(*,*) uinc(:)
-!       IF(BD_Norm(uinc) .LE. TOLF) THEN
+!       IF(TwoNorm(uinc) .LE. TOLF) THEN
 !           CALL BD_DestroyInput(BDInput_tmp, ErrStat, ErrMsg )
 !           CALL BD_DestroyInput(BD1Input_tmp, ErrStat, ErrMsg )
 !           CALL BD_DestroyOutput(OT_tmp, ErrStat, ErrMsg )
