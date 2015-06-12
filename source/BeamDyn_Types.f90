@@ -139,8 +139,11 @@ IMPLICIT NONE
     INTEGER(IntKi)  :: kp_total      ! Total number of key point [-]
     INTEGER(IntKi) , DIMENSION(:), ALLOCATABLE  :: kp_member      ! Total number of key point [-]
     INTEGER(IntKi)  :: order_elem      ! Order of interpolation (basis) function [-]
+    INTEGER(IntKi)  :: NRMax      ! Total number of key point [-]
+    REAL(ReKi)  :: stop_tol      ! Key point coordinates array [-]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: kp_coordinate      ! Key point coordinates array [-]
     REAL(DbKi)  :: rhoinf      ! Key point coordinates array [-]
+    REAL(DbKi)  :: DTBeam      ! Time interval for BeamDyn  calculations {or default} (s) [-]
     TYPE(BladeInputData)  :: InpBl      ! Input data for individual blades [see BladeInputData Type]
     CHARACTER(1024)  :: BldFile      ! Name of blade input file [-]
     LOGICAL  :: Echo      ! Echo [-]
@@ -3671,6 +3674,8 @@ IF (ALLOCATED(SrcInputFileData%kp_member)) THEN
     DstInputFileData%kp_member = SrcInputFileData%kp_member
 ENDIF
     DstInputFileData%order_elem = SrcInputFileData%order_elem
+    DstInputFileData%NRMax = SrcInputFileData%NRMax
+    DstInputFileData%stop_tol = SrcInputFileData%stop_tol
 IF (ALLOCATED(SrcInputFileData%kp_coordinate)) THEN
   i1_l = LBOUND(SrcInputFileData%kp_coordinate,1)
   i1_u = UBOUND(SrcInputFileData%kp_coordinate,1)
@@ -3686,6 +3691,7 @@ IF (ALLOCATED(SrcInputFileData%kp_coordinate)) THEN
     DstInputFileData%kp_coordinate = SrcInputFileData%kp_coordinate
 ENDIF
     DstInputFileData%rhoinf = SrcInputFileData%rhoinf
+    DstInputFileData%DTBeam = SrcInputFileData%DTBeam
       CALL BD_Copybladeinputdata( SrcInputFileData%InpBl, DstInputFileData%InpBl, CtrlCode, ErrStat2, ErrMsg2 )
          CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg,RoutineName)
          IF (ErrStat>=AbortErrLev) RETURN
@@ -3755,12 +3761,15 @@ ENDIF
       Int_BufSz  = Int_BufSz  + SIZE(InData%kp_member)  ! kp_member
   END IF
       Int_BufSz  = Int_BufSz  + 1  ! order_elem
+      Int_BufSz  = Int_BufSz  + 1  ! NRMax
+      Re_BufSz   = Re_BufSz   + 1  ! stop_tol
   Int_BufSz   = Int_BufSz   + 1     ! kp_coordinate allocated yes/no
   IF ( ALLOCATED(InData%kp_coordinate) ) THEN
     Int_BufSz   = Int_BufSz   + 2*2  ! kp_coordinate upper/lower bounds for each dimension
       Re_BufSz   = Re_BufSz   + SIZE(InData%kp_coordinate)  ! kp_coordinate
   END IF
       Db_BufSz   = Db_BufSz   + 1  ! rhoinf
+      Db_BufSz   = Db_BufSz   + 1  ! DTBeam
    ! Allocate buffers for subtypes, if any (we'll get sizes from these) 
       Int_BufSz   = Int_BufSz + 3  ! InpBl: size of buffers for each call to pack subtype
       CALL BD_Packbladeinputdata( Re_Buf, Db_Buf, Int_Buf, InData%InpBl, ErrStat2, ErrMsg2, .TRUE. ) ! InpBl 
@@ -3829,6 +3838,10 @@ ENDIF
   END IF
       IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%order_elem
       Int_Xferred   = Int_Xferred   + 1
+      IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%NRMax
+      Int_Xferred   = Int_Xferred   + 1
+      ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%stop_tol
+      Re_Xferred   = Re_Xferred   + 1
   IF ( .NOT. ALLOCATED(InData%kp_coordinate) ) THEN
     IntKiBuf( Int_Xferred ) = 0
     Int_Xferred = Int_Xferred + 1
@@ -3846,6 +3859,8 @@ ENDIF
       Re_Xferred   = Re_Xferred   + SIZE(InData%kp_coordinate)
   END IF
       DbKiBuf ( Db_Xferred:Db_Xferred+(1)-1 ) = InData%rhoinf
+      Db_Xferred   = Db_Xferred   + 1
+      DbKiBuf ( Db_Xferred:Db_Xferred+(1)-1 ) = InData%DTBeam
       Db_Xferred   = Db_Xferred   + 1
       CALL BD_Packbladeinputdata( Re_Buf, Db_Buf, Int_Buf, InData%InpBl, ErrStat2, ErrMsg2, OnlySize ) ! InpBl 
         CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg, RoutineName)
@@ -3948,6 +3963,10 @@ ENDIF
   END IF
       OutData%order_elem = IntKiBuf( Int_Xferred ) 
       Int_Xferred   = Int_Xferred + 1
+      OutData%NRMax = IntKiBuf( Int_Xferred ) 
+      Int_Xferred   = Int_Xferred + 1
+      OutData%stop_tol = ReKiBuf( Re_Xferred )
+      Re_Xferred   = Re_Xferred + 1
   IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! kp_coordinate not allocated
     Int_Xferred = Int_Xferred + 1
   ELSE
@@ -3975,6 +3994,8 @@ ENDIF
     DEALLOCATE(mask2)
   END IF
       OutData%rhoinf = DbKiBuf( Db_Xferred ) 
+      Db_Xferred   = Db_Xferred + 1
+      OutData%DTBeam = DbKiBuf( Db_Xferred ) 
       Db_Xferred   = Db_Xferred + 1
       Buf_size=IntKiBuf( Int_Xferred )
       Int_Xferred = Int_Xferred + 1

@@ -146,26 +146,10 @@ SUBROUTINE BD1_BD_InputOutputSolve(time, &
    eps = 0.01D+00
    DO i=1,iter_max
 !WRITE(*,*) 'i=',i
-
-!WRITE(*,*) 'BD1_Cont%q'
-!WRITE(*,*) BD1_ContinuousState%q
-!WRITE(*,*) 'BD1_Cont%dqdt'
-!WRITE(*,*) BD1_ContinuousState%dqdt
-!WRITE(*,*) 'BD1_Other%Acc'
-!WRITE(*,*) BD1_OtherState%Acc(:)
        CALL BD_CalcOutput( time, BD1_Input, BD1_Parameter, BD1_ContinuousState, BD1_DiscreteState, &
                     BD1_ConstraintState, BD1_OtherState, BD1_Output, ErrStat, ErrMsg )
-!WRITE(*,*) 'BD_Cont%q'
-!WRITE(*,*) BD_ContinuousState%q
-!WRITE(*,*) 'BD_Cont%dqdt'
-!WRITE(*,*) BD_ContinuousState%dqdt
-!WRITE(*,*) 'BD_Other%Acc'
-!WRITE(*,*) BD_OtherState%Acc(:)
        CALL BD_CalcOutput( time, BD_Input, BD_Parameter, BD_ContinuousState, BD_DiscreteState, &
                     BD_ConstraintState, BD_OtherState, BD_Output, ErrStat, ErrMsg )
-!WRITE(*,*) 'Original BD Reaction Force:'
-!WRITE(*,*) BD_Output%ReactionForce%Force(1:3,1)
-!WRITE(*,*) BD_Output%ReactionForce%Moment(1:3,1)
        CALL BD_CopyInput(BD_Input,BDInput_tmp,MESH_NEWCOPY,ErrStat,ErrMsg)
        CALL BD_CopyInput(BD1_Input,BD1Input_tmp,MESH_NEWCOPY,ErrStat,ErrMsg)
 
@@ -180,12 +164,6 @@ SUBROUTINE BD1_BD_InputOutputSolve(time, &
        RHS(6) = -(BD_Input%RootMotion%RotationAcc(2,1) - &
                       BD1_Output%BldMotion%RotationAcc(2,BD1_Parameter%node_total))
     
-!WRITE(*,*) 'RHS(Residual)'
-!WRITE(*,*) RHS
-!WRITE(*,*) 'BD1 Input Force'
-!WRITE(*,*) BD1_Input%PointLoad%Force(1:3,BD1_Parameter%node_total),BD1_Input%PointLoad%Moment(1:3,BD1_Parameter%node_total)
-!WRITE(*,*) 'BD Input Acc'
-!WRITE(*,*) BD_Input%RootMotion%TranslationAcc(1:3,1),BD_Input%RootMotion%RotationAcc(1:3,1)
        IF(TwoNorm(RHS) .LE. TOLF) THEN
            CALL BD_DestroyInput(BDInput_tmp, ErrStat, ErrMsg )
            CALL BD_DestroyInput(BD1Input_tmp, ErrStat, ErrMsg )
