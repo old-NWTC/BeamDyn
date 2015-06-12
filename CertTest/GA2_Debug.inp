@@ -4,6 +4,9 @@ Beam for Coupling Validation
 TRUE         Echo        - Echo input data to "<RootName>.ech" (flag)
 2         analysis_type  - 1: Static analysis; 2: Dynamic analysis
 1.0       rhoinf         - Numerical Damping Parameter for Generalized-alpha integrator
+1.0E-03   dt             - Time step size
+10        NRMax			 - Max number of iterations in Newton-Ralphson algorithm
+1.0E-05   stop_tol       - Tolerance for stopping criterion
 ---------------------- GEOMETRY PARAMETER --------------------------------------
 1     member_total    - Total number of member (-)
 3    kp_total        - Total number of key point (-)
