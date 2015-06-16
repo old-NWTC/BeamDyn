@@ -28,7 +28,6 @@ else
    REGISTRY = /Users/qwang2/Desktop/BeamDyn/SVN/BJonkman/Source/dependencies/registry.exe
    NETLIB_DIR = /Users/qwang2/Desktop/BeamDyn/SVN/BJonkman/Source/dependencies/NetLib/
    LAPACK_LINK  = -llapack -lblas
-
 endif
 
 MODNAME_DIR = .
@@ -37,9 +36,6 @@ MODNAME_DIR = .
 
 FC     = gfortran
 OPT    = 
-#FFLAGS = -O2 -m$(BITS) -fbacktrace -ffree-line-length-none -x f95-cpp-input  -fcheck=bounds -C
-#FFLAGS = -O3 -fbacktrace -ffree-line-length-none -x f95-cpp-input
-#LDFLAGS = -O2 -m$(BITS)  -fbacktrace $(BLAS_LAPACK_LIBS)
 FFLAGS = $(OPT) -O2 -m32 -fdefault-real-8 -fdefault-double-8 -fbacktrace -ffree-line-length-none -x f95-cpp-input -Wsurprising
 LDFLAGS = $(OPT) -O2 -m32 -fbacktrace
 
