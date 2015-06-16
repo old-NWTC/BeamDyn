@@ -70,8 +70,6 @@ IMPLICIT NONE
 ! =======================
 ! =========  BD_OtherStateType  =======
   TYPE, PUBLIC :: BD_OtherStateType
-    REAL(ReKi)  :: DummyOtherState      ! A variable, replace if you have Other States [-]
-    INTEGER(IntKi)  :: NR_counter      ! A variable, replace if you have Other States [-]
     REAL(ReKi) , DIMENSION(:), ALLOCATABLE  :: acc      ! Accerleration in GA2 [-]
     REAL(ReKi) , DIMENSION(:), ALLOCATABLE  :: xcc      ! Algorithm accerleration in GA2 [-]
   END TYPE BD_OtherStateType
@@ -1255,8 +1253,6 @@ ENDIF
 ! 
    ErrStat = ErrID_None
    ErrMsg  = ""
-    DstOtherStateData%DummyOtherState = SrcOtherStateData%DummyOtherState
-    DstOtherStateData%NR_counter = SrcOtherStateData%NR_counter
 IF (ALLOCATED(SrcOtherStateData%acc)) THEN
   i1_l = LBOUND(SrcOtherStateData%acc,1)
   i1_u = UBOUND(SrcOtherStateData%acc,1)
@@ -1335,8 +1331,6 @@ ENDIF
   Re_BufSz  = 0
   Db_BufSz  = 0
   Int_BufSz  = 0
-      Re_BufSz   = Re_BufSz   + 1  ! DummyOtherState
-      Int_BufSz  = Int_BufSz  + 1  ! NR_counter
   Int_BufSz   = Int_BufSz   + 1     ! acc allocated yes/no
   IF ( ALLOCATED(InData%acc) ) THEN
     Int_BufSz   = Int_BufSz   + 2*1  ! acc upper/lower bounds for each dimension
@@ -1374,10 +1368,6 @@ ENDIF
   Db_Xferred  = 1
   Int_Xferred = 1
 
-      ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%DummyOtherState
-      Re_Xferred   = Re_Xferred   + 1
-      IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%NR_counter
-      Int_Xferred   = Int_Xferred   + 1
   IF ( .NOT. ALLOCATED(InData%acc) ) THEN
     IntKiBuf( Int_Xferred ) = 0
     Int_Xferred = Int_Xferred + 1
@@ -1439,10 +1429,6 @@ ENDIF
   Re_Xferred  = 1
   Db_Xferred  = 1
   Int_Xferred  = 1
-      OutData%DummyOtherState = ReKiBuf( Re_Xferred )
-      Re_Xferred   = Re_Xferred + 1
-      OutData%NR_counter = IntKiBuf( Int_Xferred ) 
-      Int_Xferred   = Int_Xferred + 1
   IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! acc not allocated
     Int_Xferred = Int_Xferred + 1
   ELSE

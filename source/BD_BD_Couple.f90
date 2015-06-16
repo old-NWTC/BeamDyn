@@ -106,22 +106,15 @@ SUBROUTINE BD1_BD_InputOutputSolve(time, &
    REAL(ReKi)                                   :: eps
    REAL(ReKi)                                   :: d
    REAL(ReKi)                                   :: uinc(6)
-   REAL(ReKi)                                   :: temp_c0(3)
-   REAL(ReKi)                                   :: temp_cc(3)
-   REAL(ReKi)                                   :: temp3(3)
-   REAL(ReKi)                                   :: tempBD_rr(3)
-   REAL(ReKi)                                   :: tempBD1_rr(3)
    REAL(ReKi),                        PARAMETER :: TOLF = 1.0D-05
    INTEGER(IntKi)                               :: indx(6)
    INTEGER(IntKi)                               :: i
    INTEGER(IntKi)                               :: j
-   INTEGER(IntKi)                               :: k
    INTEGER(IntKi),                    PARAMETER :: iter_max = 10
    TYPE(BD_OutputType)                          :: OT_tmp
    TYPE(BD_OutputType)                         :: BD1OT_tmp
    TYPE(BD_InputType)                           :: BDInput_tmp
    TYPE(BD_InputType)                          :: BD1Input_tmp
-   TYPE(BD_InputType)                          :: BD1InputRea_tmp
    ! Solve input-output relations; this section of code corresponds to Eq. (35) in Gasmi et al. (2013)
    ! This code will be specific to the underlying modules; could be placed in a separate routine.
    ! Note that Module2 has direct feedthrough, but Module1 does not. Thus, Module1 should be called first.
@@ -303,14 +296,12 @@ PROGRAM MAIN
    INTEGER(IntKi)                     :: BD1_interp_order     ! order of interpolation/extrapolation
    INTEGER(IntKi)                     :: BD_interp_order     ! order of interpolation/extrapolation
 
-   INTEGER(IntKi)                     :: MaxPtsInMap      ! the maximum number of points in a mapping
    
    ! Module1 Derived-types variables; see Registry_Module1.txt for details
 
    TYPE(BD_InitInputType)           :: BD1_InitInput
    TYPE(BD_ParameterType)           :: BD1_Parameter
    TYPE(BD_ContinuousStateType)     :: BD1_ContinuousState
-   TYPE(BD_ContinuousStateType)     :: BD1_ContinuousStateDeriv
    TYPE(BD_InitOutputType)          :: BD1_InitOutput
    TYPE(BD_DiscreteStateType)       :: BD1_DiscreteState
    TYPE(BD_ConstraintStateType)     :: BD1_ConstraintState
@@ -337,7 +328,6 @@ PROGRAM MAIN
    TYPE(BD_InitInputType)           :: BD_InitInput
    TYPE(BD_ParameterType)           :: BD_Parameter
    TYPE(BD_ContinuousStateType)     :: BD_ContinuousState
-   TYPE(BD_ContinuousStateType)     :: BD_ContinuousStateDeriv
    TYPE(BD_InitOutputType)          :: BD_InitOutput
    TYPE(BD_DiscreteStateType)       :: BD_DiscreteState
    TYPE(BD_ConstraintStateType)     :: BD_ConstraintState
@@ -360,7 +350,6 @@ PROGRAM MAIN
 
    ! local variables
    Integer(IntKi)                     :: i               ! counter for various loops
-   Integer(IntKi)                     :: temp               ! counter for various loops
    REAL(ReKi):: temp_R(3,3)
    REAL(ReKi):: temp_vec(3)
    REAL(ReKi):: temp_cc(3)
