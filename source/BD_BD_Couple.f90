@@ -156,7 +156,7 @@ SUBROUTINE BD1_BD_InputOutputSolve(time, &
                       BD1_Output%BldMotion%TranslationAcc(3,BD1_Parameter%node_total))
        RHS(6) = -(BD_Input%RootMotion%RotationAcc(2,1) - &
                       BD1_Output%BldMotion%RotationAcc(2,BD1_Parameter%node_total))
-    
+!WRITE(*,*) RHS(:)    
        IF(TwoNorm(RHS) .LE. TOLF) THEN
            CALL BD_DestroyInput(BDInput_tmp, ErrStat, ErrMsg )
            CALL BD_DestroyInput(BD1Input_tmp, ErrStat, ErrMsg )
@@ -224,12 +224,17 @@ SUBROUTINE BD1_BD_InputOutputSolve(time, &
            Coef(6,3) = -((BD1OT_tmp%BldMotion%RotationAcc(2,BD1_Parameter%node_total) - &
                           BD1_Output%BldMotion%RotationAcc(2,BD1_Parameter%node_total))/eps)
            CALL BD_CopyInput(BD1Input_tmp,BD1_Input,MESH_NEWCOPY,ErrStat,ErrMsg)
+
+!DO j=1,6
+!WRITE(*,*) Coef(j,:)
+!ENDDO
  
        CALL ludcmp(Coef,6,indx,d)
        CALL lubksb(Coef,6,indx,RHS,uinc)
 
 !WRITE(*,*) 'uinc:'
-!WRITE(*,*) uinc(:)
+!WRITE(*,*) uinc(1:3)
+!WRITE(*,*) uinc(4:6)
 !       IF(TwoNorm(uinc) .LE. TOLF) THEN
 !           CALL BD_DestroyInput(BDInput_tmp, ErrStat, ErrMsg )
 !           CALL BD_DestroyInput(BD1Input_tmp, ErrStat, ErrMsg )
@@ -250,6 +255,9 @@ SUBROUTINE BD1_BD_InputOutputSolve(time, &
 !WRITE(*,*) 'BD_Input%RootMotion%Acc'      
 !WRITE(*,*) BD_Input%RootMotion%TranslationAcc(:,1)
 !WRITE(*,*) BD_Input%RootMotion%RotationAcc(:,1)
+!WRITE(*,*) 'BD1_Input%PointLoad'      
+!WRITE(*,*) BD1_Input%PointLoad%Force(:,3)
+!WRITE(*,*) BD1_Input%PointLoad%Moment(:,3)
        IF(i .EQ. iter_max) THEN
            WRITE(*,*) "InputOutputSolve does not converge after the maximum number of iterations"
            CALL BD_DestroyInput(BDInput_tmp, ErrStat, ErrMsg )
@@ -388,7 +396,7 @@ PROGRAM MAIN
                ! are available to modules that have an implicit dependence on other-module data
 
    ! specify time increment; currently, all modules will be time integrated with this increment size
-   dt_global = 1.0D-03*0.001
+   dt_global = 1.0D-03
 
    n_t_final = ((t_final - t_initial) / dt_global )
 
@@ -433,7 +441,7 @@ PROGRAM MAIN
    temp_vec(1) = 0.0
    temp_vec(2) = 0.0
    temp_vec(3) = 0.0
-   CALL BD_CrvMatrixR(temp_vec,temp_R)
+   CALL BD_CrvMatrixR(temp_vec,temp_R,ErrStat,ErrMsg)
    BD1_InitInput%GlbRot(1:3,1:3) = temp_R(1:3,1:3)
    !ALLOCATE(BD1_InitInput%RootDisp(3)) 
    BD1_InitInput%RootDisp(1) = 0.0D+00
@@ -444,7 +452,7 @@ PROGRAM MAIN
    temp_vec(1) = 0.0
    temp_vec(2) = 0.0
    temp_vec(3) = 0.0
-   CALL BD_CrvMatrixR(temp_vec,temp_R)
+   CALL BD_CrvMatrixR(temp_vec,temp_R,ErrStat,ErrMsg)
    BD1_InitInput%RootOri(1:3,1:3) = temp_R(1:3,1:3)
    !ALLOCATE(BD1_InitInput%RootVel(6)) 
    BD1_InitInput%RootVel(:) = 0.0D+00
@@ -465,14 +473,14 @@ PROGRAM MAIN
 
 
 !   BD_InitInput%InputFile = 'Siemens_53_Input.inp'
-   BD_InitInput%InputFile = 'GA2_Debug_BD.inp'
+   BD_InitInput%InputFile = 'GA2_Debug_BD2.inp'
    BD_InitInput%RootName  = TRIM(BD_Initinput%InputFile)
    !ALLOCATE(BD_InitInput%gravity(3)) 
    BD_InitInput%gravity(1) = 0.0D0 !-9.80665
    BD_InitInput%gravity(2) = 0.0D0 
    BD_InitInput%gravity(3) = 0.0D0
    !ALLOCATE(BD_InitInput%GlbPos(3)) 
-   BD_InitInput%GlbPos(1) = 0.0D+00
+   BD_InitInput%GlbPos(1) = 5.0D+00
    BD_InitInput%GlbPos(2) = 0.0D+00
    BD_InitInput%GlbPos(3) = 0.0D+00
    !ALLOCATE(BD_InitInput%GlbRot(3,3)) 
@@ -480,7 +488,7 @@ PROGRAM MAIN
    temp_vec(1) = 0.0
    temp_vec(2) = 0.0
    temp_vec(3) = 0.0 !4.0D0*TAN((3.1415926D0/2.0D0)/4.0D0)
-   CALL BD_CrvMatrixR(temp_vec,temp_R)
+   CALL BD_CrvMatrixR(temp_vec,temp_R,ErrStat,ErrMsg)
    BD_InitInput%GlbRot(1:3,1:3) = temp_R(1:3,1:3)
    !ALLOCATE(BD_InitInput%RootDisp(3)) 
    BD_InitInput%RootDisp(1) = 0.0D+00
@@ -491,7 +499,7 @@ PROGRAM MAIN
    temp_vec(1) = 0.0
    temp_vec(2) = 0.0
    temp_vec(3) = 0.0
-   CALL BD_CrvMatrixR(temp_vec,temp_R)
+   CALL BD_CrvMatrixR(temp_vec,temp_R,ErrStat,ErrMsg)
    BD_InitInput%RootOri(1:3,1:3) = temp_R(1:3,1:3)
    !ALLOCATE(BD_InitInput%RootVel(6)) 
    BD_InitInput%RootVel(:) = 0.0D+00
@@ -568,7 +576,7 @@ PROGRAM MAIN
 
    DO n_t_global = 0, n_t_final
 WRITE(*,*) "Time Step: ", n_t_global
-!IF(n_t_global .EQ. 1) STOP
+IF(n_t_global .EQ. 1000) STOP
       ! Solve input-output relations; this section of code corresponds to Eq. (35) in Gasmi et al. (2013)
       ! This code will be specific to the underlying modules
 IF(MOD(n_t_global,1000) .EQ. 0) THEN
