@@ -57,6 +57,7 @@ MODULE BD1_BD_MappingModule
    USE BeamDyn_Types
 
    USE NWTC_Library
+   USE NWTC_LAPACK
 
    implicit none
 
@@ -115,6 +116,12 @@ SUBROUTINE BD1_BD_InputOutputSolve(time, &
    TYPE(BD_OutputType)                         :: BD1OT_tmp
    TYPE(BD_InputType)                           :: BDInput_tmp
    TYPE(BD_InputType)                          :: BD1Input_tmp
+   INTEGER(IntKi)          :: ErrStat2                     ! Temporary Error status
+   CHARACTER(ErrMsgLen)    :: ErrMsg2                      ! Temporary Error message
+   CHARACTER(*), PARAMETER :: RoutineName = 'BD_InputOutputSolve'
+
+   ErrStat = ErrID_None
+   ErrMsg  = ""
    ! Solve input-output relations; this section of code corresponds to Eq. (35) in Gasmi et al. (2013)
    ! This code will be specific to the underlying modules; could be placed in a separate routine.
    ! Note that Module2 has direct feedthrough, but Module1 does not. Thus, Module1 should be called first.
@@ -138,7 +145,7 @@ SUBROUTINE BD1_BD_InputOutputSolve(time, &
 !WRITE(*,*) 'TIME',time
    eps = 0.01D+00
    DO i=1,iter_max
-!WRITE(*,*) 'i=',i
+WRITE(*,*) 'i=',i
        CALL BD_CalcOutput( time, BD1_Input, BD1_Parameter, BD1_ContinuousState, BD1_DiscreteState, &
                     BD1_ConstraintState, BD1_OtherState, BD1_Output, ErrStat, ErrMsg )
        CALL BD_CalcOutput( time, BD_Input, BD_Parameter, BD_ContinuousState, BD_DiscreteState, &
@@ -156,7 +163,8 @@ SUBROUTINE BD1_BD_InputOutputSolve(time, &
                       BD1_Output%BldMotion%TranslationAcc(3,BD1_Parameter%node_total))
        RHS(6) = -(BD_Input%RootMotion%RotationAcc(2,1) - &
                       BD1_Output%BldMotion%RotationAcc(2,BD1_Parameter%node_total))
-!WRITE(*,*) RHS(:)    
+WRITE(*,*) 'RHS(:)'    
+WRITE(*,*) RHS(:)    
        IF(TwoNorm(RHS) .LE. TOLF) THEN
            CALL BD_DestroyInput(BDInput_tmp, ErrStat, ErrMsg )
            CALL BD_DestroyInput(BD1Input_tmp, ErrStat, ErrMsg )
@@ -225,16 +233,20 @@ SUBROUTINE BD1_BD_InputOutputSolve(time, &
                           BD1_Output%BldMotion%RotationAcc(2,BD1_Parameter%node_total))/eps)
            CALL BD_CopyInput(BD1Input_tmp,BD1_Input,MESH_NEWCOPY,ErrStat,ErrMsg)
 
-!DO j=1,6
-!WRITE(*,*) Coef(j,:)
-!ENDDO
- 
-       CALL ludcmp(Coef,6,indx,d)
-       CALL lubksb(Coef,6,indx,RHS,uinc)
+DO j=1,6
+WRITE(*,*) Coef(j,:)
+ENDDO
+           CALL LAPACK_getrf( 6, 6, Coef,indx,&
+                              ErrStat2, ErrMsg2) 
+              CALL SetErrStat( ErrStat2, ErrMsg2, ErrStat, ErrMsg, RoutineName )
+           CALL LAPACK_getrs( 'N',6, Coef,indx,RHS,&
+                              ErrStat2, ErrMsg2) 
+              CALL SetErrStat( ErrStat2, ErrMsg2, ErrStat, ErrMsg, RoutineName )
+           uinc(:) = RHS(:) 
 
-!WRITE(*,*) 'uinc:'
-!WRITE(*,*) uinc(1:3)
-!WRITE(*,*) uinc(4:6)
+WRITE(*,*) 'uinc:'
+WRITE(*,*) uinc(1:3)
+WRITE(*,*) uinc(4:6)
 !       IF(TwoNorm(uinc) .LE. TOLF) THEN
 !           CALL BD_DestroyInput(BDInput_tmp, ErrStat, ErrMsg )
 !           CALL BD_DestroyInput(BD1Input_tmp, ErrStat, ErrMsg )
@@ -252,12 +264,12 @@ SUBROUTINE BD1_BD_InputOutputSolve(time, &
        BD_Input%RootMotion%TranslationAcc(1,1) = BD_Input%RootMotion%TranslationAcc(1,1) + uinc(4)
        BD_Input%RootMotion%TranslationAcc(3,1) = BD_Input%RootMotion%TranslationAcc(3,1) + uinc(5)
        BD_Input%RootMotion%RotationAcc(2,1) = BD_Input%RootMotion%RotationAcc(2,1) + uinc(6)
-!WRITE(*,*) 'BD_Input%RootMotion%Acc'      
-!WRITE(*,*) BD_Input%RootMotion%TranslationAcc(:,1)
-!WRITE(*,*) BD_Input%RootMotion%RotationAcc(:,1)
-!WRITE(*,*) 'BD1_Input%PointLoad'      
-!WRITE(*,*) BD1_Input%PointLoad%Force(:,3)
-!WRITE(*,*) BD1_Input%PointLoad%Moment(:,3)
+WRITE(*,*) 'BD_Input%RootMotion%Acc'      
+WRITE(*,*) BD_Input%RootMotion%TranslationAcc(:,1)
+WRITE(*,*) BD_Input%RootMotion%RotationAcc(:,1)
+WRITE(*,*) 'BD1_Input%PointLoad'      
+WRITE(*,*) BD1_Input%PointLoad%Force(:,4)
+WRITE(*,*) BD1_Input%PointLoad%Moment(:,4)
        IF(i .EQ. iter_max) THEN
            WRITE(*,*) "InputOutputSolve does not converge after the maximum number of iterations"
            CALL BD_DestroyInput(BDInput_tmp, ErrStat, ErrMsg )
@@ -541,8 +553,8 @@ PROGRAM MAIN
 !                   Map_Mod1_P_Mod2_P, Map_Mod2_P_Mod1_P, &
                    ErrStat, ErrMsg)
 
-   CALL BD_IniAcc(BD1_Input(1),BD1_Output(1),BD1_Parameter,BD1_OtherState)
-   CALL BD_IniAcc(BD_Input(1),BD_Output(1),BD_Parameter,BD_OtherState)
+   CALL BD_IniAcc(BD1_Input(1),BD1_Output(1),BD1_Parameter,BD1_OtherState,ErrStat,ErrMsg)
+   CALL BD_IniAcc(BD_Input(1),BD_Output(1),BD_Parameter,BD_OtherState,ErrStat,ErrMsg)
 !WRITE(*,*) 'Ini BD1 Acc'
 !WRITE(*,*) BD1_OtherState%Acc(:) 
 !WRITE(*,*) 'Ini BD1 Xcc'
@@ -576,7 +588,7 @@ PROGRAM MAIN
 
    DO n_t_global = 0, n_t_final
 WRITE(*,*) "Time Step: ", n_t_global
-IF(n_t_global .EQ. 1000) STOP
+IF(n_t_global .EQ. 1) STOP
       ! Solve input-output relations; this section of code corresponds to Eq. (35) in Gasmi et al. (2013)
       ! This code will be specific to the underlying modules
 IF(MOD(n_t_global,1000) .EQ. 0) THEN
