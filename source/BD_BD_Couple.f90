@@ -163,8 +163,8 @@ WRITE(*,*) 'i=',i
                       BD1_Output%BldMotion%TranslationAcc(3,BD1_Parameter%node_total))
        RHS(6) = -(BD_Input%RootMotion%RotationAcc(2,1) - &
                       BD1_Output%BldMotion%RotationAcc(2,BD1_Parameter%node_total))
-WRITE(*,*) 'RHS(:)'    
-WRITE(*,*) RHS(:)    
+!WRITE(*,*) 'RHS(:)'    
+!WRITE(*,*) RHS(:)    
        IF(TwoNorm(RHS) .LE. TOLF) THEN
            CALL BD_DestroyInput(BDInput_tmp, ErrStat, ErrMsg )
            CALL BD_DestroyInput(BD1Input_tmp, ErrStat, ErrMsg )
@@ -233,6 +233,8 @@ WRITE(*,*) RHS(:)
                           BD1_Output%BldMotion%RotationAcc(2,BD1_Parameter%node_total))/eps)
            CALL BD_CopyInput(BD1Input_tmp,BD1_Input,MESH_NEWCOPY,ErrStat,ErrMsg)
 
+!Coef(1:3,4:6) = 0.0D0
+WRITE(*,*) 'Coef:'
 DO j=1,6
 WRITE(*,*) Coef(j,:)
 ENDDO
@@ -244,9 +246,9 @@ ENDDO
               CALL SetErrStat( ErrStat2, ErrMsg2, ErrStat, ErrMsg, RoutineName )
            uinc(:) = RHS(:) 
 
-WRITE(*,*) 'uinc:'
-WRITE(*,*) uinc(1:3)
-WRITE(*,*) uinc(4:6)
+!WRITE(*,*) 'uinc:'
+!WRITE(*,*) uinc(1:3)
+!WRITE(*,*) uinc(4:6)
 !       IF(TwoNorm(uinc) .LE. TOLF) THEN
 !           CALL BD_DestroyInput(BDInput_tmp, ErrStat, ErrMsg )
 !           CALL BD_DestroyInput(BD1Input_tmp, ErrStat, ErrMsg )
@@ -264,12 +266,12 @@ WRITE(*,*) uinc(4:6)
        BD_Input%RootMotion%TranslationAcc(1,1) = BD_Input%RootMotion%TranslationAcc(1,1) + uinc(4)
        BD_Input%RootMotion%TranslationAcc(3,1) = BD_Input%RootMotion%TranslationAcc(3,1) + uinc(5)
        BD_Input%RootMotion%RotationAcc(2,1) = BD_Input%RootMotion%RotationAcc(2,1) + uinc(6)
-WRITE(*,*) 'BD_Input%RootMotion%Acc'      
-WRITE(*,*) BD_Input%RootMotion%TranslationAcc(:,1)
-WRITE(*,*) BD_Input%RootMotion%RotationAcc(:,1)
-WRITE(*,*) 'BD1_Input%PointLoad'      
-WRITE(*,*) BD1_Input%PointLoad%Force(:,4)
-WRITE(*,*) BD1_Input%PointLoad%Moment(:,4)
+!WRITE(*,*) 'BD_Input%RootMotion%Acc'      
+!WRITE(*,*) BD_Input%RootMotion%TranslationAcc(:,1)
+!WRITE(*,*) BD_Input%RootMotion%RotationAcc(:,1)
+!WRITE(*,*) 'BD1_Input%PointLoad'      
+!WRITE(*,*) BD1_Input%PointLoad%Force(:,3)
+!WRITE(*,*) BD1_Input%PointLoad%Moment(:,3)
        IF(i .EQ. iter_max) THEN
            WRITE(*,*) "InputOutputSolve does not converge after the maximum number of iterations"
            CALL BD_DestroyInput(BDInput_tmp, ErrStat, ErrMsg )
