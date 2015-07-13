@@ -13,6 +13,23 @@ DEFAULT   stop_tol       - Tolerance for stopping criterion
 1    11               - Member number; Number of key points in this member
 kp_xb kp_yb   kp_zb    initial_twist
 (m)    (m)    (m)     (deg)
+0.0   0.0    0.0         0     - Key point coordinates and initial twist (-)
+0.0   0.0    6.199815    0     - Key point coordinates and initial twist (-)
+0.0   0.0    12.199755   0     - Key point coordinates and initial twist (-)
+0.0   0.0    18.200925   0     - Key point coordinates and initial twist (-)
+0.0   0.0    24.20025    0    - Key point coordinates and initial twist (-)
+0.0   0.0    30.20019    0    - Key point coordinates and initial twist (-)
+0.0   0.0    38.200725   0    - Key point coordinates and initial twist (-)
+0.0   0.0    44.20005    0    - Key point coordinates and initial twist (-)
+0.0   0.0    50.19999    0    - Key point coordinates and initial twist (-)
+0.0   0.0    55.19994    0   - Key point coordinates and initial twist (-)
+0.0   0.0    61.5        0   - Key point coordinates and initial twist (-)
+---------------------- MESH PARAMETER ------------------------------------------
+5    order_elem    - Order of interpolation (basis) function (-)
+---------------------- MATERIAL PARAMETER --------------------------------------
+"5MW_Blade.inp"    BldFile - Name of file containing properties for blade
+
+
 0.0   0.0    0.0         13.308      - Key point coordinates and initial twist (-)
 0.0   0.0    6.199815    13.308      - Key point coordinates and initial twist (-)
 0.0   0.0    12.199755   12.848      - Key point coordinates and initial twist (-)
@@ -24,7 +41,3 @@ kp_xb kp_yb   kp_zb    initial_twist
 0.0   0.0    50.19999    1.730      - Key point coordinates and initial twist (-)
 0.0   0.0    55.19994    0.76      - Key point coordinates and initial twist (-)
 0.0   0.0    61.5        0      - Key point coordinates and initial twist (-)
----------------------- MESH PARAMETER ------------------------------------------
-5    order_elem    - Order of interpolation (basis) function (-)
----------------------- MATERIAL PARAMETER --------------------------------------
-"5MW_Blade.inp"    BldFile - Name of file containing properties for blade
