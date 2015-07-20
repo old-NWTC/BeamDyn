@@ -3,7 +3,7 @@ Sample
 ---------------------- SIMULATION CONTROL --------------------------------------
 TRUE         Echo        - Echo input data to "<RootName>.ech" (flag)
 2         analysis_type  - 1: Static analysis; 2: Dynamic analysis
-1.0       rhoinf         - Numerical Damping Parameter for Generalized-alpha integrator
+0.0       rhoinf         - Numerical Damping Parameter for Generalized-alpha integrator
 DEFAULT   DTBeam         - Time step size
 DEFAULT   NRMax			 - Max number of iterations in Newton-Ralphson algorithm
 DEFAULT   stop_tol       - Tolerance for stopping criterion
