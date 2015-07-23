@@ -105,7 +105,7 @@ SUBROUTINE BD1_BD_InputOutputSolve(time, &
    REAL(ReKi)                                   :: RHS(6)
    REAL(ReKi)                                   :: Coef(6,6)
    REAL(ReKi)                                   :: eps
-   REAL(ReKi)                                   :: d
+!   REAL(ReKi)                                   :: d
    REAL(ReKi)                                   :: uinc(6)
    REAL(ReKi),                        PARAMETER :: TOLF = 1.0D-05
    INTEGER(IntKi)                               :: indx(6)
@@ -442,16 +442,12 @@ PROGRAM MAIN
 
    BD1_InitInput%InputFile = 'GA2_Debug_BD1.inp'
    BD1_InitInput%RootName  = TRIM(BD1_Initinput%InputFile)
-   !ALLOCATE(BD1_InitInput%gravity(3)) 
    BD1_InitInput%gravity(1) = 0.0D0 !-9.80665
    BD1_InitInput%gravity(2) = 0.0D0 
    BD1_InitInput%gravity(3) = 0.0D0
-   !ALLOCATE(BD1_InitInput%GlbPos(3)) 
    BD1_InitInput%GlbPos(1) = 0.0D+00
    BD1_InitInput%GlbPos(2) = 0.0D+00
    BD1_InitInput%GlbPos(3) = 0.0D+00
-   !ALLOCATE(BD1_InitInput%GlbRot(3,3)) 
-   !BD1_InitInput%GlbRot(:,:) = 0.0D0
    temp_vec(1) = 0.0
    temp_vec(2) = 0.0
    temp_vec(3) = 0.0
