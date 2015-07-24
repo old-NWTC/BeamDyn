@@ -84,6 +84,7 @@ IMPLICIT NONE
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: segment_length      ! Array stored length of each segment [-]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: member_length      ! Array stored length of each member [-]
     REAL(ReKi)  :: blade_length      ! Blade Length [-]
+    REAL(ReKi)  :: blade_mass      ! Blade Length [-]
     INTEGER(IntKi)  :: node_elem      ! Node per element [-]
     INTEGER(IntKi)  :: dof_node      ! dof per node [-]
     INTEGER(IntKi)  :: elem_total      ! Total number of elements [-]
@@ -1576,6 +1577,7 @@ IF (ALLOCATED(SrcParamData%member_length)) THEN
     DstParamData%member_length = SrcParamData%member_length
 ENDIF
     DstParamData%blade_length = SrcParamData%blade_length
+    DstParamData%blade_mass = SrcParamData%blade_mass
     DstParamData%node_elem = SrcParamData%node_elem
     DstParamData%dof_node = SrcParamData%dof_node
     DstParamData%elem_total = SrcParamData%elem_total
@@ -1683,6 +1685,7 @@ ENDIF
       Re_BufSz   = Re_BufSz   + SIZE(InData%member_length)  ! member_length
   END IF
       Re_BufSz   = Re_BufSz   + 1  ! blade_length
+      Re_BufSz   = Re_BufSz   + 1  ! blade_mass
       Int_BufSz  = Int_BufSz  + 1  ! node_elem
       Int_BufSz  = Int_BufSz  + 1  ! dof_node
       Int_BufSz  = Int_BufSz  + 1  ! elem_total
@@ -1816,6 +1819,8 @@ ENDIF
       Re_Xferred   = Re_Xferred   + SIZE(InData%member_length)
   END IF
       ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%blade_length
+      Re_Xferred   = Re_Xferred   + 1
+      ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%blade_mass
       Re_Xferred   = Re_Xferred   + 1
       IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%node_elem
       Int_Xferred   = Int_Xferred   + 1
@@ -2036,6 +2041,8 @@ ENDIF
     DEALLOCATE(mask2)
   END IF
       OutData%blade_length = ReKiBuf( Re_Xferred )
+      Re_Xferred   = Re_Xferred + 1
+      OutData%blade_mass = ReKiBuf( Re_Xferred )
       Re_Xferred   = Re_Xferred + 1
       OutData%node_elem = IntKiBuf( Int_Xferred ) 
       Int_Xferred   = Int_Xferred + 1
