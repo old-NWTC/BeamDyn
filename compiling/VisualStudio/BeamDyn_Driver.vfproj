@@ -40,6 +40,7 @@
 			<FileConfiguration Name="Release|Win32" ExcludedFromBuild="true"/></File>
 		<File RelativePath="..\..\source\BeamDyn.f90"/>
 		<File RelativePath="..\..\source\BeamDyn_IO.f90"/>
+		<File RelativePath="..\..\source\BeamDyn_Subs.f90"/>
 		<File RelativePath="..\..\source\Driver_Beam.f90"/></Filter>
 		<Filter Name="NWTC_Library">
 		<Filter Name="NetLib">

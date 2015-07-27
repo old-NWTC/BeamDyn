@@ -103,6 +103,7 @@ NETLIB_SOURCES=             \
 BD_SOURCES   =      \
 	BeamDyn.f90           \
 	BeamDyn_IO.f90        \
+	BeamDyn_Subs.f90      \
 	BD_BD_Couple.f90      \
 	BeamDyn_Types.f90     \
 
@@ -146,7 +147,8 @@ NWTC_LAPACK.obj:            NWTC_Base.obj
 
 BeamDyn_Types.obj:       NWTC_Library.obj  $(BD_DIR)/BeamDyn_Types.f90
 BeamDyn_IO.obj:          BeamDyn_Types.obj
-BeamDyn.obj:             BeamDyn_IO.obj
+BeamDyn_Subs.obj:        BeamDyn_Types.obj
+BeamDyn.obj:             BeamDyn_IO.obj  BeamDyn_Subs.obj
 
 BD_BD_Couple.obj:        BeamDyn.obj NWTC_Library.obj
 
