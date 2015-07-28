@@ -34,10 +34,14 @@ kp_xb kp_yb   kp_zb    initial_twist
               OutList             - The next line(s) contains a list of output parameters.  See OutListParameters.xlsx for a listing of available output channels, (-)
 "RootFxr, RootFyr, RootFzr"
 "RootMxr, RootMyr, RootMzr"
+"TipTDxr, TipTDyr, TipTDzr"
+END of input file (the word "END" must appear in the first 3 columns of this last OutList line)
+--------------------------------------------------------------------------------
+
+
+
 "N1TDXr, N1TDYr, N1TDZr"
 "N1TVXg, N1TVYg, N1TVZg"
 "N1TAXg, N1TAYg, N1TAZg"
 "N1RVXg, N1RVYg, N1RVZg"
 "N1RAXg, N1RAYg, N1RAZg"
-END of input file (the word "END" must appear in the first 3 columns of this last OutList line)
---------------------------------------------------------------------------------
