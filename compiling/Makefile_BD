@@ -146,8 +146,8 @@ NWTC_Library.obj:           ModMesh.obj  ModMesh_Mapping.obj
 NWTC_LAPACK.obj:            NWTC_Base.obj
 
 BeamDyn_Types.obj:       NWTC_Library.obj  $(BD_DIR)/BeamDyn_Types.f90
-BeamDyn_IO.obj:          BeamDyn_Types.obj
 BeamDyn_Subs.obj:        BeamDyn_Types.obj
+BeamDyn_IO.obj:          BeamDyn_Types.obj  BeamDyn_Subs.obj
 BeamDyn.obj:             BeamDyn_IO.obj  BeamDyn_Subs.obj
 
 BD_BD_Couple.obj:        BeamDyn.obj NWTC_Library.obj
