@@ -13,7 +13,7 @@ DEFAULT   stop_tol       - Tolerance for stopping criterion
 1    49                  - Member number; Number of key points in this member
 kp_xb kp_yb   kp_zb    initial_twist
 (m)    (m)    (m)     (deg)
-  0.000000   0.000000   0.000000  0.0000000
+  0.000000   0.000000   0.000000  13.308000
   0.000000   0.000000   0.199875  13.308000
   0.000000   0.000000   1.199865  13.308000
   0.000000   0.000000   2.199855  13.308000
@@ -63,7 +63,7 @@ kp_xb kp_yb   kp_zb    initial_twist
   0.000000   0.000000  61.199880   0.023000
   0.000000   0.000000  61.500000   0.000000
 ---------------------- MESH PARAMETER ------------------------------------------
-10         order_elem     - Order of interpolation (basis) function (-)
+5         order_elem     - Order of interpolation (basis) function (-)
 ---------------------- MATERIAL PARAMETER --------------------------------------
 "5MW_Blade_Test.inp"  BldFile - Name of file containing properties for blade
 ---------------------- OUTPUTS -------------------------------------------------
