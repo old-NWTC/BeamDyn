@@ -65,7 +65,7 @@ kp_xb kp_yb   kp_zb    initial_twist
 ---------------------- MESH PARAMETER ------------------------------------------
 5         order_elem     - Order of interpolation (basis) function (-)
 ---------------------- MATERIAL PARAMETER --------------------------------------
-"5MW_Blade_Test.inp"  BldFile - Name of file containing properties for blade
+"5MW_Blade.inp"  BldFile - Name of file containing properties for blade
 ---------------------- OUTPUTS -------------------------------------------------
 True      SumPrint       - Print summary data to "<RootName>.sum" (flag)
       2   NNodeOuts      - Number of nodes to output to file [0 - 9] (-)
@@ -74,6 +74,7 @@ True      SumPrint       - Print summary data to "<RootName>.sum" (flag)
 "RootFxr, RootFyr, RootFzr"
 "RootMxr, RootMyr, RootMzr"
 "TipTDxr, TipTDyr, TipTDzr"
+"TipRDxr, TipRDyr, TipRDzr"
 END of input file (the word "END" must appear in the first 3 columns of this last OutList line)
 --------------------------------------------------------------------------------
 
