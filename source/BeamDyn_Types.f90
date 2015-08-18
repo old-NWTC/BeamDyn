@@ -88,6 +88,7 @@ IMPLICIT NONE
     REAL(ReKi)  :: blade_mass      ! Blade Length [-]
     REAL(ReKi) , DIMENSION(1:3)  :: blade_CG      ! Blade Length [-]
     REAL(ReKi) , DIMENSION(:), ALLOCATABLE  :: station_eta      ! Array stored length of each segment [-]
+    REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: kp_coordinate      ! Total number of dofs [-]
     INTEGER(IntKi)  :: node_elem      ! Node per element [-]
     INTEGER(IntKi)  :: kp_total      ! Total number of dofs [-]
     INTEGER(IntKi)  :: dof_node      ! dof per node [-]
@@ -1621,6 +1622,20 @@ IF (ALLOCATED(SrcParamData%station_eta)) THEN
   END IF
     DstParamData%station_eta = SrcParamData%station_eta
 ENDIF
+IF (ALLOCATED(SrcParamData%kp_coordinate)) THEN
+  i1_l = LBOUND(SrcParamData%kp_coordinate,1)
+  i1_u = UBOUND(SrcParamData%kp_coordinate,1)
+  i2_l = LBOUND(SrcParamData%kp_coordinate,2)
+  i2_u = UBOUND(SrcParamData%kp_coordinate,2)
+  IF (.NOT. ALLOCATED(DstParamData%kp_coordinate)) THEN 
+    ALLOCATE(DstParamData%kp_coordinate(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+      CALL SetErrStat(ErrID_Fatal, 'Error allocating DstParamData%kp_coordinate.', ErrStat, ErrMsg,RoutineName)
+      RETURN
+    END IF
+  END IF
+    DstParamData%kp_coordinate = SrcParamData%kp_coordinate
+ENDIF
     DstParamData%node_elem = SrcParamData%node_elem
     DstParamData%kp_total = SrcParamData%kp_total
     DstParamData%dof_node = SrcParamData%dof_node
@@ -1737,6 +1752,9 @@ ENDIF
 IF (ALLOCATED(ParamData%station_eta)) THEN
   DEALLOCATE(ParamData%station_eta)
 ENDIF
+IF (ALLOCATED(ParamData%kp_coordinate)) THEN
+  DEALLOCATE(ParamData%kp_coordinate)
+ENDIF
 IF (ALLOCATED(ParamData%ngp)) THEN
   DEALLOCATE(ParamData%ngp)
 ENDIF
@@ -1830,6 +1848,11 @@ ENDIF
   IF ( ALLOCATED(InData%station_eta) ) THEN
     Int_BufSz   = Int_BufSz   + 2*1  ! station_eta upper/lower bounds for each dimension
       Re_BufSz   = Re_BufSz   + SIZE(InData%station_eta)  ! station_eta
+  END IF
+  Int_BufSz   = Int_BufSz   + 1     ! kp_coordinate allocated yes/no
+  IF ( ALLOCATED(InData%kp_coordinate) ) THEN
+    Int_BufSz   = Int_BufSz   + 2*2  ! kp_coordinate upper/lower bounds for each dimension
+      Re_BufSz   = Re_BufSz   + SIZE(InData%kp_coordinate)  ! kp_coordinate
   END IF
       Int_BufSz  = Int_BufSz  + 1  ! node_elem
       Int_BufSz  = Int_BufSz  + 1  ! kp_total
@@ -2044,6 +2067,22 @@ ENDIF
 
       IF (SIZE(InData%station_eta)>0) ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%station_eta))-1 ) = PACK(InData%station_eta,.TRUE.)
       Re_Xferred   = Re_Xferred   + SIZE(InData%station_eta)
+  END IF
+  IF ( .NOT. ALLOCATED(InData%kp_coordinate) ) THEN
+    IntKiBuf( Int_Xferred ) = 0
+    Int_Xferred = Int_Xferred + 1
+  ELSE
+    IntKiBuf( Int_Xferred ) = 1
+    Int_Xferred = Int_Xferred + 1
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%kp_coordinate,1)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%kp_coordinate,1)
+    Int_Xferred = Int_Xferred + 2
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%kp_coordinate,2)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%kp_coordinate,2)
+    Int_Xferred = Int_Xferred + 2
+
+      IF (SIZE(InData%kp_coordinate)>0) ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%kp_coordinate))-1 ) = PACK(InData%kp_coordinate,.TRUE.)
+      Re_Xferred   = Re_Xferred   + SIZE(InData%kp_coordinate)
   END IF
       IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%node_elem
       Int_Xferred   = Int_Xferred   + 1
@@ -2425,6 +2464,32 @@ ENDIF
       IF (SIZE(OutData%station_eta)>0) OutData%station_eta = UNPACK(ReKiBuf( Re_Xferred:Re_Xferred+(SIZE(OutData%station_eta))-1 ), mask1, 0.0_ReKi )
       Re_Xferred   = Re_Xferred   + SIZE(OutData%station_eta)
     DEALLOCATE(mask1)
+  END IF
+  IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! kp_coordinate not allocated
+    Int_Xferred = Int_Xferred + 1
+  ELSE
+    Int_Xferred = Int_Xferred + 1
+    i1_l = IntKiBuf( Int_Xferred    )
+    i1_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
+    i2_l = IntKiBuf( Int_Xferred    )
+    i2_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
+    IF (ALLOCATED(OutData%kp_coordinate)) DEALLOCATE(OutData%kp_coordinate)
+    ALLOCATE(OutData%kp_coordinate(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating OutData%kp_coordinate.', ErrStat, ErrMsg,RoutineName)
+       RETURN
+    END IF
+    ALLOCATE(mask2(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask2.', ErrStat, ErrMsg,RoutineName)
+       RETURN
+    END IF
+    mask2 = .TRUE. 
+      IF (SIZE(OutData%kp_coordinate)>0) OutData%kp_coordinate = UNPACK(ReKiBuf( Re_Xferred:Re_Xferred+(SIZE(OutData%kp_coordinate))-1 ), mask2, 0.0_ReKi )
+      Re_Xferred   = Re_Xferred   + SIZE(OutData%kp_coordinate)
+    DEALLOCATE(mask2)
   END IF
       OutData%node_elem = IntKiBuf( Int_Xferred ) 
       Int_Xferred   = Int_Xferred + 1
