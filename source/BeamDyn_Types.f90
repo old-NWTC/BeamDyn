@@ -87,6 +87,7 @@ IMPLICIT NONE
     REAL(ReKi)  :: blade_length      ! Blade Length [-]
     REAL(ReKi)  :: blade_mass      ! Blade Length [-]
     REAL(ReKi) , DIMENSION(1:3)  :: blade_CG      ! Blade Length [-]
+    REAL(ReKi) , DIMENSION(1:3,1:3)  :: blade_IN      ! Blade Length [-]
     REAL(ReKi) , DIMENSION(:), ALLOCATABLE  :: station_eta      ! Array stored length of each segment [-]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: kp_coordinate      ! Total number of dofs [-]
     INTEGER(IntKi)  :: node_elem      ! Node per element [-]
@@ -1610,6 +1611,7 @@ ENDIF
     DstParamData%blade_length = SrcParamData%blade_length
     DstParamData%blade_mass = SrcParamData%blade_mass
     DstParamData%blade_CG = SrcParamData%blade_CG
+    DstParamData%blade_IN = SrcParamData%blade_IN
 IF (ALLOCATED(SrcParamData%station_eta)) THEN
   i1_l = LBOUND(SrcParamData%station_eta,1)
   i1_u = UBOUND(SrcParamData%station_eta,1)
@@ -1844,6 +1846,7 @@ ENDIF
       Re_BufSz   = Re_BufSz   + 1  ! blade_length
       Re_BufSz   = Re_BufSz   + 1  ! blade_mass
       Re_BufSz   = Re_BufSz   + SIZE(InData%blade_CG)  ! blade_CG
+      Re_BufSz   = Re_BufSz   + SIZE(InData%blade_IN)  ! blade_IN
   Int_BufSz   = Int_BufSz   + 1     ! station_eta allocated yes/no
   IF ( ALLOCATED(InData%station_eta) ) THEN
     Int_BufSz   = Int_BufSz   + 2*1  ! station_eta upper/lower bounds for each dimension
@@ -2055,6 +2058,8 @@ ENDIF
       Re_Xferred   = Re_Xferred   + 1
       ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%blade_CG))-1 ) = PACK(InData%blade_CG,.TRUE.)
       Re_Xferred   = Re_Xferred   + SIZE(InData%blade_CG)
+      ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%blade_IN))-1 ) = PACK(InData%blade_IN,.TRUE.)
+      Re_Xferred   = Re_Xferred   + SIZE(InData%blade_IN)
   IF ( .NOT. ALLOCATED(InData%station_eta) ) THEN
     IntKiBuf( Int_Xferred ) = 0
     Int_Xferred = Int_Xferred + 1
@@ -2442,6 +2447,19 @@ ENDIF
       OutData%blade_CG = UNPACK(ReKiBuf( Re_Xferred:Re_Xferred+(SIZE(OutData%blade_CG))-1 ), mask1, 0.0_ReKi )
       Re_Xferred   = Re_Xferred   + SIZE(OutData%blade_CG)
     DEALLOCATE(mask1)
+    i1_l = LBOUND(OutData%blade_IN,1)
+    i1_u = UBOUND(OutData%blade_IN,1)
+    i2_l = LBOUND(OutData%blade_IN,2)
+    i2_u = UBOUND(OutData%blade_IN,2)
+    ALLOCATE(mask2(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask2.', ErrStat, ErrMsg,RoutineName)
+       RETURN
+    END IF
+    mask2 = .TRUE. 
+      OutData%blade_IN = UNPACK(ReKiBuf( Re_Xferred:Re_Xferred+(SIZE(OutData%blade_IN))-1 ), mask2, 0.0_ReKi )
+      Re_Xferred   = Re_Xferred   + SIZE(OutData%blade_IN)
+    DEALLOCATE(mask2)
   IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! station_eta not allocated
     Int_Xferred = Int_Xferred + 1
   ELSE
