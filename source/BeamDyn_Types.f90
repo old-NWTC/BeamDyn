@@ -43,6 +43,8 @@ IMPLICIT NONE
     REAL(ReKi) , DIMENSION(1:3)  :: RootDisp      ! Initial root displacement [-]
     REAL(ReKi) , DIMENSION(1:3,1:3)  :: RootOri      ! Initial root orientation [-]
     REAL(ReKi) , DIMENSION(1:6)  :: RootVel      ! Initial root velocities and angular veolcities [-]
+    REAL(ReKi) , DIMENSION(1:6)  :: DistrLoad      ! Constant distributed load along beam axis, 3 forces and 3 moments [-]
+    REAL(ReKi) , DIMENSION(1:6)  :: TipLoad      ! Constant point load applied at tip, 3 forces and 3 moments [-]
   END TYPE BD_InitInputType
 ! =======================
 ! =========  BD_InitOutputType  =======
@@ -151,6 +153,7 @@ IMPLICIT NONE
     INTEGER(IntKi) , DIMENSION(:), ALLOCATABLE  :: kp_member      ! Total number of key point [-]
     INTEGER(IntKi)  :: order_elem      ! Order of interpolation (basis) function [-]
     INTEGER(IntKi)  :: NRMax      ! Total number of key point [-]
+    INTEGER(IntKi)  :: quadrature      ! Quadrature: 1: Gauss; 2: Trapezoidal [-]
     REAL(ReKi)  :: stop_tol      ! Key point coordinates array [-]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: kp_coordinate      ! Key point coordinates array [-]
     REAL(DbKi)  :: rhoinf      ! Key point coordinates array [-]
@@ -191,6 +194,8 @@ CONTAINS
     DstInitInputData%RootDisp = SrcInitInputData%RootDisp
     DstInitInputData%RootOri = SrcInitInputData%RootOri
     DstInitInputData%RootVel = SrcInitInputData%RootVel
+    DstInitInputData%DistrLoad = SrcInitInputData%DistrLoad
+    DstInitInputData%TipLoad = SrcInitInputData%TipLoad
  END SUBROUTINE BD_CopyInitInput
 
  SUBROUTINE BD_DestroyInitInput( InitInputData, ErrStat, ErrMsg )
@@ -247,6 +252,8 @@ CONTAINS
       Re_BufSz   = Re_BufSz   + SIZE(InData%RootDisp)  ! RootDisp
       Re_BufSz   = Re_BufSz   + SIZE(InData%RootOri)  ! RootOri
       Re_BufSz   = Re_BufSz   + SIZE(InData%RootVel)  ! RootVel
+      Re_BufSz   = Re_BufSz   + SIZE(InData%DistrLoad)  ! DistrLoad
+      Re_BufSz   = Re_BufSz   + SIZE(InData%TipLoad)  ! TipLoad
   IF ( Re_BufSz  .GT. 0 ) THEN 
      ALLOCATE( ReKiBuf(  Re_BufSz  ), STAT=ErrStat2 )
      IF (ErrStat2 /= 0) THEN 
@@ -294,6 +301,10 @@ CONTAINS
       Re_Xferred   = Re_Xferred   + SIZE(InData%RootOri)
       ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%RootVel))-1 ) = PACK(InData%RootVel,.TRUE.)
       Re_Xferred   = Re_Xferred   + SIZE(InData%RootVel)
+      ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%DistrLoad))-1 ) = PACK(InData%DistrLoad,.TRUE.)
+      Re_Xferred   = Re_Xferred   + SIZE(InData%DistrLoad)
+      ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%TipLoad))-1 ) = PACK(InData%TipLoad,.TRUE.)
+      Re_Xferred   = Re_Xferred   + SIZE(InData%TipLoad)
  END SUBROUTINE BD_PackInitInput
 
  SUBROUTINE BD_UnPackInitInput( ReKiBuf, DbKiBuf, IntKiBuf, Outdata, ErrStat, ErrMsg )
@@ -408,6 +419,28 @@ CONTAINS
     mask1 = .TRUE. 
       OutData%RootVel = UNPACK(ReKiBuf( Re_Xferred:Re_Xferred+(SIZE(OutData%RootVel))-1 ), mask1, 0.0_ReKi )
       Re_Xferred   = Re_Xferred   + SIZE(OutData%RootVel)
+    DEALLOCATE(mask1)
+    i1_l = LBOUND(OutData%DistrLoad,1)
+    i1_u = UBOUND(OutData%DistrLoad,1)
+    ALLOCATE(mask1(i1_l:i1_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask1.', ErrStat, ErrMsg,RoutineName)
+       RETURN
+    END IF
+    mask1 = .TRUE. 
+      OutData%DistrLoad = UNPACK(ReKiBuf( Re_Xferred:Re_Xferred+(SIZE(OutData%DistrLoad))-1 ), mask1, 0.0_ReKi )
+      Re_Xferred   = Re_Xferred   + SIZE(OutData%DistrLoad)
+    DEALLOCATE(mask1)
+    i1_l = LBOUND(OutData%TipLoad,1)
+    i1_u = UBOUND(OutData%TipLoad,1)
+    ALLOCATE(mask1(i1_l:i1_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask1.', ErrStat, ErrMsg,RoutineName)
+       RETURN
+    END IF
+    mask1 = .TRUE. 
+      OutData%TipLoad = UNPACK(ReKiBuf( Re_Xferred:Re_Xferred+(SIZE(OutData%TipLoad))-1 ), mask1, 0.0_ReKi )
+      Re_Xferred   = Re_Xferred   + SIZE(OutData%TipLoad)
     DEALLOCATE(mask1)
  END SUBROUTINE BD_UnPackInitInput
 
@@ -4028,6 +4061,7 @@ IF (ALLOCATED(SrcInputFileData%kp_member)) THEN
 ENDIF
     DstInputFileData%order_elem = SrcInputFileData%order_elem
     DstInputFileData%NRMax = SrcInputFileData%NRMax
+    DstInputFileData%quadrature = SrcInputFileData%quadrature
     DstInputFileData%stop_tol = SrcInputFileData%stop_tol
 IF (ALLOCATED(SrcInputFileData%kp_coordinate)) THEN
   i1_l = LBOUND(SrcInputFileData%kp_coordinate,1)
@@ -4134,6 +4168,7 @@ ENDIF
   END IF
       Int_BufSz  = Int_BufSz  + 1  ! order_elem
       Int_BufSz  = Int_BufSz  + 1  ! NRMax
+      Int_BufSz  = Int_BufSz  + 1  ! quadrature
       Re_BufSz   = Re_BufSz   + 1  ! stop_tol
   Int_BufSz   = Int_BufSz   + 1     ! kp_coordinate allocated yes/no
   IF ( ALLOCATED(InData%kp_coordinate) ) THEN
@@ -4220,6 +4255,8 @@ ENDIF
       IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%order_elem
       Int_Xferred   = Int_Xferred   + 1
       IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%NRMax
+      Int_Xferred   = Int_Xferred   + 1
+      IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%quadrature
       Int_Xferred   = Int_Xferred   + 1
       ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%stop_tol
       Re_Xferred   = Re_Xferred   + 1
@@ -4370,6 +4407,8 @@ ENDIF
       OutData%order_elem = IntKiBuf( Int_Xferred ) 
       Int_Xferred   = Int_Xferred + 1
       OutData%NRMax = IntKiBuf( Int_Xferred ) 
+      Int_Xferred   = Int_Xferred + 1
+      OutData%quadrature = IntKiBuf( Int_Xferred ) 
       Int_Xferred   = Int_Xferred + 1
       OutData%stop_tol = ReKiBuf( Re_Xferred )
       Re_Xferred   = Re_Xferred + 1
