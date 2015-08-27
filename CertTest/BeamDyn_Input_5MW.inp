@@ -4,6 +4,7 @@ NREL 5MW blade
 False     Echo           - Echo input data to "<RootName>.ech" (flag)
 2         analysis_type  - 1: Static analysis; 2: Dynamic analysis
 0.0       rhoinf         - Numerical Damping Parameter for Generalized-alpha integrator
+2         quadrature     - 1: Gauss; 2: Trapezoidal
 DEFAULT   DTBeam         - Time step size
 DEFAULT   NRMax          - Max number of iterations in Newton-Ralphson algorithm
 DEFAULT   stop_tol       - Tolerance for stopping criterion
@@ -63,7 +64,7 @@ kp_xb kp_yb   kp_zb    initial_twist
   0.000000   0.000000  61.199880   0.023000
   0.000000   0.000000  61.500000   0.000000
 ---------------------- MESH PARAMETER ------------------------------------------
-5         order_elem     - Order of interpolation (basis) function (-)
+20         order_elem     - Order of interpolation (basis) function (-)
 ---------------------- MATERIAL PARAMETER --------------------------------------
 "5MW_Blade.inp"  BldFile - Name of file containing properties for blade
 ---------------------- OUTPUTS -------------------------------------------------
