@@ -103,6 +103,7 @@ IMPLICIT NONE
     INTEGER(IntKi)  :: damp_flag      ! damping flag [-]
     INTEGER(IntKi)  :: niter      ! Maximum number of iterations in Newton-Ralphson algorithm [-]
     INTEGER(IntKi)  :: quadrature      ! Quadrature method: 1 Gauss 2 Trapezoidal [-]
+    INTEGER(IntKi)  :: n_fact      ! Factorization frequency [-]
     REAL(DbKi)  :: dt      ! module dt [s]
     REAL(ReKi) , DIMENSION(1:6)  :: beta      ! Damping Coefficient [-]
     REAL(ReKi)  :: tol      ! Tolerance used in stopping criterion [-]
@@ -117,6 +118,7 @@ IMPLICIT NONE
     INTEGER(IntKi)  :: NNodeOuts      ! Number of nodes to output data to a file[0 - 9] [-]
     INTEGER(IntKi) , DIMENSION(1:9)  :: OutNd      ! Nodes whose values will be output [-]
     INTEGER(IntKi) , DIMENSION(:), ALLOCATABLE  :: NdIndx      ! Index into BldMotion mesh (to number the nodes for output without using collocated nodes) [-]
+    CHARACTER(20)  :: OutFmt      ! Format specifier [-]
   END TYPE BD_ParameterType
 ! =======================
 ! =========  BD_InputType  =======
@@ -156,6 +158,7 @@ IMPLICIT NONE
     INTEGER(IntKi)  :: order_elem      ! Order of interpolation (basis) function [-]
     INTEGER(IntKi)  :: NRMax      ! Total number of key point [-]
     INTEGER(IntKi)  :: quadrature      ! Quadrature: 1: Gauss; 2: Trapezoidal [-]
+    INTEGER(IntKi)  :: n_fact      ! Factorization frequency [-]
     REAL(ReKi)  :: stop_tol      ! Key point coordinates array [-]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: kp_coordinate      ! Key point coordinates array [-]
     REAL(DbKi)  :: rhoinf      ! Key point coordinates array [-]
@@ -168,6 +171,7 @@ IMPLICIT NONE
     INTEGER(IntKi)  :: NumOuts      ! Number of parameters in the output list (number of outputs requested) [-]
     CHARACTER(ChanLen) , DIMENSION(:), ALLOCATABLE  :: OutList      ! List of user-requested output channels [-]
     LOGICAL  :: SumPrint      ! Print summary data to file? (.sum) [-]
+    CHARACTER(20)  :: OutFmt      ! Format specifier [-]
   END TYPE BD_InputFile
 ! =======================
 CONTAINS
@@ -1695,6 +1699,7 @@ ENDIF
     DstParamData%damp_flag = SrcParamData%damp_flag
     DstParamData%niter = SrcParamData%niter
     DstParamData%quadrature = SrcParamData%quadrature
+    DstParamData%n_fact = SrcParamData%n_fact
     DstParamData%dt = SrcParamData%dt
     DstParamData%beta = SrcParamData%beta
     DstParamData%tol = SrcParamData%tol
@@ -1757,6 +1762,7 @@ IF (ALLOCATED(SrcParamData%NdIndx)) THEN
   END IF
     DstParamData%NdIndx = SrcParamData%NdIndx
 ENDIF
+    DstParamData%OutFmt = SrcParamData%OutFmt
  END SUBROUTINE BD_CopyParam
 
  SUBROUTINE BD_DestroyParam( ParamData, ErrStat, ErrMsg )
@@ -1907,6 +1913,7 @@ ENDIF
       Int_BufSz  = Int_BufSz  + 1  ! damp_flag
       Int_BufSz  = Int_BufSz  + 1  ! niter
       Int_BufSz  = Int_BufSz  + 1  ! quadrature
+      Int_BufSz  = Int_BufSz  + 1  ! n_fact
       Db_BufSz   = Db_BufSz   + 1  ! dt
       Re_BufSz   = Re_BufSz   + SIZE(InData%beta)  ! beta
       Re_BufSz   = Re_BufSz   + 1  ! tol
@@ -1956,6 +1963,7 @@ ENDIF
     Int_BufSz   = Int_BufSz   + 2*1  ! NdIndx upper/lower bounds for each dimension
       Int_BufSz  = Int_BufSz  + SIZE(InData%NdIndx)  ! NdIndx
   END IF
+      Int_BufSz  = Int_BufSz  + 1*LEN(InData%OutFmt)  ! OutFmt
   IF ( Re_BufSz  .GT. 0 ) THEN 
      ALLOCATE( ReKiBuf(  Re_BufSz  ), STAT=ErrStat2 )
      IF (ErrStat2 /= 0) THEN 
@@ -2157,6 +2165,8 @@ ENDIF
       Int_Xferred   = Int_Xferred   + 1
       IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%quadrature
       Int_Xferred   = Int_Xferred   + 1
+      IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%n_fact
+      Int_Xferred   = Int_Xferred   + 1
       DbKiBuf ( Db_Xferred:Db_Xferred+(1)-1 ) = InData%dt
       Db_Xferred   = Db_Xferred   + 1
       ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%beta))-1 ) = PACK(InData%beta,.TRUE.)
@@ -2257,6 +2267,10 @@ ENDIF
       IF (SIZE(InData%NdIndx)>0) IntKiBuf ( Int_Xferred:Int_Xferred+(SIZE(InData%NdIndx))-1 ) = PACK(InData%NdIndx,.TRUE.)
       Int_Xferred   = Int_Xferred   + SIZE(InData%NdIndx)
   END IF
+        DO I = 1, LEN(InData%OutFmt)
+          IntKiBuf(Int_Xferred) = ICHAR(InData%OutFmt(I:I), IntKi)
+          Int_Xferred = Int_Xferred   + 1
+        END DO ! I
  END SUBROUTINE BD_PackParam
 
  SUBROUTINE BD_UnPackParam( ReKiBuf, DbKiBuf, IntKiBuf, Outdata, ErrStat, ErrMsg )
@@ -2587,6 +2601,8 @@ ENDIF
       Int_Xferred   = Int_Xferred + 1
       OutData%quadrature = IntKiBuf( Int_Xferred ) 
       Int_Xferred   = Int_Xferred + 1
+      OutData%n_fact = IntKiBuf( Int_Xferred ) 
+      Int_Xferred   = Int_Xferred + 1
       OutData%dt = DbKiBuf( Db_Xferred ) 
       Db_Xferred   = Db_Xferred + 1
     i1_l = LBOUND(OutData%beta,1)
@@ -2779,6 +2795,10 @@ ENDIF
       Int_Xferred   = Int_Xferred   + SIZE(OutData%NdIndx)
     DEALLOCATE(mask1)
   END IF
+      DO I = 1, LEN(OutData%OutFmt)
+        OutData%OutFmt(I:I) = CHAR(IntKiBuf(Int_Xferred))
+        Int_Xferred = Int_Xferred   + 1
+      END DO ! I
  END SUBROUTINE BD_UnPackParam
 
  SUBROUTINE BD_CopyInput( SrcInputData, DstInputData, CtrlCode, ErrStat, ErrMsg )
@@ -4076,6 +4096,7 @@ ENDIF
     DstInputFileData%order_elem = SrcInputFileData%order_elem
     DstInputFileData%NRMax = SrcInputFileData%NRMax
     DstInputFileData%quadrature = SrcInputFileData%quadrature
+    DstInputFileData%n_fact = SrcInputFileData%n_fact
     DstInputFileData%stop_tol = SrcInputFileData%stop_tol
 IF (ALLOCATED(SrcInputFileData%kp_coordinate)) THEN
   i1_l = LBOUND(SrcInputFileData%kp_coordinate,1)
@@ -4114,6 +4135,7 @@ IF (ALLOCATED(SrcInputFileData%OutList)) THEN
     DstInputFileData%OutList = SrcInputFileData%OutList
 ENDIF
     DstInputFileData%SumPrint = SrcInputFileData%SumPrint
+    DstInputFileData%OutFmt = SrcInputFileData%OutFmt
  END SUBROUTINE BD_CopyInputFile
 
  SUBROUTINE BD_DestroyInputFile( InputFileData, ErrStat, ErrMsg )
@@ -4183,6 +4205,7 @@ ENDIF
       Int_BufSz  = Int_BufSz  + 1  ! order_elem
       Int_BufSz  = Int_BufSz  + 1  ! NRMax
       Int_BufSz  = Int_BufSz  + 1  ! quadrature
+      Int_BufSz  = Int_BufSz  + 1  ! n_fact
       Re_BufSz   = Re_BufSz   + 1  ! stop_tol
   Int_BufSz   = Int_BufSz   + 1     ! kp_coordinate allocated yes/no
   IF ( ALLOCATED(InData%kp_coordinate) ) THEN
@@ -4220,6 +4243,7 @@ ENDIF
       Int_BufSz  = Int_BufSz  + SIZE(InData%OutList)*LEN(InData%OutList)  ! OutList
   END IF
       Int_BufSz  = Int_BufSz  + 1  ! SumPrint
+      Int_BufSz  = Int_BufSz  + 1*LEN(InData%OutFmt)  ! OutFmt
   IF ( Re_BufSz  .GT. 0 ) THEN 
      ALLOCATE( ReKiBuf(  Re_BufSz  ), STAT=ErrStat2 )
      IF (ErrStat2 /= 0) THEN 
@@ -4271,6 +4295,8 @@ ENDIF
       IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%NRMax
       Int_Xferred   = Int_Xferred   + 1
       IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%quadrature
+      Int_Xferred   = Int_Xferred   + 1
+      IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%n_fact
       Int_Xferred   = Int_Xferred   + 1
       ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%stop_tol
       Re_Xferred   = Re_Xferred   + 1
@@ -4353,6 +4379,10 @@ ENDIF
   END IF
       IntKiBuf ( Int_Xferred:Int_Xferred+1-1 ) = TRANSFER( InData%SumPrint , IntKiBuf(1), 1)
       Int_Xferred   = Int_Xferred   + 1
+        DO I = 1, LEN(InData%OutFmt)
+          IntKiBuf(Int_Xferred) = ICHAR(InData%OutFmt(I:I), IntKi)
+          Int_Xferred = Int_Xferred   + 1
+        END DO ! I
  END SUBROUTINE BD_PackInputFile
 
  SUBROUTINE BD_UnPackInputFile( ReKiBuf, DbKiBuf, IntKiBuf, Outdata, ErrStat, ErrMsg )
@@ -4423,6 +4453,8 @@ ENDIF
       OutData%NRMax = IntKiBuf( Int_Xferred ) 
       Int_Xferred   = Int_Xferred + 1
       OutData%quadrature = IntKiBuf( Int_Xferred ) 
+      Int_Xferred   = Int_Xferred + 1
+      OutData%n_fact = IntKiBuf( Int_Xferred ) 
       Int_Xferred   = Int_Xferred + 1
       OutData%stop_tol = ReKiBuf( Re_Xferred )
       Re_Xferred   = Re_Xferred + 1
@@ -4546,6 +4578,10 @@ ENDIF
   END IF
       OutData%SumPrint = TRANSFER( IntKiBuf( Int_Xferred ), mask0 )
       Int_Xferred   = Int_Xferred + 1
+      DO I = 1, LEN(OutData%OutFmt)
+        OutData%OutFmt(I:I) = CHAR(IntKiBuf(Int_Xferred))
+        Int_Xferred = Int_Xferred   + 1
+      END DO ! I
  END SUBROUTINE BD_UnPackInputFile
 
 
