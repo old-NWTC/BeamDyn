@@ -124,6 +124,8 @@ IMPLICIT NONE
     TYPE(MeshType)  :: ReactionForce      ! contains force and moments [-]
     TYPE(MeshType)  :: BldForce      ! contains force and moments [-]
     TYPE(MeshType)  :: BldMotion      ! Motion (disp,rot,vel) along beam axis [-]
+    REAL(ReKi)  :: RootMxr      ! x-component of the root reaction moment expressed in r (used for ServoDyn Bladed DLL Interface) [Nm]
+    REAL(ReKi)  :: RootMyr      ! y-component of the root reaction moment expressed in r (used for ServoDyn Bladed DLL Interface) [Nm]
     REAL(ReKi) , DIMENSION(:), ALLOCATABLE  :: WriteOutput      ! Data to be written to an output file: see WriteOutputHdr for names of each variable [see WriteOutputUnt]
   END TYPE BD_OutputType
 ! =======================
@@ -2959,6 +2961,8 @@ ENDIF
       CALL MeshCopy( SrcOutputData%BldMotion, DstOutputData%BldMotion, CtrlCode, ErrStat2, ErrMsg2 )
          CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg, RoutineName)
          IF (ErrStat>=AbortErrLev) RETURN
+    DstOutputData%RootMxr = SrcOutputData%RootMxr
+    DstOutputData%RootMyr = SrcOutputData%RootMyr
 IF (ALLOCATED(SrcOutputData%WriteOutput)) THEN
   i1_l = LBOUND(SrcOutputData%WriteOutput,1)
   i1_u = UBOUND(SrcOutputData%WriteOutput,1)
@@ -3077,6 +3081,8 @@ ENDIF
          Int_BufSz = Int_BufSz + SIZE( Int_Buf )
          DEALLOCATE(Int_Buf)
       END IF
+      Re_BufSz   = Re_BufSz   + 1  ! RootMxr
+      Re_BufSz   = Re_BufSz   + 1  ! RootMyr
   Int_BufSz   = Int_BufSz   + 1     ! WriteOutput allocated yes/no
   IF ( ALLOCATED(InData%WriteOutput) ) THEN
     Int_BufSz   = Int_BufSz   + 2*1  ! WriteOutput upper/lower bounds for each dimension
@@ -3193,6 +3199,10 @@ ENDIF
       ELSE
         IntKiBuf( Int_Xferred ) = 0; Int_Xferred = Int_Xferred + 1
       ENDIF
+      ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%RootMxr
+      Re_Xferred   = Re_Xferred   + 1
+      ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%RootMyr
+      Re_Xferred   = Re_Xferred   + 1
   IF ( .NOT. ALLOCATED(InData%WriteOutput) ) THEN
     IntKiBuf( Int_Xferred ) = 0
     Int_Xferred = Int_Xferred + 1
@@ -3361,6 +3371,10 @@ ENDIF
       IF(ALLOCATED(Re_Buf )) DEALLOCATE(Re_Buf )
       IF(ALLOCATED(Db_Buf )) DEALLOCATE(Db_Buf )
       IF(ALLOCATED(Int_Buf)) DEALLOCATE(Int_Buf)
+      OutData%RootMxr = ReKiBuf( Re_Xferred )
+      Re_Xferred   = Re_Xferred + 1
+      OutData%RootMyr = ReKiBuf( Re_Xferred )
+      Re_Xferred   = Re_Xferred + 1
   IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! WriteOutput not allocated
     Int_Xferred = Int_Xferred + 1
   ELSE
@@ -4547,6 +4561,10 @@ ENDIF
         CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg,RoutineName)
       CALL MeshExtrapInterp1(y1%BldMotion, y2%BldMotion, tin, y_out%BldMotion, tin_out, ErrStat2, ErrMsg2 )
         CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg,RoutineName)
+  b0 = -(y1%RootMxr - y2%RootMxr)/t(2)
+  y_out%RootMxr = y1%RootMxr + b0 * t_out
+  b0 = -(y1%RootMyr - y2%RootMyr)/t(2)
+  y_out%RootMyr = y1%RootMyr + b0 * t_out
 IF (ALLOCATED(y_out%WriteOutput) .AND. ALLOCATED(y1%WriteOutput)) THEN
   ALLOCATE(b1(SIZE(y_out%WriteOutput,1)))
   ALLOCATE(c1(SIZE(y_out%WriteOutput,1)))
@@ -4615,6 +4633,12 @@ END IF ! check if allocated
         CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg,RoutineName)
       CALL MeshExtrapInterp2(y1%BldMotion, y2%BldMotion, y3%BldMotion, tin, y_out%BldMotion, tin_out, ErrStat2, ErrMsg2 )
         CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg,RoutineName)
+  b0 = (t(3)**2*(y1%RootMxr - y2%RootMxr) + t(2)**2*(-y1%RootMxr + y3%RootMxr))/(t(2)*t(3)*(t(2) - t(3)))
+  c0 = ( (t(2)-t(3))*y1%RootMxr + t(3)*y2%RootMxr - t(2)*y3%RootMxr ) / (t(2)*t(3)*(t(2) - t(3)))
+  y_out%RootMxr = y1%RootMxr + b0 * t_out + c0 * t_out**2
+  b0 = (t(3)**2*(y1%RootMyr - y2%RootMyr) + t(2)**2*(-y1%RootMyr + y3%RootMyr))/(t(2)*t(3)*(t(2) - t(3)))
+  c0 = ( (t(2)-t(3))*y1%RootMyr + t(3)*y2%RootMyr - t(2)*y3%RootMyr ) / (t(2)*t(3)*(t(2) - t(3)))
+  y_out%RootMyr = y1%RootMyr + b0 * t_out + c0 * t_out**2
 IF (ALLOCATED(y_out%WriteOutput) .AND. ALLOCATED(y1%WriteOutput)) THEN
   ALLOCATE(b1(SIZE(y_out%WriteOutput,1)))
   ALLOCATE(c1(SIZE(y_out%WriteOutput,1)))

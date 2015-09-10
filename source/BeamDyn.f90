@@ -95,6 +95,8 @@ SUBROUTINE BD_Init( InitInp, u, p, x, xd, z, OtherState, y, Interval, InitOut, E
    REAL(ReKi)              :: TmpDCM(3,3)
    REAL(ReKi)              :: temp_glb(3)
 
+   INTEGER(IntKi)          :: indx
+
    INTEGER(IntKi)          :: ErrStat2                     ! Temporary Error status
    CHARACTER(ErrMsgLen)    :: ErrMsg2                      ! Temporary Error message
    character(*), parameter :: RoutineName = 'BD_Init'
@@ -1095,7 +1097,6 @@ SUBROUTINE BD_CalcOutput( t, u, p, x, xd, z, OtherState, y, ErrStat, ErrMsg )
          y%WriteOutput(i) = p%OutParam(i)%SignM * AllOuts( p%OutParam(i)%Indx )
       end do             ! i - All selected output channels
       
-   end if   
    
    call cleanup()
    return
