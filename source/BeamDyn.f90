@@ -582,9 +582,13 @@ SUBROUTINE BD_Init( InitInp, u, p, x, xd, z, OtherState, y, Interval, InitOut, E
    ENDDO
    
    temp_int = p%node_elem*p%elem_total
+   p%NdIndx(1) = 1
+   indx = 2
    DO i=1,temp_int-1
       
       if (.not. equalRealNos( TwoNorm( y%BldMotion%Position(:,i)-y%BldMotion%Position(:,i+1) ), 0.0_ReKi ) ) then
+         p%NdIndx(indx) = i + 1
+         indx = indx + 1;
          ! do not connect nodes that are collocated
           CALL MeshConstructElement( Mesh     = y%BldMotion      &
                                     ,Xelement = ELEMENT_LINE2    &
@@ -1078,8 +1082,10 @@ SUBROUTINE BD_CalcOutput( t, u, p, x, xd, z, OtherState, y, ErrStat, ErrMsg )
    !-------------------------------------------------------   
    !     get values to output to file:  
    !-------------------------------------------------------   
-   if (p%NumOuts > 0) then
-      call Calc_WriteOutput( p, u, AllOuts, y, ErrStat, ErrMsg )   
+   call Calc_WriteOutput( p, u, AllOuts, y, ErrStat, ErrMsg )   
+    
+   y%RootMxr = AllOuts( RootMxr )
+   y%RootMyr = AllOuts( RootMyr )
    
       !...............................................................................................................................   
       ! Place the selected output channels into the WriteOutput(:) array with the proper sign:
