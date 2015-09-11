@@ -166,7 +166,7 @@ SUBROUTINE BD_Init( InitInp, u, p, x, xd, z, OtherState, y, Interval, InitOut, E
    ! Number of nodes per elelemt
    p%node_elem  = InputFileData%order_elem + 1   
    ! Number of Gauss points
-   p%ngp        = p%node_elem - 1
+   p%ngp        = p%node_elem! - 1
    ! Degree-of-freedom (DoF) per node
    p%dof_node   = 6
    ! Total number of (finite element) nodes
