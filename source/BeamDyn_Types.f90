@@ -65,7 +65,6 @@ IMPLICIT NONE
 ! =========  BD_DiscreteStateType  =======
   TYPE, PUBLIC :: BD_DiscreteStateType
     REAL(ReKi)  :: DummyDiscState      ! A variable, Replace if you have discrete states [-]
-    REAL(ReKi) , DIMENSION(1:3)  :: rot      ! For filter [-]
   END TYPE BD_DiscreteStateType
 ! =======================
 ! =========  BD_ConstraintStateType  =======
@@ -123,7 +122,6 @@ IMPLICIT NONE
     INTEGER(IntKi) , DIMENSION(1:9)  :: OutNd      ! Nodes whose values will be output [-]
     INTEGER(IntKi) , DIMENSION(:), ALLOCATABLE  :: NdIndx      ! Index into BldMotion mesh (to number the nodes for output without using collocated nodes) [-]
     CHARACTER(20)  :: OutFmt      ! Format specifier [-]
-    REAL(ReKi)  :: alpha      ! Coefficient for filter [-]
     REAL(ReKi) , DIMENSION(:), ALLOCATABLE  :: GLL      ! GLL point locations in natural frame [-]
     REAL(ReKi) , DIMENSION(:), ALLOCATABLE  :: GL      ! GL(Gauss) point locations in natural frame [-]
     REAL(ReKi) , DIMENSION(:), ALLOCATABLE  :: GLw      ! Weights at each GL(Gauss) point [-]
@@ -1090,7 +1088,6 @@ ENDIF
    CHARACTER(*),    INTENT(  OUT) :: ErrMsg
 ! Local 
    INTEGER(IntKi)                 :: i,j,k
-   INTEGER(IntKi)                 :: i1, i1_l, i1_u  !  bounds (upper/lower) for an array dimension 1
    INTEGER(IntKi)                 :: ErrStat2
    CHARACTER(ErrMsgLen)           :: ErrMsg2
    CHARACTER(*), PARAMETER        :: RoutineName = 'BD_CopyDiscState'
@@ -1098,7 +1095,6 @@ ENDIF
    ErrStat = ErrID_None
    ErrMsg  = ""
     DstDiscStateData%DummyDiscState = SrcDiscStateData%DummyDiscState
-    DstDiscStateData%rot = SrcDiscStateData%rot
  END SUBROUTINE BD_CopyDiscState
 
  SUBROUTINE BD_DestroyDiscState( DiscStateData, ErrStat, ErrMsg )
@@ -1148,7 +1144,6 @@ ENDIF
   Db_BufSz  = 0
   Int_BufSz  = 0
       Re_BufSz   = Re_BufSz   + 1  ! DummyDiscState
-      Re_BufSz   = Re_BufSz   + SIZE(InData%rot)  ! rot
   IF ( Re_BufSz  .GT. 0 ) THEN 
      ALLOCATE( ReKiBuf(  Re_BufSz  ), STAT=ErrStat2 )
      IF (ErrStat2 /= 0) THEN 
@@ -1178,8 +1173,6 @@ ENDIF
 
       ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%DummyDiscState
       Re_Xferred   = Re_Xferred   + 1
-      ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%rot))-1 ) = PACK(InData%rot,.TRUE.)
-      Re_Xferred   = Re_Xferred   + SIZE(InData%rot)
  END SUBROUTINE BD_PackDiscState
 
  SUBROUTINE BD_UnPackDiscState( ReKiBuf, DbKiBuf, IntKiBuf, Outdata, ErrStat, ErrMsg )
@@ -1201,7 +1194,6 @@ ENDIF
   LOGICAL, ALLOCATABLE           :: mask3(:,:,:)
   LOGICAL, ALLOCATABLE           :: mask4(:,:,:,:)
   LOGICAL, ALLOCATABLE           :: mask5(:,:,:,:,:)
-  INTEGER(IntKi)                 :: i1, i1_l, i1_u  !  bounds (upper/lower) for an array dimension 1
   INTEGER(IntKi)                 :: ErrStat2
   CHARACTER(ErrMsgLen)           :: ErrMsg2
   CHARACTER(*), PARAMETER        :: RoutineName = 'BD_UnPackDiscState'
@@ -1217,17 +1209,6 @@ ENDIF
   Int_Xferred  = 1
       OutData%DummyDiscState = ReKiBuf( Re_Xferred )
       Re_Xferred   = Re_Xferred + 1
-    i1_l = LBOUND(OutData%rot,1)
-    i1_u = UBOUND(OutData%rot,1)
-    ALLOCATE(mask1(i1_l:i1_u),STAT=ErrStat2)
-    IF (ErrStat2 /= 0) THEN 
-       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask1.', ErrStat, ErrMsg,RoutineName)
-       RETURN
-    END IF
-    mask1 = .TRUE. 
-      OutData%rot = UNPACK(ReKiBuf( Re_Xferred:Re_Xferred+(SIZE(OutData%rot))-1 ), mask1, 0.0_ReKi )
-      Re_Xferred   = Re_Xferred   + SIZE(OutData%rot)
-    DEALLOCATE(mask1)
  END SUBROUTINE BD_UnPackDiscState
 
  SUBROUTINE BD_CopyConstrState( SrcConstrStateData, DstConstrStateData, CtrlCode, ErrStat, ErrMsg )
@@ -1818,7 +1799,6 @@ IF (ALLOCATED(SrcParamData%NdIndx)) THEN
     DstParamData%NdIndx = SrcParamData%NdIndx
 ENDIF
     DstParamData%OutFmt = SrcParamData%OutFmt
-    DstParamData%alpha = SrcParamData%alpha
 IF (ALLOCATED(SrcParamData%GLL)) THEN
   i1_l = LBOUND(SrcParamData%GLL,1)
   i1_u = UBOUND(SrcParamData%GLL,1)
@@ -2161,7 +2141,6 @@ ENDIF
       Int_BufSz  = Int_BufSz  + SIZE(InData%NdIndx)  ! NdIndx
   END IF
       Int_BufSz  = Int_BufSz  + 1*LEN(InData%OutFmt)  ! OutFmt
-      Re_BufSz   = Re_BufSz   + 1  ! alpha
   Int_BufSz   = Int_BufSz   + 1     ! GLL allocated yes/no
   IF ( ALLOCATED(InData%GLL) ) THEN
     Int_BufSz   = Int_BufSz   + 2*1  ! GLL upper/lower bounds for each dimension
@@ -2505,8 +2484,6 @@ ENDIF
           IntKiBuf(Int_Xferred) = ICHAR(InData%OutFmt(I:I), IntKi)
           Int_Xferred = Int_Xferred   + 1
         END DO ! I
-      ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%alpha
-      Re_Xferred   = Re_Xferred   + 1
   IF ( .NOT. ALLOCATED(InData%GLL) ) THEN
     IntKiBuf( Int_Xferred ) = 0
     Int_Xferred = Int_Xferred + 1
@@ -3151,8 +3128,6 @@ ENDIF
         OutData%OutFmt(I:I) = CHAR(IntKiBuf(Int_Xferred))
         Int_Xferred = Int_Xferred   + 1
       END DO ! I
-      OutData%alpha = ReKiBuf( Re_Xferred )
-      Re_Xferred   = Re_Xferred + 1
   IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! GLL not allocated
     Int_Xferred = Int_Xferred + 1
   ELSE
