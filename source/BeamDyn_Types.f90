@@ -3,7 +3,7 @@
 ! WARNING This file is generated automatically by the FAST registry
 ! Do not edit.  Your changes to this file will be lost.
 !
-! FAST Registry (v2.08.02, 12-Aug-2015)
+! FAST Registry (v2.08.01, 21-May-2015)
 !*********************************************************************************************************************************
 ! BeamDyn_Types
 !.................................................................................................................................
@@ -39,12 +39,14 @@ IMPLICIT NONE
     CHARACTER(1024)  :: RootName      ! RootName for writing output files [-]
     REAL(ReKi) , DIMENSION(1:3)  :: gravity      ! Gravitational acceleration [m/s^2]
     REAL(ReKi) , DIMENSION(1:3)  :: GlbPos      ! Initial Position Vector of the local blade coordinate system [-]
-    REAL(ReKi) , DIMENSION(1:3,1:3)  :: GlbRot      ! Initial direction cosine matrix of the loacl blade coordinate system [-]
+    REAL(ReKi) , DIMENSION(1:3,1:3)  :: GlbRot      ! Initial direction cosine matrix of the local blade coordinate system [-]
     REAL(ReKi) , DIMENSION(1:3)  :: RootDisp      ! Initial root displacement [-]
     REAL(ReKi) , DIMENSION(1:3,1:3)  :: RootOri      ! Initial root orientation [-]
     REAL(ReKi) , DIMENSION(1:6)  :: RootVel      ! Initial root velocities and angular veolcities [-]
     REAL(ReKi) , DIMENSION(1:6)  :: DistrLoad      ! Constant distributed load along beam axis, 3 forces and 3 moments [-]
     REAL(ReKi) , DIMENSION(1:6)  :: TipLoad      ! Constant point load applied at tip, 3 forces and 3 moments [-]
+    REAL(ReKi) , DIMENSION(1:3)  :: HubPos      ! Initial Hub position vector [-]
+    REAL(ReKi) , DIMENSION(1:3,1:3)  :: HubRot      ! Initial Hub direction cosine matrix [-]
   END TYPE BD_InitInputType
 ! =======================
 ! =========  BD_InitOutputType  =======
@@ -138,6 +140,7 @@ IMPLICIT NONE
     TYPE(MeshType)  :: RootMotion      ! contains motion [-]
     TYPE(MeshType)  :: PointLoad      ! Applied point forces along beam axis [-]
     TYPE(MeshType)  :: DistrLoad      ! Applied distributed forces along beam axis [-]
+    TYPE(MeshType)  :: HubMotion      ! motion (orientation) at the hub [-]
   END TYPE BD_InputType
 ! =======================
 ! =========  BD_OutputType  =======
@@ -215,6 +218,8 @@ CONTAINS
     DstInitInputData%RootVel = SrcInitInputData%RootVel
     DstInitInputData%DistrLoad = SrcInitInputData%DistrLoad
     DstInitInputData%TipLoad = SrcInitInputData%TipLoad
+    DstInitInputData%HubPos = SrcInitInputData%HubPos
+    DstInitInputData%HubRot = SrcInitInputData%HubRot
  END SUBROUTINE BD_CopyInitInput
 
  SUBROUTINE BD_DestroyInitInput( InitInputData, ErrStat, ErrMsg )
@@ -273,6 +278,8 @@ CONTAINS
       Re_BufSz   = Re_BufSz   + SIZE(InData%RootVel)  ! RootVel
       Re_BufSz   = Re_BufSz   + SIZE(InData%DistrLoad)  ! DistrLoad
       Re_BufSz   = Re_BufSz   + SIZE(InData%TipLoad)  ! TipLoad
+      Re_BufSz   = Re_BufSz   + SIZE(InData%HubPos)  ! HubPos
+      Re_BufSz   = Re_BufSz   + SIZE(InData%HubRot)  ! HubRot
   IF ( Re_BufSz  .GT. 0 ) THEN 
      ALLOCATE( ReKiBuf(  Re_BufSz  ), STAT=ErrStat2 )
      IF (ErrStat2 /= 0) THEN 
@@ -324,6 +331,10 @@ CONTAINS
       Re_Xferred   = Re_Xferred   + SIZE(InData%DistrLoad)
       ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%TipLoad))-1 ) = PACK(InData%TipLoad,.TRUE.)
       Re_Xferred   = Re_Xferred   + SIZE(InData%TipLoad)
+      ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%HubPos))-1 ) = PACK(InData%HubPos,.TRUE.)
+      Re_Xferred   = Re_Xferred   + SIZE(InData%HubPos)
+      ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%HubRot))-1 ) = PACK(InData%HubRot,.TRUE.)
+      Re_Xferred   = Re_Xferred   + SIZE(InData%HubRot)
  END SUBROUTINE BD_PackInitInput
 
  SUBROUTINE BD_UnPackInitInput( ReKiBuf, DbKiBuf, IntKiBuf, Outdata, ErrStat, ErrMsg )
@@ -461,6 +472,30 @@ CONTAINS
       OutData%TipLoad = UNPACK(ReKiBuf( Re_Xferred:Re_Xferred+(SIZE(OutData%TipLoad))-1 ), mask1, 0.0_ReKi )
       Re_Xferred   = Re_Xferred   + SIZE(OutData%TipLoad)
     DEALLOCATE(mask1)
+    i1_l = LBOUND(OutData%HubPos,1)
+    i1_u = UBOUND(OutData%HubPos,1)
+    ALLOCATE(mask1(i1_l:i1_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask1.', ErrStat, ErrMsg,RoutineName)
+       RETURN
+    END IF
+    mask1 = .TRUE. 
+      OutData%HubPos = UNPACK(ReKiBuf( Re_Xferred:Re_Xferred+(SIZE(OutData%HubPos))-1 ), mask1, 0.0_ReKi )
+      Re_Xferred   = Re_Xferred   + SIZE(OutData%HubPos)
+    DEALLOCATE(mask1)
+    i1_l = LBOUND(OutData%HubRot,1)
+    i1_u = UBOUND(OutData%HubRot,1)
+    i2_l = LBOUND(OutData%HubRot,2)
+    i2_u = UBOUND(OutData%HubRot,2)
+    ALLOCATE(mask2(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask2.', ErrStat, ErrMsg,RoutineName)
+       RETURN
+    END IF
+    mask2 = .TRUE. 
+      OutData%HubRot = UNPACK(ReKiBuf( Re_Xferred:Re_Xferred+(SIZE(OutData%HubRot))-1 ), mask2, 0.0_ReKi )
+      Re_Xferred   = Re_Xferred   + SIZE(OutData%HubRot)
+    DEALLOCATE(mask2)
  END SUBROUTINE BD_UnPackInitInput
 
  SUBROUTINE BD_CopyInitOutput( SrcInitOutputData, DstInitOutputData, CtrlCode, ErrStat, ErrMsg )
@@ -3368,6 +3403,9 @@ ENDIF
       CALL MeshCopy( SrcInputData%DistrLoad, DstInputData%DistrLoad, CtrlCode, ErrStat2, ErrMsg2 )
          CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg, RoutineName)
          IF (ErrStat>=AbortErrLev) RETURN
+      CALL MeshCopy( SrcInputData%HubMotion, DstInputData%HubMotion, CtrlCode, ErrStat2, ErrMsg2 )
+         CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg, RoutineName)
+         IF (ErrStat>=AbortErrLev) RETURN
  END SUBROUTINE BD_CopyInput
 
  SUBROUTINE BD_DestroyInput( InputData, ErrStat, ErrMsg )
@@ -3382,6 +3420,7 @@ ENDIF
   CALL MeshDestroy( InputData%RootMotion, ErrStat, ErrMsg )
   CALL MeshDestroy( InputData%PointLoad, ErrStat, ErrMsg )
   CALL MeshDestroy( InputData%DistrLoad, ErrStat, ErrMsg )
+  CALL MeshDestroy( InputData%HubMotion, ErrStat, ErrMsg )
  END SUBROUTINE BD_DestroyInput
 
  SUBROUTINE BD_PackInput( ReKiBuf, DbKiBuf, IntKiBuf, Indata, ErrStat, ErrMsg, SizeOnly )
@@ -3471,6 +3510,23 @@ ENDIF
          Int_BufSz = Int_BufSz + SIZE( Int_Buf )
          DEALLOCATE(Int_Buf)
       END IF
+      Int_BufSz   = Int_BufSz + 3  ! HubMotion: size of buffers for each call to pack subtype
+      CALL MeshPack( InData%HubMotion, Re_Buf, Db_Buf, Int_Buf, ErrStat2, ErrMsg2, .TRUE. ) ! HubMotion 
+        CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg, RoutineName)
+        IF (ErrStat >= AbortErrLev) RETURN
+
+      IF(ALLOCATED(Re_Buf)) THEN ! HubMotion
+         Re_BufSz  = Re_BufSz  + SIZE( Re_Buf  )
+         DEALLOCATE(Re_Buf)
+      END IF
+      IF(ALLOCATED(Db_Buf)) THEN ! HubMotion
+         Db_BufSz  = Db_BufSz  + SIZE( Db_Buf  )
+         DEALLOCATE(Db_Buf)
+      END IF
+      IF(ALLOCATED(Int_Buf)) THEN ! HubMotion
+         Int_BufSz = Int_BufSz + SIZE( Int_Buf )
+         DEALLOCATE(Int_Buf)
+      END IF
   IF ( Re_BufSz  .GT. 0 ) THEN 
      ALLOCATE( ReKiBuf(  Re_BufSz  ), STAT=ErrStat2 )
      IF (ErrStat2 /= 0) THEN 
@@ -3555,6 +3611,34 @@ ENDIF
         IntKiBuf( Int_Xferred ) = 0; Int_Xferred = Int_Xferred + 1
       ENDIF
       CALL MeshPack( InData%DistrLoad, Re_Buf, Db_Buf, Int_Buf, ErrStat2, ErrMsg2, OnlySize ) ! DistrLoad 
+        CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg, RoutineName)
+        IF (ErrStat >= AbortErrLev) RETURN
+
+      IF(ALLOCATED(Re_Buf)) THEN
+        IntKiBuf( Int_Xferred ) = SIZE(Re_Buf); Int_Xferred = Int_Xferred + 1
+        IF (SIZE(Re_Buf) > 0) ReKiBuf( Re_Xferred:Re_Xferred+SIZE(Re_Buf)-1 ) = Re_Buf
+        Re_Xferred = Re_Xferred + SIZE(Re_Buf)
+        DEALLOCATE(Re_Buf)
+      ELSE
+        IntKiBuf( Int_Xferred ) = 0; Int_Xferred = Int_Xferred + 1
+      ENDIF
+      IF(ALLOCATED(Db_Buf)) THEN
+        IntKiBuf( Int_Xferred ) = SIZE(Db_Buf); Int_Xferred = Int_Xferred + 1
+        IF (SIZE(Db_Buf) > 0) DbKiBuf( Db_Xferred:Db_Xferred+SIZE(Db_Buf)-1 ) = Db_Buf
+        Db_Xferred = Db_Xferred + SIZE(Db_Buf)
+        DEALLOCATE(Db_Buf)
+      ELSE
+        IntKiBuf( Int_Xferred ) = 0; Int_Xferred = Int_Xferred + 1
+      ENDIF
+      IF(ALLOCATED(Int_Buf)) THEN
+        IntKiBuf( Int_Xferred ) = SIZE(Int_Buf); Int_Xferred = Int_Xferred + 1
+        IF (SIZE(Int_Buf) > 0) IntKiBuf( Int_Xferred:Int_Xferred+SIZE(Int_Buf)-1 ) = Int_Buf
+        Int_Xferred = Int_Xferred + SIZE(Int_Buf)
+        DEALLOCATE(Int_Buf)
+      ELSE
+        IntKiBuf( Int_Xferred ) = 0; Int_Xferred = Int_Xferred + 1
+      ENDIF
+      CALL MeshPack( InData%HubMotion, Re_Buf, Db_Buf, Int_Buf, ErrStat2, ErrMsg2, OnlySize ) ! HubMotion 
         CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg, RoutineName)
         IF (ErrStat >= AbortErrLev) RETURN
 
@@ -3730,6 +3814,46 @@ ENDIF
         Int_Xferred = Int_Xferred + Buf_size
       END IF
       CALL MeshUnpack( OutData%DistrLoad, Re_Buf, Db_Buf, Int_Buf, ErrStat2, ErrMsg2 ) ! DistrLoad 
+        CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg, RoutineName)
+        IF (ErrStat >= AbortErrLev) RETURN
+
+      IF(ALLOCATED(Re_Buf )) DEALLOCATE(Re_Buf )
+      IF(ALLOCATED(Db_Buf )) DEALLOCATE(Db_Buf )
+      IF(ALLOCATED(Int_Buf)) DEALLOCATE(Int_Buf)
+      Buf_size=IntKiBuf( Int_Xferred )
+      Int_Xferred = Int_Xferred + 1
+      IF(Buf_size > 0) THEN
+        ALLOCATE(Re_Buf(Buf_size),STAT=ErrStat2)
+        IF (ErrStat2 /= 0) THEN 
+           CALL SetErrStat(ErrID_Fatal, 'Error allocating Re_Buf.', ErrStat, ErrMsg,RoutineName)
+           RETURN
+        END IF
+        Re_Buf = ReKiBuf( Re_Xferred:Re_Xferred+Buf_size-1 )
+        Re_Xferred = Re_Xferred + Buf_size
+      END IF
+      Buf_size=IntKiBuf( Int_Xferred )
+      Int_Xferred = Int_Xferred + 1
+      IF(Buf_size > 0) THEN
+        ALLOCATE(Db_Buf(Buf_size),STAT=ErrStat2)
+        IF (ErrStat2 /= 0) THEN 
+           CALL SetErrStat(ErrID_Fatal, 'Error allocating Db_Buf.', ErrStat, ErrMsg,RoutineName)
+           RETURN
+        END IF
+        Db_Buf = DbKiBuf( Db_Xferred:Db_Xferred+Buf_size-1 )
+        Db_Xferred = Db_Xferred + Buf_size
+      END IF
+      Buf_size=IntKiBuf( Int_Xferred )
+      Int_Xferred = Int_Xferred + 1
+      IF(Buf_size > 0) THEN
+        ALLOCATE(Int_Buf(Buf_size),STAT=ErrStat2)
+        IF (ErrStat2 /= 0) THEN 
+           CALL SetErrStat(ErrID_Fatal, 'Error allocating Int_Buf.', ErrStat, ErrMsg,RoutineName)
+           RETURN
+        END IF
+        Int_Buf = IntKiBuf( Int_Xferred:Int_Xferred+Buf_size-1 )
+        Int_Xferred = Int_Xferred + Buf_size
+      END IF
+      CALL MeshUnpack( OutData%HubMotion, Re_Buf, Db_Buf, Int_Buf, ErrStat2, ErrMsg2 ) ! HubMotion 
         CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg, RoutineName)
         IF (ErrStat >= AbortErrLev) RETURN
 
@@ -5231,6 +5355,8 @@ ENDIF
         CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg,RoutineName)
       CALL MeshExtrapInterp1(u1%DistrLoad, u2%DistrLoad, tin, u_out%DistrLoad, tin_out, ErrStat2, ErrMsg2 )
         CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg,RoutineName)
+      CALL MeshExtrapInterp1(u1%HubMotion, u2%HubMotion, tin, u_out%HubMotion, tin_out, ErrStat2, ErrMsg2 )
+        CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg,RoutineName)
  END SUBROUTINE BD_Input_ExtrapInterp1
 
 
@@ -5288,6 +5414,8 @@ ENDIF
       CALL MeshExtrapInterp2(u1%PointLoad, u2%PointLoad, u3%PointLoad, tin, u_out%PointLoad, tin_out, ErrStat2, ErrMsg2 )
         CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg,RoutineName)
       CALL MeshExtrapInterp2(u1%DistrLoad, u2%DistrLoad, u3%DistrLoad, tin, u_out%DistrLoad, tin_out, ErrStat2, ErrMsg2 )
+        CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg,RoutineName)
+      CALL MeshExtrapInterp2(u1%HubMotion, u2%HubMotion, u3%HubMotion, tin, u_out%HubMotion, tin_out, ErrStat2, ErrMsg2 )
         CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg,RoutineName)
  END SUBROUTINE BD_Input_ExtrapInterp2
 
