@@ -3,7 +3,7 @@
 ! WARNING This file is generated automatically by the FAST registry
 ! Do not edit.  Your changes to this file will be lost.
 !
-! FAST Registry (v2.08.01, 21-May-2015)
+! FAST Registry (v2.08.02, 12-Aug-2015)
 !*********************************************************************************************************************************
 ! BeamDyn_Types
 !.................................................................................................................................
@@ -121,9 +121,7 @@ IMPLICIT NONE
     INTEGER(IntKi) , DIMENSION(1:9)  :: OutNd      ! Nodes whose values will be output [-]
     INTEGER(IntKi) , DIMENSION(:), ALLOCATABLE  :: NdIndx      ! Index into BldMotion mesh (to number the nodes for output without using collocated nodes) [-]
     CHARACTER(20)  :: OutFmt      ! Format specifier [-]
-<<<<<<< HEAD
     REAL(ReKi)  :: alpha      ! Coefficient for filter [-]
-=======
     REAL(ReKi) , DIMENSION(:), ALLOCATABLE  :: GLL      ! GLL point locations in natural frame [-]
     REAL(ReKi) , DIMENSION(:), ALLOCATABLE  :: GL      ! GL(Gauss) point locations in natural frame [-]
     REAL(ReKi) , DIMENSION(:), ALLOCATABLE  :: GLw      ! Weights at each GL(Gauss) point [-]
@@ -133,7 +131,6 @@ IMPLICIT NONE
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: rrN0      ! Initial relative rotation array [-]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: uu0      ! Initial Disp/Rot value at quadrature point  [-]
     REAL(ReKi) , DIMENSION(:,:), ALLOCATABLE  :: E10      ! Initial E10 at quadrature point [-]
->>>>>>> BDImprove
   END TYPE BD_ParameterType
 ! =======================
 ! =========  BD_InputType  =======
@@ -1786,9 +1783,7 @@ IF (ALLOCATED(SrcParamData%NdIndx)) THEN
     DstParamData%NdIndx = SrcParamData%NdIndx
 ENDIF
     DstParamData%OutFmt = SrcParamData%OutFmt
-<<<<<<< HEAD
     DstParamData%alpha = SrcParamData%alpha
-=======
 IF (ALLOCATED(SrcParamData%GLL)) THEN
   i1_l = LBOUND(SrcParamData%GLL,1)
   i1_u = UBOUND(SrcParamData%GLL,1)
@@ -1909,7 +1904,6 @@ IF (ALLOCATED(SrcParamData%E10)) THEN
   END IF
     DstParamData%E10 = SrcParamData%E10
 ENDIF
->>>>>>> BDImprove
  END SUBROUTINE BD_CopyParam
 
  SUBROUTINE BD_DestroyParam( ParamData, ErrStat, ErrMsg )
@@ -2132,9 +2126,7 @@ ENDIF
       Int_BufSz  = Int_BufSz  + SIZE(InData%NdIndx)  ! NdIndx
   END IF
       Int_BufSz  = Int_BufSz  + 1*LEN(InData%OutFmt)  ! OutFmt
-<<<<<<< HEAD
       Re_BufSz   = Re_BufSz   + 1  ! alpha
-=======
   Int_BufSz   = Int_BufSz   + 1     ! GLL allocated yes/no
   IF ( ALLOCATED(InData%GLL) ) THEN
     Int_BufSz   = Int_BufSz   + 2*1  ! GLL upper/lower bounds for each dimension
@@ -2180,7 +2172,6 @@ ENDIF
     Int_BufSz   = Int_BufSz   + 2*2  ! E10 upper/lower bounds for each dimension
       Re_BufSz   = Re_BufSz   + SIZE(InData%E10)  ! E10
   END IF
->>>>>>> BDImprove
   IF ( Re_BufSz  .GT. 0 ) THEN 
      ALLOCATE( ReKiBuf(  Re_BufSz  ), STAT=ErrStat2 )
      IF (ErrStat2 /= 0) THEN 
@@ -2479,10 +2470,8 @@ ENDIF
           IntKiBuf(Int_Xferred) = ICHAR(InData%OutFmt(I:I), IntKi)
           Int_Xferred = Int_Xferred   + 1
         END DO ! I
-<<<<<<< HEAD
       ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%alpha
       Re_Xferred   = Re_Xferred   + 1
-=======
   IF ( .NOT. ALLOCATED(InData%GLL) ) THEN
     IntKiBuf( Int_Xferred ) = 0
     Int_Xferred = Int_Xferred + 1
@@ -2618,7 +2607,6 @@ ENDIF
       IF (SIZE(InData%E10)>0) ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%E10))-1 ) = PACK(InData%E10,.TRUE.)
       Re_Xferred   = Re_Xferred   + SIZE(InData%E10)
   END IF
->>>>>>> BDImprove
  END SUBROUTINE BD_PackParam
 
  SUBROUTINE BD_UnPackParam( ReKiBuf, DbKiBuf, IntKiBuf, Outdata, ErrStat, ErrMsg )
@@ -3128,10 +3116,8 @@ ENDIF
         OutData%OutFmt(I:I) = CHAR(IntKiBuf(Int_Xferred))
         Int_Xferred = Int_Xferred   + 1
       END DO ! I
-<<<<<<< HEAD
       OutData%alpha = ReKiBuf( Re_Xferred )
       Re_Xferred   = Re_Xferred + 1
-=======
   IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! GLL not allocated
     Int_Xferred = Int_Xferred + 1
   ELSE
@@ -3357,7 +3343,6 @@ ENDIF
       Re_Xferred   = Re_Xferred   + SIZE(OutData%E10)
     DEALLOCATE(mask2)
   END IF
->>>>>>> BDImprove
  END SUBROUTINE BD_UnPackParam
 
  SUBROUTINE BD_CopyInput( SrcInputData, DstInputData, CtrlCode, ErrStat, ErrMsg )
