@@ -128,6 +128,7 @@ IMPLICIT NONE
     REAL(ReKi)  :: pitchK      ! Pitch actuator stiffness [-]
     REAL(ReKi)  :: pitchC      ! Pitch actuator damping [-]
     REAL(ReKi)  :: pitchJ      ! Pitch actuator inertia [-]
+    REAL(ReKi) , DIMENSION(1:2,1:2)  :: torqM      ! Pitch actuator inertia [-]
     REAL(ReKi) , DIMENSION(:), ALLOCATABLE  :: GLL      ! GLL point locations in natural frame [-]
     REAL(ReKi) , DIMENSION(:), ALLOCATABLE  :: GL      ! GL(Gauss) point locations in natural frame [-]
     REAL(ReKi) , DIMENSION(:), ALLOCATABLE  :: GLw      ! Weights at each GL(Gauss) point [-]
@@ -1821,6 +1822,7 @@ ENDIF
     DstParamData%pitchK = SrcParamData%pitchK
     DstParamData%pitchC = SrcParamData%pitchC
     DstParamData%pitchJ = SrcParamData%pitchJ
+    DstParamData%torqM = SrcParamData%torqM
 IF (ALLOCATED(SrcParamData%GLL)) THEN
   i1_l = LBOUND(SrcParamData%GLL,1)
   i1_u = UBOUND(SrcParamData%GLL,1)
@@ -2167,6 +2169,7 @@ ENDIF
       Re_BufSz   = Re_BufSz   + 1  ! pitchK
       Re_BufSz   = Re_BufSz   + 1  ! pitchC
       Re_BufSz   = Re_BufSz   + 1  ! pitchJ
+      Re_BufSz   = Re_BufSz   + SIZE(InData%torqM)  ! torqM
   Int_BufSz   = Int_BufSz   + 1     ! GLL allocated yes/no
   IF ( ALLOCATED(InData%GLL) ) THEN
     Int_BufSz   = Int_BufSz   + 2*1  ! GLL upper/lower bounds for each dimension
@@ -2518,6 +2521,8 @@ ENDIF
       Re_Xferred   = Re_Xferred   + 1
       ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%pitchJ
       Re_Xferred   = Re_Xferred   + 1
+      ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%torqM))-1 ) = PACK(InData%torqM,.TRUE.)
+      Re_Xferred   = Re_Xferred   + SIZE(InData%torqM)
   IF ( .NOT. ALLOCATED(InData%GLL) ) THEN
     IntKiBuf( Int_Xferred ) = 0
     Int_Xferred = Int_Xferred + 1
@@ -3170,6 +3175,19 @@ ENDIF
       Re_Xferred   = Re_Xferred + 1
       OutData%pitchJ = ReKiBuf( Re_Xferred )
       Re_Xferred   = Re_Xferred + 1
+    i1_l = LBOUND(OutData%torqM,1)
+    i1_u = UBOUND(OutData%torqM,1)
+    i2_l = LBOUND(OutData%torqM,2)
+    i2_u = UBOUND(OutData%torqM,2)
+    ALLOCATE(mask2(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask2.', ErrStat, ErrMsg,RoutineName)
+       RETURN
+    END IF
+    mask2 = .TRUE. 
+      OutData%torqM = UNPACK(ReKiBuf( Re_Xferred:Re_Xferred+(SIZE(OutData%torqM))-1 ), mask2, 0.0_ReKi )
+      Re_Xferred   = Re_Xferred   + SIZE(OutData%torqM)
+    DEALLOCATE(mask2)
   IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! GLL not allocated
     Int_Xferred = Int_Xferred + 1
   ELSE
