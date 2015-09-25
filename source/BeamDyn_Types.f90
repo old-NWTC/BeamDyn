@@ -124,6 +124,7 @@ IMPLICIT NONE
     INTEGER(IntKi) , DIMENSION(1:9)  :: OutNd      ! Nodes whose values will be output [-]
     INTEGER(IntKi) , DIMENSION(:), ALLOCATABLE  :: NdIndx      ! Index into BldMotion mesh (to number the nodes for output without using collocated nodes) [-]
     CHARACTER(20)  :: OutFmt      ! Format specifier [-]
+    LOGICAL  :: torq      !  [-]
     REAL(ReKi)  :: pitchK      ! Pitch actuator stiffness [-]
     REAL(ReKi)  :: pitchC      ! Pitch actuator damping [-]
     REAL(ReKi)  :: pitchJ      ! Pitch actuator inertia [-]
@@ -1816,6 +1817,7 @@ IF (ALLOCATED(SrcParamData%NdIndx)) THEN
     DstParamData%NdIndx = SrcParamData%NdIndx
 ENDIF
     DstParamData%OutFmt = SrcParamData%OutFmt
+    DstParamData%torq = SrcParamData%torq
     DstParamData%pitchK = SrcParamData%pitchK
     DstParamData%pitchC = SrcParamData%pitchC
     DstParamData%pitchJ = SrcParamData%pitchJ
@@ -2161,6 +2163,7 @@ ENDIF
       Int_BufSz  = Int_BufSz  + SIZE(InData%NdIndx)  ! NdIndx
   END IF
       Int_BufSz  = Int_BufSz  + 1*LEN(InData%OutFmt)  ! OutFmt
+      Int_BufSz  = Int_BufSz  + 1  ! torq
       Re_BufSz   = Re_BufSz   + 1  ! pitchK
       Re_BufSz   = Re_BufSz   + 1  ! pitchC
       Re_BufSz   = Re_BufSz   + 1  ! pitchJ
@@ -2507,6 +2510,8 @@ ENDIF
           IntKiBuf(Int_Xferred) = ICHAR(InData%OutFmt(I:I), IntKi)
           Int_Xferred = Int_Xferred   + 1
         END DO ! I
+      IntKiBuf ( Int_Xferred:Int_Xferred+1-1 ) = TRANSFER( InData%torq , IntKiBuf(1), 1)
+      Int_Xferred   = Int_Xferred   + 1
       ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%pitchK
       Re_Xferred   = Re_Xferred   + 1
       ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%pitchC
@@ -3157,6 +3162,8 @@ ENDIF
         OutData%OutFmt(I:I) = CHAR(IntKiBuf(Int_Xferred))
         Int_Xferred = Int_Xferred   + 1
       END DO ! I
+      OutData%torq = TRANSFER( IntKiBuf( Int_Xferred ), mask0 )
+      Int_Xferred   = Int_Xferred + 1
       OutData%pitchK = ReKiBuf( Re_Xferred )
       Re_Xferred   = Re_Xferred + 1
       OutData%pitchC = ReKiBuf( Re_Xferred )
