@@ -65,6 +65,8 @@ IMPLICIT NONE
 ! =========  BD_DiscreteStateType  =======
   TYPE, PUBLIC :: BD_DiscreteStateType
     REAL(ReKi)  :: DummyDiscState      ! A variable, Replace if you have discrete states [-]
+    REAL(ReKi)  :: thetaP      ! Pitch angle state [-]
+    REAL(ReKi)  :: thetaPD      ! Pitch rate state [-]
   END TYPE BD_DiscreteStateType
 ! =======================
 ! =========  BD_ConstraintStateType  =======
@@ -122,6 +124,11 @@ IMPLICIT NONE
     INTEGER(IntKi) , DIMENSION(1:9)  :: OutNd      ! Nodes whose values will be output [-]
     INTEGER(IntKi) , DIMENSION(:), ALLOCATABLE  :: NdIndx      ! Index into BldMotion mesh (to number the nodes for output without using collocated nodes) [-]
     CHARACTER(20)  :: OutFmt      ! Format specifier [-]
+    LOGICAL  :: UsePitchAct      ! Whether to use a pitch actuator inside BeamDyn [(flag)]
+    REAL(ReKi)  :: pitchJ      ! Pitch actuator inertia [(kg-m^2)]
+    REAL(ReKi)  :: pitchK      ! Pitch actuator stiffness [(kg-m^2/s^2)]
+    REAL(ReKi)  :: pitchC      ! Pitch actuator damping [-]
+    REAL(ReKi) , DIMENSION(1:2,1:2)  :: torqM      ! Pitch actuator matrix: (I-hA)^-1 [-]
     REAL(ReKi) , DIMENSION(:), ALLOCATABLE  :: GLL      ! GLL point locations in natural frame [-]
     REAL(ReKi) , DIMENSION(:), ALLOCATABLE  :: GL      ! GL(Gauss) point locations in natural frame [-]
     REAL(ReKi) , DIMENSION(:), ALLOCATABLE  :: GLw      ! Weights at each GL(Gauss) point [-]
@@ -179,6 +186,10 @@ IMPLICIT NONE
     REAL(DbKi)  :: DTBeam      ! Time interval for BeamDyn  calculations {or default} (s) [-]
     TYPE(BladeInputData)  :: InpBl      ! Input data for individual blades [see BladeInputData Type]
     CHARACTER(1024)  :: BldFile      ! Name of blade input file [-]
+    LOGICAL  :: UsePitchAct      ! Whether to use a pitch actuator inside BeamDyn [(flag)]
+    REAL(ReKi)  :: pitchJ      ! Pitch actuator inertia [(kg-m^2)]
+    REAL(ReKi)  :: pitchK      ! Pitch actuator stiffness [(kg-m^2/s^2)]
+    REAL(ReKi)  :: pitchC      ! Pitch actuator damping [-]
     LOGICAL  :: Echo      ! Echo [-]
     INTEGER(IntKi)  :: NNodeOuts      ! Number of node outputs [0 - 9] [-]
     INTEGER(IntKi) , DIMENSION(1:9)  :: OutNd      ! Nodes whose values will be output [-]
@@ -1095,6 +1106,8 @@ ENDIF
    ErrStat = ErrID_None
    ErrMsg  = ""
     DstDiscStateData%DummyDiscState = SrcDiscStateData%DummyDiscState
+    DstDiscStateData%thetaP = SrcDiscStateData%thetaP
+    DstDiscStateData%thetaPD = SrcDiscStateData%thetaPD
  END SUBROUTINE BD_CopyDiscState
 
  SUBROUTINE BD_DestroyDiscState( DiscStateData, ErrStat, ErrMsg )
@@ -1144,6 +1157,8 @@ ENDIF
   Db_BufSz  = 0
   Int_BufSz  = 0
       Re_BufSz   = Re_BufSz   + 1  ! DummyDiscState
+      Re_BufSz   = Re_BufSz   + 1  ! thetaP
+      Re_BufSz   = Re_BufSz   + 1  ! thetaPD
   IF ( Re_BufSz  .GT. 0 ) THEN 
      ALLOCATE( ReKiBuf(  Re_BufSz  ), STAT=ErrStat2 )
      IF (ErrStat2 /= 0) THEN 
@@ -1172,6 +1187,10 @@ ENDIF
   Int_Xferred = 1
 
       ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%DummyDiscState
+      Re_Xferred   = Re_Xferred   + 1
+      ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%thetaP
+      Re_Xferred   = Re_Xferred   + 1
+      ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%thetaPD
       Re_Xferred   = Re_Xferred   + 1
  END SUBROUTINE BD_PackDiscState
 
@@ -1208,6 +1227,10 @@ ENDIF
   Db_Xferred  = 1
   Int_Xferred  = 1
       OutData%DummyDiscState = ReKiBuf( Re_Xferred )
+      Re_Xferred   = Re_Xferred + 1
+      OutData%thetaP = ReKiBuf( Re_Xferred )
+      Re_Xferred   = Re_Xferred + 1
+      OutData%thetaPD = ReKiBuf( Re_Xferred )
       Re_Xferred   = Re_Xferred + 1
  END SUBROUTINE BD_UnPackDiscState
 
@@ -1799,6 +1822,11 @@ IF (ALLOCATED(SrcParamData%NdIndx)) THEN
     DstParamData%NdIndx = SrcParamData%NdIndx
 ENDIF
     DstParamData%OutFmt = SrcParamData%OutFmt
+    DstParamData%UsePitchAct = SrcParamData%UsePitchAct
+    DstParamData%pitchJ = SrcParamData%pitchJ
+    DstParamData%pitchK = SrcParamData%pitchK
+    DstParamData%pitchC = SrcParamData%pitchC
+    DstParamData%torqM = SrcParamData%torqM
 IF (ALLOCATED(SrcParamData%GLL)) THEN
   i1_l = LBOUND(SrcParamData%GLL,1)
   i1_u = UBOUND(SrcParamData%GLL,1)
@@ -2141,6 +2169,11 @@ ENDIF
       Int_BufSz  = Int_BufSz  + SIZE(InData%NdIndx)  ! NdIndx
   END IF
       Int_BufSz  = Int_BufSz  + 1*LEN(InData%OutFmt)  ! OutFmt
+      Int_BufSz  = Int_BufSz  + 1  ! UsePitchAct
+      Re_BufSz   = Re_BufSz   + 1  ! pitchJ
+      Re_BufSz   = Re_BufSz   + 1  ! pitchK
+      Re_BufSz   = Re_BufSz   + 1  ! pitchC
+      Re_BufSz   = Re_BufSz   + SIZE(InData%torqM)  ! torqM
   Int_BufSz   = Int_BufSz   + 1     ! GLL allocated yes/no
   IF ( ALLOCATED(InData%GLL) ) THEN
     Int_BufSz   = Int_BufSz   + 2*1  ! GLL upper/lower bounds for each dimension
@@ -2484,6 +2517,16 @@ ENDIF
           IntKiBuf(Int_Xferred) = ICHAR(InData%OutFmt(I:I), IntKi)
           Int_Xferred = Int_Xferred   + 1
         END DO ! I
+      IntKiBuf ( Int_Xferred:Int_Xferred+1-1 ) = TRANSFER( InData%UsePitchAct , IntKiBuf(1), 1)
+      Int_Xferred   = Int_Xferred   + 1
+      ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%pitchJ
+      Re_Xferred   = Re_Xferred   + 1
+      ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%pitchK
+      Re_Xferred   = Re_Xferred   + 1
+      ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%pitchC
+      Re_Xferred   = Re_Xferred   + 1
+      ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%torqM))-1 ) = PACK(InData%torqM,.TRUE.)
+      Re_Xferred   = Re_Xferred   + SIZE(InData%torqM)
   IF ( .NOT. ALLOCATED(InData%GLL) ) THEN
     IntKiBuf( Int_Xferred ) = 0
     Int_Xferred = Int_Xferred + 1
@@ -3128,6 +3171,27 @@ ENDIF
         OutData%OutFmt(I:I) = CHAR(IntKiBuf(Int_Xferred))
         Int_Xferred = Int_Xferred   + 1
       END DO ! I
+      OutData%UsePitchAct = TRANSFER( IntKiBuf( Int_Xferred ), mask0 )
+      Int_Xferred   = Int_Xferred + 1
+      OutData%pitchJ = ReKiBuf( Re_Xferred )
+      Re_Xferred   = Re_Xferred + 1
+      OutData%pitchK = ReKiBuf( Re_Xferred )
+      Re_Xferred   = Re_Xferred + 1
+      OutData%pitchC = ReKiBuf( Re_Xferred )
+      Re_Xferred   = Re_Xferred + 1
+    i1_l = LBOUND(OutData%torqM,1)
+    i1_u = UBOUND(OutData%torqM,1)
+    i2_l = LBOUND(OutData%torqM,2)
+    i2_u = UBOUND(OutData%torqM,2)
+    ALLOCATE(mask2(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask2.', ErrStat, ErrMsg,RoutineName)
+       RETURN
+    END IF
+    mask2 = .TRUE. 
+      OutData%torqM = UNPACK(ReKiBuf( Re_Xferred:Re_Xferred+(SIZE(OutData%torqM))-1 ), mask2, 0.0_ReKi )
+      Re_Xferred   = Re_Xferred   + SIZE(OutData%torqM)
+    DEALLOCATE(mask2)
   IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! GLL not allocated
     Int_Xferred = Int_Xferred + 1
   ELSE
@@ -4762,6 +4826,10 @@ ENDIF
          CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg,RoutineName)
          IF (ErrStat>=AbortErrLev) RETURN
     DstInputFileData%BldFile = SrcInputFileData%BldFile
+    DstInputFileData%UsePitchAct = SrcInputFileData%UsePitchAct
+    DstInputFileData%pitchJ = SrcInputFileData%pitchJ
+    DstInputFileData%pitchK = SrcInputFileData%pitchK
+    DstInputFileData%pitchC = SrcInputFileData%pitchC
     DstInputFileData%Echo = SrcInputFileData%Echo
     DstInputFileData%NNodeOuts = SrcInputFileData%NNodeOuts
     DstInputFileData%OutNd = SrcInputFileData%OutNd
@@ -4878,6 +4946,10 @@ ENDIF
          DEALLOCATE(Int_Buf)
       END IF
       Int_BufSz  = Int_BufSz  + 1*LEN(InData%BldFile)  ! BldFile
+      Int_BufSz  = Int_BufSz  + 1  ! UsePitchAct
+      Re_BufSz   = Re_BufSz   + 1  ! pitchJ
+      Re_BufSz   = Re_BufSz   + 1  ! pitchK
+      Re_BufSz   = Re_BufSz   + 1  ! pitchC
       Int_BufSz  = Int_BufSz  + 1  ! Echo
       Int_BufSz  = Int_BufSz  + 1  ! NNodeOuts
       Int_BufSz  = Int_BufSz  + SIZE(InData%OutNd)  ! OutNd
@@ -4999,6 +5071,14 @@ ENDIF
           IntKiBuf(Int_Xferred) = ICHAR(InData%BldFile(I:I), IntKi)
           Int_Xferred = Int_Xferred   + 1
         END DO ! I
+      IntKiBuf ( Int_Xferred:Int_Xferred+1-1 ) = TRANSFER( InData%UsePitchAct , IntKiBuf(1), 1)
+      Int_Xferred   = Int_Xferred   + 1
+      ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%pitchJ
+      Re_Xferred   = Re_Xferred   + 1
+      ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%pitchK
+      Re_Xferred   = Re_Xferred   + 1
+      ReKiBuf ( Re_Xferred:Re_Xferred+(1)-1 ) = InData%pitchC
+      Re_Xferred   = Re_Xferred   + 1
       IntKiBuf ( Int_Xferred:Int_Xferred+1-1 ) = TRANSFER( InData%Echo , IntKiBuf(1), 1)
       Int_Xferred   = Int_Xferred   + 1
       IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%NNodeOuts
@@ -5181,6 +5261,14 @@ ENDIF
         OutData%BldFile(I:I) = CHAR(IntKiBuf(Int_Xferred))
         Int_Xferred = Int_Xferred   + 1
       END DO ! I
+      OutData%UsePitchAct = TRANSFER( IntKiBuf( Int_Xferred ), mask0 )
+      Int_Xferred   = Int_Xferred + 1
+      OutData%pitchJ = ReKiBuf( Re_Xferred )
+      Re_Xferred   = Re_Xferred + 1
+      OutData%pitchK = ReKiBuf( Re_Xferred )
+      Re_Xferred   = Re_Xferred + 1
+      OutData%pitchC = ReKiBuf( Re_Xferred )
+      Re_Xferred   = Re_Xferred + 1
       OutData%Echo = TRANSFER( IntKiBuf( Int_Xferred ), mask0 )
       Int_Xferred   = Int_Xferred + 1
       OutData%NNodeOuts = IntKiBuf( Int_Xferred ) 

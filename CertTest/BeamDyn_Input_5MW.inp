@@ -68,7 +68,12 @@ kp_xb kp_yb   kp_zb    initial_twist
 ---------------------- MESH PARAMETER ------------------------------------------
 5         order_elem     - Order of interpolation (basis) function (-)
 ---------------------- MATERIAL PARAMETER --------------------------------------
-"5MW_Blade.inp"  BldFile - Name of file containing properties for blade
+"5MW_Blade_IEC.inp"  BldFile - Name of file containing properties for blade
+---------------------- PITCH ACTUATOR PARAMETERS -------------------------------
+False     UsePitchAct - Whether a pitch actuator should be used (flag)
+200       PitchJ      - Pitch actuator inertia (kg-m^2) [used only when UsePitchAct is true]
+2.0E+7    PitchK      - Pitch actuator stiffness (kg-m^2/s^2) [used only when UsePitchAct is true]
+5.0E+5    PitchC      - Pitch actuator damping (kg-m^2/s) [used only when UsePitchAct is true]
 ---------------------- OUTPUTS -------------------------------------------------
 True      SumPrint       - Print summary data to "<RootName>.sum" (flag)
 "ES10.3E2"    OutFmt          - Format used for text tabular output, excluding the time channel.  Resulting field should be 10 characters. (quoted string)
