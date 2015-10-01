@@ -116,6 +116,7 @@ IMPLICIT NONE
     REAL(DbKi)  :: rhoinf      ! Numerical Damping Coefficient for GA2 [-]
     REAL(ReKi) , DIMENSION(1:3)  :: GlbPos      ! Initial Position Vector between origins of Global and blade frames [-]
     REAL(ReKi) , DIMENSION(1:3,1:3)  :: GlbRot      ! Initial Rotation Tensor between Global and Blade frames [-]
+    REAL(ReKi) , DIMENSION(1:3)  :: Glb_crv      ! CRV parameters of GlbRot [-]
     REAL(ReKi) , DIMENSION(:), ALLOCATABLE  :: IniDisp      ! Initial Position Vector between origins of Global and blade frames [-]
     REAL(ReKi) , DIMENSION(:), ALLOCATABLE  :: IniVelo      ! Initial Position Vector between origins of Global and blade frames [-]
     INTEGER(IntKi)  :: NumOuts      ! Number of parameters in the output list (number of outputs requested) [-]
@@ -1766,6 +1767,7 @@ ENDIF
     DstParamData%rhoinf = SrcParamData%rhoinf
     DstParamData%GlbPos = SrcParamData%GlbPos
     DstParamData%GlbRot = SrcParamData%GlbRot
+    DstParamData%Glb_crv = SrcParamData%Glb_crv
 IF (ALLOCATED(SrcParamData%IniDisp)) THEN
   i1_l = LBOUND(SrcParamData%IniDisp,1)
   i1_u = UBOUND(SrcParamData%IniDisp,1)
@@ -2126,6 +2128,7 @@ ENDIF
       Db_BufSz   = Db_BufSz   + 1  ! rhoinf
       Re_BufSz   = Re_BufSz   + SIZE(InData%GlbPos)  ! GlbPos
       Re_BufSz   = Re_BufSz   + SIZE(InData%GlbRot)  ! GlbRot
+      Re_BufSz   = Re_BufSz   + SIZE(InData%Glb_crv)  ! Glb_crv
   Int_BufSz   = Int_BufSz   + 1     ! IniDisp allocated yes/no
   IF ( ALLOCATED(InData%IniDisp) ) THEN
     Int_BufSz   = Int_BufSz   + 2*1  ! IniDisp upper/lower bounds for each dimension
@@ -2427,6 +2430,8 @@ ENDIF
       Re_Xferred   = Re_Xferred   + SIZE(InData%GlbPos)
       ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%GlbRot))-1 ) = PACK(InData%GlbRot,.TRUE.)
       Re_Xferred   = Re_Xferred   + SIZE(InData%GlbRot)
+      ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%Glb_crv))-1 ) = PACK(InData%Glb_crv,.TRUE.)
+      Re_Xferred   = Re_Xferred   + SIZE(InData%Glb_crv)
   IF ( .NOT. ALLOCATED(InData%IniDisp) ) THEN
     IntKiBuf( Int_Xferred ) = 0
     Int_Xferred = Int_Xferred + 1
@@ -3027,6 +3032,17 @@ ENDIF
       OutData%GlbRot = UNPACK(ReKiBuf( Re_Xferred:Re_Xferred+(SIZE(OutData%GlbRot))-1 ), mask2, 0.0_ReKi )
       Re_Xferred   = Re_Xferred   + SIZE(OutData%GlbRot)
     DEALLOCATE(mask2)
+    i1_l = LBOUND(OutData%Glb_crv,1)
+    i1_u = UBOUND(OutData%Glb_crv,1)
+    ALLOCATE(mask1(i1_l:i1_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask1.', ErrStat, ErrMsg,RoutineName)
+       RETURN
+    END IF
+    mask1 = .TRUE. 
+      OutData%Glb_crv = UNPACK(ReKiBuf( Re_Xferred:Re_Xferred+(SIZE(OutData%Glb_crv))-1 ), mask1, 0.0_ReKi )
+      Re_Xferred   = Re_Xferred   + SIZE(OutData%Glb_crv)
+    DEALLOCATE(mask1)
   IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! IniDisp not allocated
     Int_Xferred = Int_Xferred + 1
   ELSE
