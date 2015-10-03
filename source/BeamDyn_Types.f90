@@ -96,7 +96,6 @@ IMPLICIT NONE
     REAL(R8Ki)  :: blade_mass      ! Blade Length [-]
     REAL(R8Ki) , DIMENSION(1:3)  :: blade_CG      ! Blade Length [-]
     REAL(R8Ki) , DIMENSION(1:3,1:3)  :: blade_IN      ! Blade Length [-]
-    REAL(R8Ki) , DIMENSION(:,:), ALLOCATABLE  :: kp_coordinate      ! Total number of dofs [-]
     REAL(R8Ki) , DIMENSION(1:6)  :: beta      ! Damping Coefficient [-]
     REAL(R8Ki)  :: tol      ! Tolerance used in stopping criterion [-]
     REAL(R8Ki) , DIMENSION(1:3)  :: GlbPos      ! Initial Position Vector between origins of Global and blade frames [-]
@@ -111,8 +110,6 @@ IMPLICIT NONE
     REAL(R8Ki) , DIMENSION(:,:), ALLOCATABLE  :: uu0      ! Initial Disp/Rot value at quadrature point  [-]
     REAL(R8Ki) , DIMENSION(:,:), ALLOCATABLE  :: E10      ! Initial E10 at quadrature point [-]
     INTEGER(IntKi)  :: node_elem      ! Node per element [-]
-    INTEGER(IntKi)  :: kp_total      ! Total number of dofs [-]
-    INTEGER(IntKi) , DIMENSION(:), ALLOCATABLE  :: kp_member      ! Total number of dofs [-]
     INTEGER(IntKi)  :: refine      ! FE mesh refinement factor for trapezoidal quadrature [-]
     INTEGER(IntKi)  :: dof_node      ! dof per node [-]
     INTEGER(IntKi)  :: elem_total      ! Total number of elements [-]
@@ -1714,20 +1711,6 @@ ENDIF
     DstParamData%blade_mass = SrcParamData%blade_mass
     DstParamData%blade_CG = SrcParamData%blade_CG
     DstParamData%blade_IN = SrcParamData%blade_IN
-IF (ALLOCATED(SrcParamData%kp_coordinate)) THEN
-  i1_l = LBOUND(SrcParamData%kp_coordinate,1)
-  i1_u = UBOUND(SrcParamData%kp_coordinate,1)
-  i2_l = LBOUND(SrcParamData%kp_coordinate,2)
-  i2_u = UBOUND(SrcParamData%kp_coordinate,2)
-  IF (.NOT. ALLOCATED(DstParamData%kp_coordinate)) THEN 
-    ALLOCATE(DstParamData%kp_coordinate(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
-    IF (ErrStat2 /= 0) THEN 
-      CALL SetErrStat(ErrID_Fatal, 'Error allocating DstParamData%kp_coordinate.', ErrStat, ErrMsg,RoutineName)
-      RETURN
-    END IF
-  END IF
-    DstParamData%kp_coordinate = SrcParamData%kp_coordinate
-ENDIF
     DstParamData%beta = SrcParamData%beta
     DstParamData%tol = SrcParamData%tol
     DstParamData%GlbPos = SrcParamData%GlbPos
@@ -1842,19 +1825,6 @@ IF (ALLOCATED(SrcParamData%E10)) THEN
     DstParamData%E10 = SrcParamData%E10
 ENDIF
     DstParamData%node_elem = SrcParamData%node_elem
-    DstParamData%kp_total = SrcParamData%kp_total
-IF (ALLOCATED(SrcParamData%kp_member)) THEN
-  i1_l = LBOUND(SrcParamData%kp_member,1)
-  i1_u = UBOUND(SrcParamData%kp_member,1)
-  IF (.NOT. ALLOCATED(DstParamData%kp_member)) THEN 
-    ALLOCATE(DstParamData%kp_member(i1_l:i1_u),STAT=ErrStat2)
-    IF (ErrStat2 /= 0) THEN 
-      CALL SetErrStat(ErrID_Fatal, 'Error allocating DstParamData%kp_member.', ErrStat, ErrMsg,RoutineName)
-      RETURN
-    END IF
-  END IF
-    DstParamData%kp_member = SrcParamData%kp_member
-ENDIF
     DstParamData%refine = SrcParamData%refine
     DstParamData%dof_node = SrcParamData%dof_node
     DstParamData%elem_total = SrcParamData%elem_total
@@ -1932,9 +1902,6 @@ ENDIF
 IF (ALLOCATED(ParamData%member_length)) THEN
   DEALLOCATE(ParamData%member_length)
 ENDIF
-IF (ALLOCATED(ParamData%kp_coordinate)) THEN
-  DEALLOCATE(ParamData%kp_coordinate)
-ENDIF
 IF (ALLOCATED(ParamData%GL)) THEN
   DEALLOCATE(ParamData%GL)
 ENDIF
@@ -1958,9 +1925,6 @@ IF (ALLOCATED(ParamData%uu0)) THEN
 ENDIF
 IF (ALLOCATED(ParamData%E10)) THEN
   DEALLOCATE(ParamData%E10)
-ENDIF
-IF (ALLOCATED(ParamData%kp_member)) THEN
-  DEALLOCATE(ParamData%kp_member)
 ENDIF
 IF (ALLOCATED(ParamData%OutParam)) THEN
 DO i1 = LBOUND(ParamData%OutParam,1), UBOUND(ParamData%OutParam,1)
@@ -2046,11 +2010,6 @@ ENDIF
       Db_BufSz   = Db_BufSz   + 1  ! blade_mass
       Db_BufSz   = Db_BufSz   + SIZE(InData%blade_CG)  ! blade_CG
       Db_BufSz   = Db_BufSz   + SIZE(InData%blade_IN)  ! blade_IN
-  Int_BufSz   = Int_BufSz   + 1     ! kp_coordinate allocated yes/no
-  IF ( ALLOCATED(InData%kp_coordinate) ) THEN
-    Int_BufSz   = Int_BufSz   + 2*2  ! kp_coordinate upper/lower bounds for each dimension
-      Db_BufSz   = Db_BufSz   + SIZE(InData%kp_coordinate)  ! kp_coordinate
-  END IF
       Db_BufSz   = Db_BufSz   + SIZE(InData%beta)  ! beta
       Db_BufSz   = Db_BufSz   + 1  ! tol
       Db_BufSz   = Db_BufSz   + SIZE(InData%GlbPos)  ! GlbPos
@@ -2097,12 +2056,6 @@ ENDIF
       Db_BufSz   = Db_BufSz   + SIZE(InData%E10)  ! E10
   END IF
       Int_BufSz  = Int_BufSz  + 1  ! node_elem
-      Int_BufSz  = Int_BufSz  + 1  ! kp_total
-  Int_BufSz   = Int_BufSz   + 1     ! kp_member allocated yes/no
-  IF ( ALLOCATED(InData%kp_member) ) THEN
-    Int_BufSz   = Int_BufSz   + 2*1  ! kp_member upper/lower bounds for each dimension
-      Int_BufSz  = Int_BufSz  + SIZE(InData%kp_member)  ! kp_member
-  END IF
       Int_BufSz  = Int_BufSz  + 1  ! refine
       Int_BufSz  = Int_BufSz  + 1  ! dof_node
       Int_BufSz  = Int_BufSz  + 1  ! elem_total
@@ -2297,22 +2250,6 @@ ENDIF
       Db_Xferred   = Db_Xferred   + SIZE(InData%blade_CG)
       DbKiBuf ( Db_Xferred:Db_Xferred+(SIZE(InData%blade_IN))-1 ) = PACK(InData%blade_IN,.TRUE.)
       Db_Xferred   = Db_Xferred   + SIZE(InData%blade_IN)
-  IF ( .NOT. ALLOCATED(InData%kp_coordinate) ) THEN
-    IntKiBuf( Int_Xferred ) = 0
-    Int_Xferred = Int_Xferred + 1
-  ELSE
-    IntKiBuf( Int_Xferred ) = 1
-    Int_Xferred = Int_Xferred + 1
-    IntKiBuf( Int_Xferred    ) = LBOUND(InData%kp_coordinate,1)
-    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%kp_coordinate,1)
-    Int_Xferred = Int_Xferred + 2
-    IntKiBuf( Int_Xferred    ) = LBOUND(InData%kp_coordinate,2)
-    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%kp_coordinate,2)
-    Int_Xferred = Int_Xferred + 2
-
-      IF (SIZE(InData%kp_coordinate)>0) DbKiBuf ( Db_Xferred:Db_Xferred+(SIZE(InData%kp_coordinate))-1 ) = PACK(InData%kp_coordinate,.TRUE.)
-      Db_Xferred   = Db_Xferred   + SIZE(InData%kp_coordinate)
-  END IF
       DbKiBuf ( Db_Xferred:Db_Xferred+(SIZE(InData%beta))-1 ) = PACK(InData%beta,.TRUE.)
       Db_Xferred   = Db_Xferred   + SIZE(InData%beta)
       DbKiBuf ( Db_Xferred:Db_Xferred+(1)-1 ) = InData%tol
@@ -2447,21 +2384,6 @@ ENDIF
   END IF
       IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%node_elem
       Int_Xferred   = Int_Xferred   + 1
-      IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%kp_total
-      Int_Xferred   = Int_Xferred   + 1
-  IF ( .NOT. ALLOCATED(InData%kp_member) ) THEN
-    IntKiBuf( Int_Xferred ) = 0
-    Int_Xferred = Int_Xferred + 1
-  ELSE
-    IntKiBuf( Int_Xferred ) = 1
-    Int_Xferred = Int_Xferred + 1
-    IntKiBuf( Int_Xferred    ) = LBOUND(InData%kp_member,1)
-    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%kp_member,1)
-    Int_Xferred = Int_Xferred + 2
-
-      IF (SIZE(InData%kp_member)>0) IntKiBuf ( Int_Xferred:Int_Xferred+(SIZE(InData%kp_member))-1 ) = PACK(InData%kp_member,.TRUE.)
-      Int_Xferred   = Int_Xferred   + SIZE(InData%kp_member)
-  END IF
       IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%refine
       Int_Xferred   = Int_Xferred   + 1
       IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%dof_node
@@ -2811,32 +2733,6 @@ ENDIF
       OutData%blade_IN = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%blade_IN))-1 ), mask2, 0.0_DbKi ), R8Ki)
       Db_Xferred   = Db_Xferred   + SIZE(OutData%blade_IN)
     DEALLOCATE(mask2)
-  IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! kp_coordinate not allocated
-    Int_Xferred = Int_Xferred + 1
-  ELSE
-    Int_Xferred = Int_Xferred + 1
-    i1_l = IntKiBuf( Int_Xferred    )
-    i1_u = IntKiBuf( Int_Xferred + 1)
-    Int_Xferred = Int_Xferred + 2
-    i2_l = IntKiBuf( Int_Xferred    )
-    i2_u = IntKiBuf( Int_Xferred + 1)
-    Int_Xferred = Int_Xferred + 2
-    IF (ALLOCATED(OutData%kp_coordinate)) DEALLOCATE(OutData%kp_coordinate)
-    ALLOCATE(OutData%kp_coordinate(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
-    IF (ErrStat2 /= 0) THEN 
-       CALL SetErrStat(ErrID_Fatal, 'Error allocating OutData%kp_coordinate.', ErrStat, ErrMsg,RoutineName)
-       RETURN
-    END IF
-    ALLOCATE(mask2(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
-    IF (ErrStat2 /= 0) THEN 
-       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask2.', ErrStat, ErrMsg,RoutineName)
-       RETURN
-    END IF
-    mask2 = .TRUE. 
-      IF (SIZE(OutData%kp_coordinate)>0) OutData%kp_coordinate = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%kp_coordinate))-1 ), mask2, 0.0_DbKi ), R8Ki)
-      Db_Xferred   = Db_Xferred   + SIZE(OutData%kp_coordinate)
-    DEALLOCATE(mask2)
-  END IF
     i1_l = LBOUND(OutData%beta,1)
     i1_u = UBOUND(OutData%beta,1)
     ALLOCATE(mask1(i1_l:i1_u),STAT=ErrStat2)
@@ -3089,31 +2985,6 @@ ENDIF
   END IF
       OutData%node_elem = IntKiBuf( Int_Xferred ) 
       Int_Xferred   = Int_Xferred + 1
-      OutData%kp_total = IntKiBuf( Int_Xferred ) 
-      Int_Xferred   = Int_Xferred + 1
-  IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! kp_member not allocated
-    Int_Xferred = Int_Xferred + 1
-  ELSE
-    Int_Xferred = Int_Xferred + 1
-    i1_l = IntKiBuf( Int_Xferred    )
-    i1_u = IntKiBuf( Int_Xferred + 1)
-    Int_Xferred = Int_Xferred + 2
-    IF (ALLOCATED(OutData%kp_member)) DEALLOCATE(OutData%kp_member)
-    ALLOCATE(OutData%kp_member(i1_l:i1_u),STAT=ErrStat2)
-    IF (ErrStat2 /= 0) THEN 
-       CALL SetErrStat(ErrID_Fatal, 'Error allocating OutData%kp_member.', ErrStat, ErrMsg,RoutineName)
-       RETURN
-    END IF
-    ALLOCATE(mask1(i1_l:i1_u),STAT=ErrStat2)
-    IF (ErrStat2 /= 0) THEN 
-       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask1.', ErrStat, ErrMsg,RoutineName)
-       RETURN
-    END IF
-    mask1 = .TRUE. 
-      IF (SIZE(OutData%kp_member)>0) OutData%kp_member = UNPACK( IntKiBuf ( Int_Xferred:Int_Xferred+(SIZE(OutData%kp_member))-1 ), mask1, 0_IntKi )
-      Int_Xferred   = Int_Xferred   + SIZE(OutData%kp_member)
-    DEALLOCATE(mask1)
-  END IF
       OutData%refine = IntKiBuf( Int_Xferred ) 
       Int_Xferred   = Int_Xferred + 1
       OutData%dof_node = IntKiBuf( Int_Xferred ) 
