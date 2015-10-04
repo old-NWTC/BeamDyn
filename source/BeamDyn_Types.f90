@@ -39,14 +39,14 @@ IMPLICIT NONE
     CHARACTER(1024)  :: RootName      ! RootName for writing output files [-]
     REAL(ReKi) , DIMENSION(1:3)  :: gravity      ! Gravitational acceleration [m/s^2]
     REAL(ReKi) , DIMENSION(1:3)  :: GlbPos      ! Initial Position Vector of the local blade coordinate system [-]
-    REAL(ReKi) , DIMENSION(1:3,1:3)  :: GlbRot      ! Initial direction cosine matrix of the local blade coordinate system [-]
+    REAL(R8Ki) , DIMENSION(1:3,1:3)  :: GlbRot      ! Initial direction cosine matrix of the local blade coordinate system [-]
     REAL(ReKi) , DIMENSION(1:3)  :: RootDisp      ! Initial root displacement [-]
-    REAL(ReKi) , DIMENSION(1:3,1:3)  :: RootOri      ! Initial root orientation [-]
+    REAL(R8Ki) , DIMENSION(1:3,1:3)  :: RootOri      ! Initial root orientation [-]
     REAL(ReKi) , DIMENSION(1:6)  :: RootVel      ! Initial root velocities and angular veolcities [-]
     REAL(ReKi) , DIMENSION(1:6)  :: DistrLoad      ! Constant distributed load along beam axis, 3 forces and 3 moments [-]
     REAL(ReKi) , DIMENSION(1:6)  :: TipLoad      ! Constant point load applied at tip, 3 forces and 3 moments [-]
     REAL(ReKi) , DIMENSION(1:3)  :: HubPos      ! Initial Hub position vector [-]
-    REAL(ReKi) , DIMENSION(1:3,1:3)  :: HubRot      ! Initial Hub direction cosine matrix [-]
+    REAL(R8Ki) , DIMENSION(1:3,1:3)  :: HubRot      ! Initial Hub direction cosine matrix [-]
   END TYPE BD_InitInputType
 ! =======================
 ! =========  BD_InitOutputType  =======
@@ -275,14 +275,14 @@ CONTAINS
       Int_BufSz  = Int_BufSz  + 1*LEN(InData%RootName)  ! RootName
       Re_BufSz   = Re_BufSz   + SIZE(InData%gravity)  ! gravity
       Re_BufSz   = Re_BufSz   + SIZE(InData%GlbPos)  ! GlbPos
-      Re_BufSz   = Re_BufSz   + SIZE(InData%GlbRot)  ! GlbRot
+      Db_BufSz   = Db_BufSz   + SIZE(InData%GlbRot)  ! GlbRot
       Re_BufSz   = Re_BufSz   + SIZE(InData%RootDisp)  ! RootDisp
-      Re_BufSz   = Re_BufSz   + SIZE(InData%RootOri)  ! RootOri
+      Db_BufSz   = Db_BufSz   + SIZE(InData%RootOri)  ! RootOri
       Re_BufSz   = Re_BufSz   + SIZE(InData%RootVel)  ! RootVel
       Re_BufSz   = Re_BufSz   + SIZE(InData%DistrLoad)  ! DistrLoad
       Re_BufSz   = Re_BufSz   + SIZE(InData%TipLoad)  ! TipLoad
       Re_BufSz   = Re_BufSz   + SIZE(InData%HubPos)  ! HubPos
-      Re_BufSz   = Re_BufSz   + SIZE(InData%HubRot)  ! HubRot
+      Db_BufSz   = Db_BufSz   + SIZE(InData%HubRot)  ! HubRot
   IF ( Re_BufSz  .GT. 0 ) THEN 
      ALLOCATE( ReKiBuf(  Re_BufSz  ), STAT=ErrStat2 )
      IF (ErrStat2 /= 0) THEN 
@@ -322,12 +322,12 @@ CONTAINS
       Re_Xferred   = Re_Xferred   + SIZE(InData%gravity)
       ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%GlbPos))-1 ) = PACK(InData%GlbPos,.TRUE.)
       Re_Xferred   = Re_Xferred   + SIZE(InData%GlbPos)
-      ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%GlbRot))-1 ) = PACK(InData%GlbRot,.TRUE.)
-      Re_Xferred   = Re_Xferred   + SIZE(InData%GlbRot)
+      DbKiBuf ( Db_Xferred:Db_Xferred+(SIZE(InData%GlbRot))-1 ) = PACK(InData%GlbRot,.TRUE.)
+      Db_Xferred   = Db_Xferred   + SIZE(InData%GlbRot)
       ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%RootDisp))-1 ) = PACK(InData%RootDisp,.TRUE.)
       Re_Xferred   = Re_Xferred   + SIZE(InData%RootDisp)
-      ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%RootOri))-1 ) = PACK(InData%RootOri,.TRUE.)
-      Re_Xferred   = Re_Xferred   + SIZE(InData%RootOri)
+      DbKiBuf ( Db_Xferred:Db_Xferred+(SIZE(InData%RootOri))-1 ) = PACK(InData%RootOri,.TRUE.)
+      Db_Xferred   = Db_Xferred   + SIZE(InData%RootOri)
       ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%RootVel))-1 ) = PACK(InData%RootVel,.TRUE.)
       Re_Xferred   = Re_Xferred   + SIZE(InData%RootVel)
       ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%DistrLoad))-1 ) = PACK(InData%DistrLoad,.TRUE.)
@@ -336,8 +336,8 @@ CONTAINS
       Re_Xferred   = Re_Xferred   + SIZE(InData%TipLoad)
       ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%HubPos))-1 ) = PACK(InData%HubPos,.TRUE.)
       Re_Xferred   = Re_Xferred   + SIZE(InData%HubPos)
-      ReKiBuf ( Re_Xferred:Re_Xferred+(SIZE(InData%HubRot))-1 ) = PACK(InData%HubRot,.TRUE.)
-      Re_Xferred   = Re_Xferred   + SIZE(InData%HubRot)
+      DbKiBuf ( Db_Xferred:Db_Xferred+(SIZE(InData%HubRot))-1 ) = PACK(InData%HubRot,.TRUE.)
+      Db_Xferred   = Db_Xferred   + SIZE(InData%HubRot)
  END SUBROUTINE BD_PackInitInput
 
  SUBROUTINE BD_UnPackInitInput( ReKiBuf, DbKiBuf, IntKiBuf, Outdata, ErrStat, ErrMsg )
@@ -415,8 +415,8 @@ CONTAINS
        RETURN
     END IF
     mask2 = .TRUE. 
-      OutData%GlbRot = UNPACK(ReKiBuf( Re_Xferred:Re_Xferred+(SIZE(OutData%GlbRot))-1 ), mask2, 0.0_ReKi )
-      Re_Xferred   = Re_Xferred   + SIZE(OutData%GlbRot)
+      OutData%GlbRot = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%GlbRot))-1 ), mask2, 0.0_DbKi ), R8Ki)
+      Db_Xferred   = Db_Xferred   + SIZE(OutData%GlbRot)
     DEALLOCATE(mask2)
     i1_l = LBOUND(OutData%RootDisp,1)
     i1_u = UBOUND(OutData%RootDisp,1)
@@ -439,8 +439,8 @@ CONTAINS
        RETURN
     END IF
     mask2 = .TRUE. 
-      OutData%RootOri = UNPACK(ReKiBuf( Re_Xferred:Re_Xferred+(SIZE(OutData%RootOri))-1 ), mask2, 0.0_ReKi )
-      Re_Xferred   = Re_Xferred   + SIZE(OutData%RootOri)
+      OutData%RootOri = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%RootOri))-1 ), mask2, 0.0_DbKi ), R8Ki)
+      Db_Xferred   = Db_Xferred   + SIZE(OutData%RootOri)
     DEALLOCATE(mask2)
     i1_l = LBOUND(OutData%RootVel,1)
     i1_u = UBOUND(OutData%RootVel,1)
@@ -496,8 +496,8 @@ CONTAINS
        RETURN
     END IF
     mask2 = .TRUE. 
-      OutData%HubRot = UNPACK(ReKiBuf( Re_Xferred:Re_Xferred+(SIZE(OutData%HubRot))-1 ), mask2, 0.0_ReKi )
-      Re_Xferred   = Re_Xferred   + SIZE(OutData%HubRot)
+      OutData%HubRot = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%HubRot))-1 ), mask2, 0.0_DbKi ), R8Ki)
+      Db_Xferred   = Db_Xferred   + SIZE(OutData%HubRot)
     DEALLOCATE(mask2)
  END SUBROUTINE BD_UnPackInitInput
 
