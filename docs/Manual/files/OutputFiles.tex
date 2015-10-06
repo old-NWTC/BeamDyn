@@ -1,0 +1,69 @@
+\chapter{Output Files}
+\label{sec:OutputFiles}
+
+BeamDyn produces three types of output files, depending on the options selected: an echo file, a summary file, and a time-series results file. The following sections detail the purpose and contents of these files.
+
+\section{Echo File}
+If the user sets the  \textbf{\textit{Echo} } flag to TRUE in the BeamDyn primary input file, the contents of this file will be echoed to a file with the naming convention  \textbf{\textit{PrimaryInputFile.ech} }. The echo file is helpful for debugging the input files. The contents of an echo file will be truncated if BeamDyn encounters an error while parsing an input file. The error usually corresponds to the line after the last successfully echoed line.
+
+\section{Summary File}
+\label{sec:SumFile}
+BeamDyn generates a summary file with the naming convention,  \textbf{\textit{PrimaryInputFile.sum} } if the  \textbf{\textit{SumPrint}} parameter is set to TRUE. This file summarizes key information about the simulation, including:
+\begin{itemize}
+  \item Blade mass.
+  \item Blade length.
+  \item Blade center of mass.
+  \item Initial global position vector in BD coordinate system.
+  \item Initial global rotation tensor in BD coordinate system.
+  \item Analysis type.
+  \item Numerical damping coefficient.
+  \item Time step size.
+  \item Maximum number of iterations in the Newton-Ralphson solution.
+  \item Convergence parameter in the stopping criterion.
+  \item Factorization frequency in the Newton-Ralphson solution.
+  \item Numerical integration (quadrature) method.
+  \item FE mesh refinement factor used in trapezoidal quadrature.
+  \item Number of elements.
+  \item Number of FE nodes.
+  \item Initial position vectors of FE nodes in BD coordinate system.
+  \item Initial rotation vectors of FE nodes in BD coordinate system.
+  \item Quadrature point position vectors in BD coordinate system. For Gauss quadrature, the physical coordinates of Gauss points are listed. For trapezoidal quadrature, the physical coordinates of the quadrature points are listed.
+  \item Sectional stiffness and mass matrices at quadrature points in local blade reference coordinate system. These are the data being used in calculations at quadrature points and they can be different from the section in Blade Input File since BeamDyn linearly interpolates the sectional properties into quadrature points based on need.
+  \item Initial displacement vectors in BD coordinate system.
+  \item Initial rotation displacement vectors in BD coordinate system.
+  \item Initial translational velocity vectors in BD coordinate system.
+  \item Initial angular velocity vectors in BD coordinate system.
+  \item Requested output information.
+\end{itemize}
+All the quantities are outputs in this file in the BD coordinate system, the one being used internally in BeamDyn calculations. The initial blade coordinate system, denoted by a subscript $r0$ that follows the IEC standard, is related to the internal BD coordinate system by Table \ref{tab:IECBD}. 
+\begin{table}
+\centering
+\caption{Transformation between blade coordinate system and BD coordinate system.}
+ \label{tab:IECBD}
+ \begin{tabular}{| c | c | c | c |}
+     \hline
+    Blade Frame & $X_{r0}$ & $Y_{r0}$ & $Z_{r0}$ \\ \hline
+    BD Frame     & $x_2$ & $x_3$ & $x_1$ \\
+    \hline
+\end{tabular}
+\end{table}
+
+\section{Results File}
+
+The BeamDyn time-series results are written to a text-based file with the naming convention 
+\textbf{\textit{DriverInputFile.out} } where \textbf{\textit{DriverInputFile} } is the name of the driver input file when BeamDyn is run in the stand-alone mode. If BeamDyn is coupled to FAST, then FAST will generate a master results file that includes the BeamDyn results. The results in \textbf{\textit{DriverInputFile.out} } are in table format, where each column is a data channel (the first column always being the simulation time), and each row corresponds to a simulation time step. The data channel are specified in the OUTPUT section of the primary input file. The column format of the BeamDyn-generated file is specified using the  \textbf{\textit{OutFmt}} parameters of the primary input file. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
