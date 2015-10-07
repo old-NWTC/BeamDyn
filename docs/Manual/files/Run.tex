@@ -6,27 +6,34 @@ This section discusses how to obtain and execute BeamDyn from a personal compute
 There are two forms of the BeamDyn software to choose from: stand-alone and coupled to the FAST simulator. Alghough the user may not necessarily need both forms, he/she would likely need to be familiar with and run the stand-alone model if building a model of the blade from scratch. The stand-alone version is also helpful for model troubleshooting and may benefit users who are interested in conducting aero-hydro-servo-elastic simulations of onshore/offshore wind turbines. For this reason, BeamDyn can be obtained from two different repositories: one for the stand-alone BeamDyn and one for the coupled solution through FAST.
 
 \subsection{Stand-Alone BeamDyn Archive}
-Users can download the stand-alone BeamDyn archive from our Web server at \url{https://nwtc.nrel.gov/BeamDyn}. The file has a name similar to $BD\_v1.00.00a-rrd.exe$, but may have a different version number. The user can then download the self-extracting archive ($.exe$) to expand the archive into a folder he/she specifies.
+Users can download the stand-alone BeamDyn archive from our Web server at \url{https://nwtc.nrel.gov/BeamDyn}. The file has a name similar to {\it BD\_v1.00.00a.exe}, but may have a different version number. The user can then download the self-extracting archive ({\it .exe}) to expand the archive into a folder he/she specifies.
 
-The archive contains the \textbf{\textit{bin}}, \textbf{\textit{CertTest}}, \textbf{\textit{Compiling}}, \textbf{\textit{Documentation}}, and \textbf{\textit{Source}} folders. The \textbf{\textit{bin}} folder includes the main executable file, \textit{BeamDyn\_win32.exe}, which is used to execute the stand-alone BeamDyn program. The \textbf{\textit{CertTest}} folder contains a collection of sample BeamDyn input files and driver input files that can be used as templates for the user's own models. This manila may be found in the \textbf{\textit{Documentation}} folder. The \textbf{\textit{Compling}} folder contains files for compiling the stand-alone \textit{BeamDyn\_wind32.exe} file with either Visual Studio or gFortran. The Fortran source code is located in the \textbf{\textit{Source}} folder.
+\begin{figure}
+    \centering
+     \includegraphics[width = 4.0 in]{\directory BeamDyn_archive.eps}
+     \caption{WinZip self-extractor main window}
+     \label{fig:BDSelfExtractor}
+\end{figure}
+
+The archive contains the \textbf{\textit{bin}}, \textbf{\textit{CertTest}}, \textbf{\textit{Compiling}}, \textbf{\textit{Documentation}}, and \textbf{\textit{Source}} folders. The \textbf{\textit{bin}} folder includes the main executable file, \textit{BeamDyn\_win32.exe}, which is used to execute the stand-alone BeamDyn program. The \textbf{\textit{CertTest}} folder contains a collection of sample BeamDyn input files and driver input files that can be used as templates for the user's own models. This manila may be found in the \textbf{\textit{Documentation}} folder. The \textbf{\textit{Compling}} folder contains files for compiling the stand-alone \textit{BeamDyn\_v1.00.00.exe} file with either Visual Studio or gFortran. The Fortran source code is located in the \textbf{\textit{Source}} folder.
 
 \subsection{FAST Archive}
 Download the FAST archive, which includes a coupling to BeamDyn, from our Web server at \url{https://nwtc.nrel.gov/FAST8}. The file has a name similar to \textit{FAST\_v8.12.00.exe}, but may have a different version number. Run the downloaded self-extracting archive ({\it .exe}) to expand the archive into a user-specified folder. The FAST executable file is located in the archive's \textbf{{\it bin}} folder. Example models using the NREL 5-MW reference turbine are located in the \textbf{{\it CertTest}} folder.
 
 \section{Running BeamDyn}
 \subsection{Running the Stand-Alone BeamDyn Program}
-The stand-alone BeamDyn program, {\it BeamDyn\_win32.exe}, simulates static and dynamic responses of the user's input model, without coupling to FAST. Unlike the coupled version, the stand-alone software requires the use of a driver file in addition to the primary  and blade BeamDyn input files. This driver file specifies inputs normally provided to BeamDyn by FAST, including motions of the blade root and externally applied loads. Both the BeamDyn summary file and the results output file are available when using the stand-alone BeamDyn (see Section~\ref{sec:OutputFiles} for more information regarding the BeamDyn output files).
+The stand-alone BeamDyn program, {\it BeamDyn\_v1.00.00.exe}, simulates static and dynamic responses of the user's input model, without coupling to FAST. Unlike the coupled version, the stand-alone software requires the use of a driver file in addition to the primary  and blade BeamDyn input files. This driver file specifies inputs normally provided to BeamDyn by FAST, including motions of the blade root and externally applied loads. Both the BeamDyn summary file and the results output file are available when using the stand-alone BeamDyn (see Section~\ref{sec:OutputFiles} for more information regarding the BeamDyn output files).
 
 Run the stand-alone BeamDyn software from a DOS command prompt by typing, for example:
 \begin{verbatim}
->BeamDyn_win32.exe Dvr_5MW_Dynamic.inp
+>BeamDyn_v1.00.00.exe Dvr_5MW_Dynamic.inp
 \end{verbatim}
 where, {\it Dvr\_5MW\_Dynamic.inp} is the name of the BeamDyn driver input file, as described in Section~\ref{sec:DriverInputFile}.
 
 \subsection{Running BeamDyn Coupled to FAST}
 Run the coupled FAST software from a DOS command prompt by typing, for example:
 \begin{verbatim}
->FAST_win32.exe Test26.fst
+>FAST_v.8.12.00.exe Test26.fst
 \end{verbatim}
 where {\it Test26.fst} is the name of the primary FAST input file. This input file has a feature switch to enable or disable the BeamDyn capabilities within FAST, and a corresponding reference to the BeamDyn input file. See the documentation supplied with FAST for further information.
 
