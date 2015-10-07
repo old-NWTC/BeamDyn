@@ -1,18 +1,18 @@
 --------- BEAMDYN V1.01.* INPUT FILE -------------------------------------------
 NREL 5MW blade primary input file
 ---------------------- SIMULATION CONTROL --------------------------------------
-TRUE     Echo           - Echo input data to "<RootName>.ech" (flag)
-1         analysis_type  - 1: Static analysis; 2: Dynamic analysis (switch)
+False     Echo           - Echo input data to "<RootName>.ech" (flag)
+2         analysis_type  - 1: Static analysis; 2: Dynamic analysis (switch)
 0.0       rhoinf         - Numerical Damping Parameter for Generalized-alpha integrator
 2         quadrature     - 1: Gauss; 2: Trapezoidal (switch)
 DEFAULT   refine         - Refinement factor for quadrature 2 (-). DEFAULT = 1
 DEFAULT   n_fact         - Factorization frequency (-). DEFAULT = 5
 DEFAULT   DTBeam         - Time step size (s).
 DEFAULT   NRMax          - Max number of iterations in Newton-Ralphson algorithm (-). DEFAULT = 10
-DEFAULT   stop_tol       - Tolerance for stopping criterion (-).
+DEFAULT   stop_tol       - Tolerance for stopping criterion (-)
 ---------------------- GEOMETRY PARAMETER --------------------------------------
-1     member_total       - Total number of member (-)
-49    kp_total           - Total number of key point (-)
+1     member_total       - Total number of members (-)
+49    kp_total           - Total number of key points (-)
 1    49                  - Member number; Number of key points in this member
 kp_xb kp_yb   kp_zb    initial_twist
 (m)    (m)    (m)     (deg)
