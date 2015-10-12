@@ -31,7 +31,20 @@
 \contentsline {section}{\numberline {4.1}Echo File}{16}{section.4.1}
 \contentsline {section}{\numberline {4.2}Summary File}{16}{section.4.2}
 \contentsline {section}{\numberline {4.3}Results File}{17}{section.4.3}
-\contentsline {chapter}{\numberline {A}BeamDyn Driver Input File}{18}{appendix.A}
-\contentsline {chapter}{\numberline {B}BeamDyn Primary Input File: NREL 5-MW Reference Wind Turbine}{20}{appendix.B}
-\contentsline {chapter}{\numberline {C}BeamDyn Blade Input File: NREL 5-MW Reference Wind Turbine Blade}{24}{appendix.C}
-\contentsline {chapter}{\numberline {D}BeamDyn List of Output Channels}{45}{appendix.D}
+\contentsline {chapter}{\numberline {5}BeamDyn Theory}{18}{chapter.5}
+\contentsline {section}{\numberline {5.1}Coordinate Systems}{18}{section.5.1}
+\contentsline {subsection}{\numberline {5.1.1}Global Coordinate System}{18}{subsection.5.1.1}
+\contentsline {subsection}{\numberline {5.1.2}BD Coordinate System}{18}{subsection.5.1.2}
+\contentsline {subsection}{\numberline {5.1.3}Blade Reference Coordinate System}{18}{subsection.5.1.3}
+\contentsline {section}{\numberline {5.2}Geometrically Exact Beam Theory}{18}{section.5.2}
+\contentsline {section}{\numberline {5.3}Numerical Implementation with Legendre Spectral Finite Elements}{20}{section.5.3}
+\contentsline {section}{\numberline {5.4}Wiener-Milenkovi\'c Rotation Parameter}{21}{section.5.4}
+\contentsline {section}{\numberline {5.5}Linearization Process}{22}{section.5.5}
+\contentsline {section}{\numberline {5.6}Damping Forces and Linearization}{23}{section.5.6}
+\contentsline {section}{\numberline {5.7}Convergence Criterion and Generalized-$\alpha $ Time Integrator}{24}{section.5.7}
+\contentsline {section}{\numberline {5.8}Calculation of Reaction Force}{24}{section.5.8}
+\contentsline {chapter}{\numberline {A}BeamDyn Driver Input File}{25}{appendix.A}
+\contentsline {chapter}{\numberline {B}BeamDyn Primary Input File: NREL 5-MW Reference Wind Turbine}{27}{appendix.B}
+\contentsline {chapter}{\numberline {C}BeamDyn Blade Input File: NREL 5-MW Reference Wind Turbine Blade}{31}{appendix.C}
+\contentsline {chapter}{\numberline {D}BeamDyn List of Output Channels}{52}{appendix.D}
+\contentsline {chapter}{References}{54}{appendix*.10}

@@ -16,11 +16,19 @@
 \def\directory{Figure/}
 \usepackage{pdfpages}
 \usepackage{listings}
+\usepackage{psfrag}
+\usepackage{fouridx}
+
+\usepackage[normalem]{ulem}  % mas addition
+\newcommand{\uvec}[1]{\bar{#1}}
+\newcommand{\tens}[1]{\underline{\underline{#1}}}
+\renewcommand{\vec}[1]{\underline{#1}}
+\renewcommand{\skew}[1]{\widetilde{#1}}
 
 % -----------------------------------
 % DOCUMENT PROPERTIES
 % -----------------------------------
-\title{BeamDyn User's Guide}
+\title{BeamDyn User's Guide and Theory Manual}
 \author{Q. Wang, J. Jonkman, M. Sprague, and B. Jonkman}
 
 % -------------------------------------
@@ -43,6 +51,7 @@
 \input{files/Run}
 \input{files/InputFiles}
 \input{files/OutputFiles}
+\input{files/Theory}
 \input{files/Appendix}
 
 %% CHAPTER: REQUIREMENTS FOR NREL DOCUMENTS

@@ -11,6 +11,11 @@
 \contentsline {subfigure}{\numberline {(b)}{\ignorespaces {Case 2 }}}{13}{figure.caption.6}
 \addvspace {10\p@ }
 \addvspace {10\p@ }
+\contentsline {figure}{\numberline {5}{\ignorespaces Global, blade, and internal coordinate systems in BeamDyn. Illustration by Al Hicks, NREL\relax }}{19}{figure.caption.8}
+\contentsline {figure}{\numberline {6}{\ignorespaces Representative $p+1$ Lagrangian-interpolant shape functions in the element natural coordinates for (a) fourth- and (b) eighth-order LSFEs, where nodes are located at the Gauss-Lobatto-Legendre points.\relax }}{22}{figure.caption.9}
+\contentsline {subfigure}{\numberline {(a)}{\ignorespaces {$p=4$}}}{22}{figure.caption.9}
+\contentsline {subfigure}{\numberline {(b)}{\ignorespaces {$p=8$}}}{22}{figure.caption.9}
+\addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }
