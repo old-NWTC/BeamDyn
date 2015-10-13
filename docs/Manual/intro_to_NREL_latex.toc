@@ -42,9 +42,11 @@
 \contentsline {section}{\numberline {5.5}Linearization Process}{22}{section.5.5}
 \contentsline {section}{\numberline {5.6}Damping Forces and Linearization}{23}{section.5.6}
 \contentsline {section}{\numberline {5.7}Convergence Criterion and Generalized-$\alpha $ Time Integrator}{24}{section.5.7}
-\contentsline {section}{\numberline {5.8}Calculation of Reaction Force}{24}{section.5.8}
-\contentsline {chapter}{\numberline {A}BeamDyn Driver Input File}{25}{appendix.A}
-\contentsline {chapter}{\numberline {B}BeamDyn Primary Input File: NREL 5-MW Reference Wind Turbine}{27}{appendix.B}
-\contentsline {chapter}{\numberline {C}BeamDyn Blade Input File: NREL 5-MW Reference Wind Turbine Blade}{31}{appendix.C}
-\contentsline {chapter}{\numberline {D}BeamDyn List of Output Channels}{52}{appendix.D}
-\contentsline {chapter}{References}{54}{appendix*.10}
+\contentsline {section}{\numberline {5.8}Calculation of Reaction Forces}{25}{section.5.8}
+\contentsline {section}{\numberline {5.9}Calculation of Blade Forces}{25}{section.5.9}
+\contentsline {chapter}{\numberline {6}Future Work}{26}{chapter.6}
+\contentsline {chapter}{\numberline {A}BeamDyn Driver Input File}{27}{appendix.A}
+\contentsline {chapter}{\numberline {B}BeamDyn Primary Input File: NREL 5-MW Reference Wind Turbine}{29}{appendix.B}
+\contentsline {chapter}{\numberline {C}BeamDyn Blade Input File: NREL 5-MW Reference Wind Turbine Blade}{33}{appendix.C}
+\contentsline {chapter}{\numberline {D}BeamDyn List of Output Channels}{54}{appendix.D}
+\contentsline {chapter}{References}{56}{appendix*.10}
