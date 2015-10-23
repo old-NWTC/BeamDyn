@@ -8,7 +8,7 @@ BeamDyn is based on the geometrically exact beam theory (GEBT) and is implemente
 When coupled with FAST, loads and responses are transferred between BeamDyn, ElastoDyn, ServoDyn, and AeroDyn via the FAST driver program (glue code) to enable aero-elasto-servo interaction at each coupling time step. There is a separate instance of BeamDyn for each blade. At the root node, the six DOFs displacements (three translations and three rotations), velocities, and accelerations are inputs to BeamDyn from ElastoDyn; and the six reaction loads (three force and three moment resultants) at the root of the wind turbine blade are outputs from BeamDyn to ElastoDyn, including the blade-pitch command through ServoDyn. BeamDyn also outputs the local blade displacements, velocities, and accelerations to AeroDyn in order to calculate the local aerodynamic applied loads that become inputs for BeamDyn. In addition, BeamDyn can calculate member internal reaction loads, as requested by the user. Please refers to Figure~\ref{fig:FlowChart} for the coupled interactions between BeamDyn and other modules in FAST. When uncoupled from FAST, the root motion and applied loads are specified via a stand-alone BeamDyn driver code.
 \begin{figure}
     \centering
-    \includegraphics[width = 6.0 in,angle = -90]{\directory FlowChart.eps}
+    \includegraphics[width = 6.0 in,angle = -90]{\directory FlowChart.jpg}
     \caption{Coupled interaction between BeamDyn and FAST}
     \label{fig:FlowChart}
 \end{figure}
