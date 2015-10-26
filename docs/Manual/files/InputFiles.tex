@@ -33,7 +33,7 @@ This section defines the relation between two inertial frames, the global coordi
 \textbf{\textit{GlbPos(1)} }, \textbf{\textit{GlbPos(2)} }, \textbf{\textit{GlbPos(3)} } specifies three components of the initial global position vector along $X$, $Y$, and $Z$ directions resolved in the global coordinate system, see Figure \ref{fig:Frame}. 
 And the following $3 \times 3$ direction cosine matrix (DCM) relates the rotations from global coordinate system to blade coordinate system. 
 
-\begin{figure}
+\begin{figure}[h!tp]
     \centering
     \includegraphics[width = 0.8\textwidth]{\directory Frame.jpg}
     \caption{Global and blade coordinate systems in BeamDyn}
@@ -197,7 +197,7 @@ It is noted that the number of key points in each member is not independent of t
 where $KP_{t}$ is the total number of key points, $M_t$ is the total number of members, and $n_i$ is the number of key points in the $i^{th}$ member. 
 Because cubic splines are implemented in BeamDyn, $n_i$ must be greater than or equal to three. 
 Figure \ref{fig:Geometry1} shows two cases for member and key-point definition.
-\begin{figure}[htp]
+\begin{figure}[h!tp]
 \centering
     \subfigure[Case 1 \label{Geometry1:Case1}]{\includegraphics[width=4.0in]{\directory Geometry_Member1.png}}\\
     \subfigure[Case 2 \label{Geometry1:Case2}]{\includegraphics[width=4.0in]{\directory Geometry_Member2.png}}

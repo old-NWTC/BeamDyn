@@ -1,5 +1,5 @@
 \chapter{Introduction}
-BeamDyn is a time-domain structural-dynamics module for slender structures created by the National Renewable Energy Laboratory (NREL) through U.S.\ Department of Energy Wind and Water Power Program support. 
+BeamDyn is a time-domain structural-dynamics module for slender structures created by the National Renewable Energy Laboratory (NREL) through support from the U.S.\ Department of Energy Wind and Water Power Program and the NREL Laboratory Directed Research and Development (LDRD) program through the grant ``High-Fidelity Computational Modeling of Wind-Turbine Structural Dynamics.''  \mas{Qi, I suggest you cite all our many papers on this topic}
 The module has been coupled into the FAST aero-hydro-servo-elastic wind turbine multi-physics engineering tool where it used to model blade structural dynamics. 
 %BeamDyn is designed to analyze beams that are made of composite materials, allowing for initial curvature and twist, and subject to large displacement and rotation deformations. BeamDyn can also be used for static analysis of beams.
 The BeamDyn module follows the requirements of the FAST modularization framework (ADD REF), couples to FAST version 8, and provides new capabilities for modeling initially curved and twisted composite wind turbine blades undergoing large deformation. 
@@ -15,7 +15,7 @@ Trapezoidal-rule integration is appropriate when a large number of sectional pro
 Time integration of the BeamDyn equations of motion is achieved through the implicit generalized-$\alpha$ solver, with user-specified numerical damping.
 The combined GEBT-LSFE  approach permits users to model a long, flexible, composite wind turbine blade with a single high-order element.  
 Given the theoretical foundation, powerful numerical tools introduced above, BeamDyn can solve the complicate nonlinear composite beam problem in an efficient manner. For example, it was recently shown that a grid-independent dynamic solution of a 50 m composite wind turbine blade and with dozens of cross-section stations could be achieved with a 
-single $6^{th}$-order LSFE \mas{Add Reference; SciTech Paper}
+single $5^{th}$-order LSFE \mas{Add Reference; SciTech Paper}
 
 When coupled with FAST, loads and responses are transferred between BeamDyn, ElastoDyn, ServoDyn, and AeroDyn via the FAST driver program (glue code) to enable aero-elasto-servo interaction at each coupling time step. 
 There is a separate instance of BeamDyn for each blade. 
