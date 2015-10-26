@@ -1,0 +1,20 @@
+== 4.0.1 / 2007-09-19
+
+* Removed extraneous center environment from sample.tex
+
+== 4.0.0 / 2007-09-19
+
+* To allow maintenance, sripped down to bare minimum
+  and built back up assuming pdflatex
+
+== 3.6 / 200?-??-??
+
+* Need to find details
+
+== 3.0 / 200?-??-??
+
+* New unreadable layout requirements
+
+== 2.4 / ????-??-??
+
+* Last unofficial, twocolumn version

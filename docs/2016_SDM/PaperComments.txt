@@ -1,0 +1,16 @@
+Another key component of the state-space formulation is defining the inputs and outputs.  You haven't mentioned this at all.  I think you need to explain that Fext is an input, along with the motion of one node (the hub).  Also, you should define what the outputs are and how they are calculated (reaction forces and moments and displacement/velocity/acceleration along the beam).  Additional equations would be useful for this.
+
+This is a bit misleading.  The state-space form is required in tight coupling.  Loose coupling doesn't require the state-space form, but it is preferable to set up the module so that it is compatible with both loose and tight coupling.  Suggest a reword here, but to properly state this will require that you first introduce the concept of loose and tight coupling.  I suggest adding some text about this in the Introduction section, to properly set the stage for this reformulation.
+
+You never mention rescaling of the rotational parameters, which is critical to proper time-marching solution.  I suggest that you describe this a bit and justify why first-order ODEs can properly integrate the rotations.
+
+You should mention here what ODE integrators are implemented -- RK4 and AM2.  For AM2, some further explanation may be required.
+Also, you should mention how the static solution is solved, as many of your examples are statics, not dynamics, cases.
+
+I feel another section is needed here before going into the examples.  The implementation of the theory into the BeamDyn module should be summarized.  That is, you should explain what the user inputs are (geometry, sectional constants, FE discretization, integration options, selection of statics or dynamisc), what inputs BeamDyn will get from FAST, what outputs BeamDyn will generator for FAST (for aero-elastic coupling), and how the equations above are split until BD_Init, BD_CCSD, BD_UpdateStates, BD_CalcOutput, and BD_End.  Also, it is important to summarize what makes BeamDyn unique either here or in the Introduction (state-space form, LSFE, FAST framework compatible).
+
+Future work?
+*Smoothing the geometry (and perhaps sectional constants)
+*Coupling to FAST
+*Fully system V&V
+*Assessment of computational efficiency.

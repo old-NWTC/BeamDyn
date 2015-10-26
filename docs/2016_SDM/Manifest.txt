@@ -1,0 +1,9 @@
+History.txt
+Manifest.txt
+README.txt
+aiaa-tc.cls
+aiaa.bst
+figure.pdf
+references.bib
+sample.pdf
+sample.tex
