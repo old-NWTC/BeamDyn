@@ -39,7 +39,7 @@ This section specifies the parameters that defines the floating blade reference 
    v_r = \omega_r \times r_t
 \end{equation}
 where $v_r$ is the root (origin of the floating blade reference frame) translational velocity vector; $\omega_r$ is the constant root (origin of the floating blade reference frame) angular velocity vector; and $r_t$ is the global position vector introduced in the previous section at instant $t$, see Figure~\ref{fig:Frame}. It is pointed out that the floating blade reference frame coincides with the initial floating blade reference frame at the beginning $t=0$. \textbf{\textit{RootVel(4)} }, \textbf{\textit{RootVel(5)} }, and \textbf{\textit{RootVel(6)} } specify the three components of the root angular velocity vector about  $X$, $Y$, and $Z$ axises in global coordinate system, respectively.  \textbf{\textit{RootVel(1)} }, \textbf{\textit{RootVel(2)} }, and \textbf{\textit{RootVel(3)} }, which are the three components of the root translational velocity vector along  $X$, $Y$, and $Z$ directions in global coordinate system, respectively, are calculated based on Eq.~\ref{RootVelocity}. BeamDyn can handle more complicate root motions by change the part, for example, in $BD\_InputSolve$ subroutine in the Drvier\_Beam.f90:
-\begin{lstlisting}[frame=single]
+\begin{lstlisting}[frame=single,language=Fortran]
    u%RootMotion%RotationVel(:,:) = 0.0D0
    u%RootMotion%RotationVel(1,1) = IniVelo(5)
    u%RootMotion%RotationVel(2,1) = IniVelo(6)
