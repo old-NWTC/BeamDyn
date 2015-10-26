@@ -13,8 +13,8 @@
 #================================================================================#
 
    # 32-bit or 64-bit?
-#BITS = 32
-BITS = 64
+BITS = 32
+#BITS = 64
 #OS = Linux
 
 
@@ -44,7 +44,7 @@ OPT    =
 #FFLAGS = -O2 -m$(BITS) -fbacktrace -ffree-line-length-none -x f95-cpp-input  -fcheck=bounds -C
 #FFLAGS = -O3 -fbacktrace -ffree-line-length-none -x f95-cpp-input
 #LDFLAGS = -O2 -m$(BITS)  -fbacktrace $(BLAS_LAPACK_LIBS)
-FFLAGS = $(OPT) -O2 -m$(BITS) -fdefault-real-8 -fdefault-double-8 -fbacktrace -ffree-line-length-none -x f95-cpp-input -Wsurprising -DDOUBLE_PRECISION
+FFLAGS = $(OPT) -O2 -m$(BITS) -fdefault-real-8 -fbacktrace -ffree-line-length-none -x f95-cpp-input -Wsurprising -DDOUBLE_PRECISION
 LDFLAGS = $(OPT) -O2 -m$(BITS) -fbacktrace
 
 
@@ -104,7 +104,8 @@ BD_SOURCES   =      \
 	BeamDyn.f90           \
 	BeamDyn_IO.f90        \
 	BeamDyn_Subs.f90      \
-	BD_BD_Couple.f90      \
+	Driver_Beam.f90       \
+	Driver_Beam_Subs.f90  \
 	BeamDyn_Types.f90     \
 
 vpath %.f90 $(LIB_DIR) $(NETLIB_DIR) $(BD_DIR)
@@ -150,7 +151,8 @@ BeamDyn_Subs.obj:        BeamDyn_Types.obj
 BeamDyn_IO.obj:          BeamDyn_Types.obj  BeamDyn_Subs.obj
 BeamDyn.obj:             BeamDyn_IO.obj  BeamDyn_Subs.obj
 
-BD_BD_Couple.obj:        BeamDyn.obj NWTC_Library.obj
+Driver_Beam_Subs.obj:   BeamDyn.obj NWTC_Library.obj
+Driver_Beam.obj:        Driver_Beam_Subs.obj
 
    # Make sure the destination directory for the intermediate files exist.
 
