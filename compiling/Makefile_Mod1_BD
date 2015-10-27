@@ -13,8 +13,8 @@
 #================================================================================#
 
    # 32-bit or 64-bit?
-BITS = 32
-#BITS = 64
+#BITS = 32
+BITS = 64
 
 
    # Location of source files for ModuleName and the NWTC Library.  You will probably need to change these for your system.
@@ -25,7 +25,8 @@ ifeq ($(OS),Windows_NT)
    REGISTRY = $(FAST_dir)/bin/Registry_Win32.exe
    LAPACK_LINK  = -llapack -lblas -LC:/LAPACK/win32
 else
-   FAST_dir=/Users/qwang2/Desktop/BeamDyn/SVN/BJonkman/
+   #FAST_dir=/Users/qwang2/Desktop/BeamDyn/SVN/BJonkman/
+   FAST_dir=/Users/mspragu2/SVN/BJonkman/
 
    REGISTRY   = $(FAST_dir)Source/dependencies/registry.exe
    LAPACK_LINK  = -llapack -lblas
@@ -42,8 +43,8 @@ OPT    =
 #FFLAGS = -O2 -m$(BITS) -fbacktrace -ffree-line-length-none -x f95-cpp-input  -fcheck=bounds -C
 #FFLAGS = -O3 -fbacktrace -ffree-line-length-none -x f95-cpp-input
 #LDFLAGS = -O2 -m$(BITS)  -fbacktrace $(BLAS_LAPACK_LIBS)
-FFLAGS = $(OPT) -O2 -m32 -fdefault-real-8 -fdefault-double-8 -fbacktrace -ffree-line-length-none -x f95-cpp-input -Wsurprising -DDOUBLE_PRECISION
-LDFLAGS = $(OPT) -O2 -m32 -fbacktrace
+FFLAGS = $(OPT) -O2 -m$(BITS) -fdefault-real-8 -fdefault-double-8 -fbacktrace -ffree-line-length-none -x f95-cpp-input -Wsurprising -DDOUBLE_PRECISION -g
+LDFLAGS = $(OPT) -O2 -m$(BITS) -fbacktrace -g
 
 
    # Precision.
