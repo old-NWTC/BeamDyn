@@ -335,19 +335,20 @@ REAL(R8Ki):: start, finish
    ! -------------------------------------------------------------------------
 
    t_initial = 0.d0
-   t_final   = 5.0D+00
+   t_final   = 10.0D+00
 
-   pc_max = 3  ! Number of predictor-corrector iterations; 1 corresponds to an explicit calculation where UpdateStates
+   pc_max = 5  ! Number of predictor-corrector iterations; 1 corresponds to an explicit calculation where UpdateStates
                ! is called only once  per time step for each module; inputs and outputs are extrapolated in time and
                ! are available to modules that have an implicit dependence on other-module data
 
    ! specify time increment; currently, all modules will be time integrated with this increment size
    ! some notes on dt_global/pc_max choice for stable solutions:
-   ! -- pc_max = 1 => dt_global <= 1e-4
-   ! -- pc_max = 2 => dt_global <= 1e-5
+   ! -- pc_max = 1 => dt_global <= 2e-5
+   ! -- pc_max = 2 => dt_global <= 5e-5
    ! -- pc_max = 3 => dt_global <= 7e-4
    ! -- pc_max = 4 => dt_global <= 1e-3
-   dt_global = 7.0D-04!*0.05
+   ! -- pc_max = 5 => dt_global <= 2e-3
+   dt_global = 1.0D-03
 
    n_t_final = ((t_final - t_initial) / dt_global )
 
@@ -475,7 +476,7 @@ REAL(R8Ki):: start, finish
 
 CALL CPU_TIME(start)
    DO n_t_global = 0, n_t_final
-WRITE(*,*) "Time Step: ", n_t_global
+!WRITE(*,*) "Time Step: ", n_t_global
 !IF(n_t_global .EQ. 0) STOP
       ! Solve input-output relations; this section of code corresponds to Eq. (35) in Gasmi et al. (2013)
       ! This code will be specific to the underlying modules
