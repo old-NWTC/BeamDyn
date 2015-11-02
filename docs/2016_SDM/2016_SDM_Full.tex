@@ -240,7 +240,15 @@ Newton-Raphson method is adopted here to solve this nonlinear system:
 \caption{Sketch of a beam attaching to a spring-mass-damper system.} 
 \label{fig:CoupledSystem}
 \end{figure}
- The beam is modeled by BeamDyn and the time integrator for the spring-damper-mass system is Adams-Bashforth-Moulton (ABM4). The material properties, coordinate system, and geometric parameters can be found in Figure~\ref{fig:CoupledSystem}. The dimensions of the cross-section of the beam is $0.1m \times 0.1m$. The whole system is at stationary at beginning but we apply a initial displacement of $0.1m$ along $Z$ axis. 
+ The beam is modeled by BeamDyn and the time integrator for the spring-damper-mass system is Adams-Bashforth-Moulton (ABM4). The material properties, coordinate system, and geometric parameters can be found in Figure~\ref{fig:CoupledSystem}. The dimensions of the cross-section of the beam is $0.1m \times 0.1m$. The natural frequency of the lumped-mass-spring-damper system is $6.28 rad/s$ and the first five natural frequencies for the cantilevered beam are $0.26, 1.72, 5.78, 22.62$, and $24.21$ in the same unit, respectively. The first five natural frequencies of the coupled system, obtained by ANSYS modal analysis, are $0.25, 0.85, 1.80, 4.76$, and $9.34 rad/s$, respectively.
+ 
+ In the present study, the system is at stationary at beginning but we apply a initial displacement of $0.1m$ along $Z$ axis. We firstly studied the stability of the proposed coupling algorithm. In the stability analysis, the beam is discretized by a single fifth-order LSFE. Figure~\ref{fig:CoupledDTPC} shows the maximum stable time step sizes obtained by numerical experiment against the number of predictor-correction times. It can be seen that the predictor-correction scheme helps increasing the maximum stable time increments. Moreover, by introducing numerical damping in the BeamDyn module, the maximum stable time increments also increase for most cases.
+ \begin{figure}
+\centering
+\includegraphics[width=4.0in]{\directory dt_pc.eps}
+\caption{Maximum stable time increments increase as increasing number of predictor-correction times. Numerical damping introduced in BeamDyn module also helps increasing the maximum stable time increments. It is noted that in the generalized-$\alpha$ time integrator that is implemented in BeamDyn, $\rho_\infty = 1.0$ represents no numerical damping (Newmark scheme); while maximum numerical damping are allowed by setting $\rho_\infty = 0.0$. } 
+\label{fig:CoupledDTPC}
+\end{figure}
  
  For validation purpose, we analyzed this case in ANSYS using 20 BEAM188 element. The time step size is set to $1E-04$ and the ANSYS solution is used as benchmark in the following comparisons. The root and tip displacements of the beam can be found in Figure~\ref{fig:E1Disp}. The beam is discretized in BeamDyn by a single $5^{th}$-order element. Good agreement can be observed between the benchmark solution and the BeamDyn results.
  \begin{figure}

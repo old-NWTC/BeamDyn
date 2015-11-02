@@ -48,7 +48,8 @@ The floating blade reference fame is assumed to be in a constant rigid-body rota
    \label{RootVelocity}
    v_r = \omega_r \times r_t
 \end{equation}
-where $v_r$ is the root (origin of the floating blade reference frame) translational velocity vector; $\omega_r$ is the constant root (origin of the floating blade reference frame) angular velocity vector; and $r_t$ is the global position vector introduced in the previous section at instant $t$, see Figure~\ref{fig:Frame}.  \mas{The figure implies more general motion, no???}
+where $v_r$ is the root (origin of the floating blade reference frame) translational velocity vector; $\omega_r$ is the constant root (origin of the floating blade reference frame) angular velocity vector; and $r_t$ is the global position vector introduced in the previous section at instant $t$, see Figure~\ref{fig:Frame}.  
+%\mas{The figure implies more general motion, no???}
 The floating blade reference frame coincides with the initial floating blade reference frame at the beginning $t=0$. 
 \param{RootVel(4)}, \param{RootVel(5)}, and \param{RootVel(6)} specify the three components of the root angular velocity vector about  $X$, $Y$, and $Z$ axises in global coordinate system, respectively.  
 \param{RootVel(1)}, \param{RootVel(2)}, and \param{RootVel(3)}, which are the three components of the root translational velocity vector along  $X$, $Y$, and $Z$ directions in global coordinate system, respectively, are calculated based on Eq.~\ref{RootVelocity}. 
@@ -174,7 +175,9 @@ If convergence is not reached within this number of iterations, BeamDyn returns 
 The keyword ``DEFAULT'' sets $\textbf{\textit{NRMax}} = 10$.
 
 \param{Stop\_Tol} specifies a tolerance parameter used in convergence criteria of a nonlinear solution that is used for the termination of the iteration. 
-The keyword ``DEFAULT'' sets $\textbf{\textit{Stop\_Tol}} = 1.0E-05$.  \mas{Please elaborate on the nature of the convergence criteria}
+The keyword ``DEFAULT'' sets $\textbf{\textit{Stop\_Tol}} = 1.0E-05$. Please refer to Section~\ref{sec:ConvergenceCriteria} for more details.
+
+%\mas{Please elaborate on the nature of the convergence criteria}
 
 \subsection{Geometry Parameter}
 

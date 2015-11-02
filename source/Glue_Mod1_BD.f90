@@ -142,7 +142,7 @@ SUBROUTINE Mod1_BD_InputOutputSolve(time, &
 !       CALL BD_InputClean(BD_Input)
        CALL BD_CalcOutput( time, BD_Input, BD_Parameter, BD_ContinuousState, BD_DiscreteState, &
                     BD_ConstraintState, BD_OtherState, BD_Output, ErrStat, ErrMsg )
-
+!IF(i .EQ. 2) EXIT
 
        BD_Force = BD_Output%ReactionForce%Force(3,1)
        BD_RootAcc = BD_Input%RootMotion%TranslationAcc(3,1)
@@ -326,10 +326,10 @@ REAL(R8Ki):: start, finish
 !   TYPE(MeshMapType) :: Map_Mod1_P_Mod2_P
 
    OPEN(unit = QiDisUnit, file = 'QiDisp_Tip_Mod1_BD.out', status = 'REPLACE',ACTION = 'WRITE')
-   OPEN(unit = BDForce, file = 'Qi_Force_Mod1_BD.out', status = 'REPLACE',ACTION = 'WRITE')
+!   OPEN(unit = BDForce, file = 'Qi_Force_Mod1_BD.out', status = 'REPLACE',ACTION = 'WRITE')
    OPEN(unit = Mod1Disp, file = 'Qi_Mod1Disp.out', status = 'REPLACE',ACTION = 'WRITE')
    OPEN(unit = Mod1Vel, file = 'Qi_Mod1Vel.out', status = 'REPLACE',ACTION = 'WRITE')
-   OPEN(unit = Mod1Acc, file = 'Qi_Mod1Acc.out', status = 'REPLACE',ACTION = 'WRITE')
+!   OPEN(unit = Mod1Acc, file = 'Qi_Mod1Acc.out', status = 'REPLACE',ACTION = 'WRITE')
    ! -------------------------------------------------------------------------
    ! Initialization of glue-code time-step variables
    ! -------------------------------------------------------------------------
@@ -337,7 +337,7 @@ REAL(R8Ki):: start, finish
    t_initial = 0.d0
    t_final   = 5.0D+00
 
-   pc_max = 3  ! Number of predictor-corrector iterations; 1 corresponds to an explicit calculation where UpdateStates
+   pc_max = 4  ! Number of predictor-corrector iterations; 1 corresponds to an explicit calculation where UpdateStates
                ! is called only once  per time step for each module; inputs and outputs are extrapolated in time and
                ! are available to modules that have an implicit dependence on other-module data
 
@@ -347,7 +347,7 @@ REAL(R8Ki):: start, finish
    ! -- pc_max = 2 => dt_global <= 1e-5
    ! -- pc_max = 3 => dt_global <= 7e-4
    ! -- pc_max = 4 => dt_global <= 1e-3
-   dt_global = 7.0D-04!*0.05
+   dt_global = 1.0D-03!*0.5
 
    n_t_final = ((t_final - t_initial) / dt_global )
 
@@ -479,21 +479,22 @@ WRITE(*,*) "Time Step: ", n_t_global
 !IF(n_t_global .EQ. 0) STOP
       ! Solve input-output relations; this section of code corresponds to Eq. (35) in Gasmi et al. (2013)
       ! This code will be specific to the underlying modules
+!IF(MOD(n_t_global,2) .EQ. 0) THEN
  CALL BD_CrvExtractCrv(BD_OutPut(1)%BldMotion%Orientation(1:3,1:3,BD_Parameter%node_elem*BD_Parameter%elem_total),temp_cc,ErrStat,ErrMsg)
       WRITE(QiDisUnit,6000) t_global,&
                             &BD_OutPut(1)%BldMotion%TranslationDisp(1:3,BD_Parameter%node_elem*BD_Parameter%elem_total),&
                             &temp_cc(1:3)
 !      WRITE(QiDisUnit,6000) t_global,&
 !                            &BD_ContinuousState%q(BD_Parameter%dof_total-5:BD_Parameter%dof_total)
-      WRITE(BDForce,6000) t_global,&
-                           &BD_OutPut(1)%ReactionForce%Force(1:3,1),&
-                           &BD_OutPut(1)%ReactionForce%Moment(1:3,1)
+!      WRITE(BDForce,6000) t_global,&
+!                           &BD_OutPut(1)%ReactionForce%Force(1:3,1),&
+!                           &BD_OutPut(1)%ReactionForce%Moment(1:3,1)
       WRITE(Mod1Disp,6000) t_global,&
                            &Mod1_OutPut(1)%PointMesh%TranslationDisp(1:3,1)
       WRITE(Mod1Vel,6000) t_global,&
                            &Mod1_OutPut(1)%PointMesh%TranslationVel(1:3,1),&
                            &Mod1_Output(1)%PointMesh%TranslationAcc(1:3,1)
-
+!ENDIF
       ! after all InputOutputSolves, we can reset the mapping flags on the meshes:
          Mod1_Input(1)%PointMesh%RemapFlag    = .FALSE. 
          Mod1_Output(1)%PointMesh%RemapFlag   = .FALSE.
@@ -671,10 +672,10 @@ CALL CPU_TIME(finish)
 
    6000 FORMAT (ES12.5,6ES21.12)
    CLOSE (QiDisUnit)
-   CLOSE (BDForce)
+!   CLOSE (BDForce)
    CLOSE (Mod1Disp)
    CLOSE (Mod1Vel)
-   CLOSE (Mod1Acc)
+!   CLOSE (Mod1Acc)
    ! -------------------------------------------------------------------------
    ! Deallocate arrays associated with mesh mapping
    ! -------------------------------------------------------------------------
