@@ -1,9 +1,9 @@
 %&LaTeX
 \chapter{Input Files}
 \label{sec:InputFiles}
-Users specify the blade model parameters; including its geometry, properties, and FE and output control parameters; via a primary BeamDyn input file and a blade property input file. 
+Users specify the blade model parameters; including its geometry, cross-sectional properties, and FE and output control parameters; via a primary BeamDyn input file and a blade property input file. 
 When used in stand-alone mode, an additional driver input file is required. 
-This driver file specifies inputs normally provided to BeamDyn by FAST, including simulation range, root motions (initial conditions), and externally applied loads.
+This driver file specifies inputs normally provided to BeamDyn by FAST, including simulation range, root motions, and externally applied loads.
 
 No lines should be added or removed from the input files, except in tables where the number of rows is specified.
 
@@ -16,7 +16,7 @@ Angles are assumed to be in radians unless otherwise specified.
 The driver input file is only needed for the stand-alone version of BeamDyn and contains inputs that are normally set by FAST, and that are necessary to control the simulation for uncoupled models. 
 
 The driver input file begins with two lines of header information, which is for the user but is not used by the software. 
-If BeamDyn run in the stand-alone mode, the results output file will be prefixed with the same name of this driver input file.
+If BeamDyn is run in the stand-alone mode, the results output file will be prefixed with the same name of this driver input file.
 
 A sample BeamDyn driver input file is given in Appendix \ref{sec:AppDriver}
 
@@ -31,7 +31,7 @@ In FAST, this is normally 0, 0, and -9.80665.
 \subsection{Inertial Frame Parameters}
 This section defines the relation between two inertial frames, the global coordinate system and initial blade reference coordinate system. 
 \textbf{\textit{GlbPos(1)} }, \textbf{\textit{GlbPos(2)} }, \textbf{\textit{GlbPos(3)} } specifies three components of the initial global position vector along $X$, $Y$, and $Z$ directions resolved in the global coordinate system, see Figure \ref{fig:Frame}. 
-And the following $3 \times 3$ direction cosine matrix (DCM) relates the rotations from global coordinate system to blade coordinate system. 
+And the following $3 \times 3$ direction cosine matrix (\textbf{\textit{GlbDCM}}) relates the rotations from the global coordinate system to the initial blade reference coordinate system. 
 
 \begin{figure}[h!tp]
     \centering
@@ -42,8 +42,8 @@ And the following $3 \times 3$ direction cosine matrix (DCM) relates the rotatio
 
 \subsection{Blade Floating Reference Frame Parameters}
 
-This section specifies the parameters that defines the blade floating reference frame, which is a body-attached floating frame and the blade root is cantilevered at the origin of this frame. 
-The floating blade reference fame is assumed to be in a constant rigid-body rotation mode about the origin of the global coordinate system, that is,
+This section specifies the parameters that defines the blade floating reference frame, which is a body-attached floating frame; the blade root is cantilevered at the origin of this frame. 
+Based on the driver input file, the floating blade reference fame is assumed to be in a constant rigid-body rotation mode about the origin of the global coordinate system, that is,
 \begin{equation}
    \label{RootVelocity}
    v_r = \omega_r \times r_t
@@ -51,9 +51,10 @@ The floating blade reference fame is assumed to be in a constant rigid-body rota
 where $v_r$ is the root (origin of the floating blade reference frame) translational velocity vector; $\omega_r$ is the constant root (origin of the floating blade reference frame) angular velocity vector; and $r_t$ is the global position vector introduced in the previous section at instant $t$, see Figure~\ref{fig:Frame}.  
 %\mas{The figure implies more general motion, no???}
 The floating blade reference frame coincides with the initial floating blade reference frame at the beginning $t=0$. 
-\param{RootVel(4)}, \param{RootVel(5)}, and \param{RootVel(6)} specify the three components of the root angular velocity vector about  $X$, $Y$, and $Z$ axises in global coordinate system, respectively.  
+\param{RootVel(4)}, \param{RootVel(5)}, and \param{RootVel(6)} specify the three components of the constant root angular velocity vector about  $X$, $Y$, and $Z$ axises in global coordinate system, respectively.  
 \param{RootVel(1)}, \param{RootVel(2)}, and \param{RootVel(3)}, which are the three components of the root translational velocity vector along  $X$, $Y$, and $Z$ directions in global coordinate system, respectively, are calculated based on Eq.~\ref{RootVelocity}. 
-BeamDyn can handle more complicate root motions by changing, for example, in $BD\_InputSolve$ subroutine in the Drvier\_Beam.f90:
+
+BeamDyn can handle more complicate root motions by changing, for example, in $BD\_InputSolve$ subroutine in the Driver\_Beam.f90  (requiring a recompile of stand-alone BeamDyn):
 \begin{lstlisting}[frame=single,language=Fortran]
    u%RootMotion%RotationVel(:,:) = 0.0D0
    u%RootMotion%RotationVel(1,1) = IniVelo(5)
@@ -63,27 +64,28 @@ BeamDyn can handle more complicate root motions by changing, for example, in $BD
    u%RootMotion%TranslationVel(:,1) = &
    MATMUL(BD_Tilde(real(u%RootMotion%RotationVel(:,1),BDKi)),temp_rr)
 \end{lstlisting}
-where $IniVelo(5)$, $IniVelo(6)$, and $IniVelo(4)$ are the three components of the root angular velocity vector about  $X$, $Y$, and $Z$ axising in the global coordinate system, respectively; $temp$\_$rr$ is the global position vector at instant $t$.
+where $IniVelo(5)$, $IniVelo(6)$, and $IniVelo(4)$ are the three components of the root angular velocity vector about  $X$, $Y$, and $Z$ axising in the global coordinate system, respectively; $temp$\_$rr$ is the global position vector at instant $t$. The first index in the u\%RootMotion\%RotationVel(:,:) and the u\%RootMotion\%TranslationVel(:,:) arrays range from 1 to 3 for load vector components along three directions and the second index of each array are set to 1, denoting the root FE node. 
+
 
 The blade is initialized in the rigid-body motion mode, i.e., based on the root velocity information defined in this section and the position information defined in the previous section, the motion of other points along the blade are initialized as
 \begin{align}
     \label{IniRootAcc}
-    a_{r0} &= \omega_r \times (\omega_r \times r_0) \\
+    a_{0} &= \omega_r \times (\omega_r \times (r_0 + P)) \\
     \label{IniTraVel}
-    v_0 &= v_{r0} + \omega \times P \\
+    v_0 &= v_{r0} + \omega_r \times P \\
     \label{IniAngVel}
     \omega_0 &= \omega_r
 \end{align}
-where $a_{r0}$ is the initial root translational acceleration vector; $v_0$ and $\omega_0$ the initial translational and angular velocity vectors along blade other than the root, respectively; and $P$ is the position vector along the blade relative to the root. 
+where $a_{0}$ is the initial translational acceleration vector; $v_0$ and $\omega_0$ the initial translational and angular velocity vectors along blade other than the root, respectively; and $P$ is the position vector along the blade relative to the root. 
 
 \subsection{Applied Load}
-This section defines the applied loads, including distributed and tip-concentrated loads, for the analysis. 
+This section defines the applied loads, including distributed and tip-concentrated loads, for the stand-alone analysis. 
 The first six entries \param{DistrLoad(i)}, $i \in [1,6]$, specify three components of uniformly distributed force vector and three components of uniformly distributed moment vector in the global coordinate systems, respectively. 
 The following six entries \param{TipLoad(i)}, $i \in [1,6]$, specify three components of concentrated tip force vector and three components of concentrated tip moment vector in the global coordinate system, respectively. 
-The distributed load defined in this section is assumed to be uniform along the blade and constant throughout the simulation; the tip load is a constant concentrated load applied at the tip of a blade. 
+The distributed load defined in this section is assumed to be uniform along the blade and constant throughout the simulation; the tip load is a constant concentrated load applied at the tip of a blade. It is noted that all the loads defined in this section are dead loads, i.e., they are not rotating with the blade following the rigid-body rotation defined in the previous section. 
 
 BeamDyn is capable of handling more complex loading cases, e.g., time-dependent loads, through customization of the source code (requiring a recompile of stand-alone BeamDyn). 
-The user can define such loads in the \textit{BD\_InputSolve} solve in the Driver\_Beam.f90 file, which is called every time step. 
+The user can define such loads in the \textit{BD\_InputSolve} subroutine in the Driver\_Beam.f90 file, which is called every time step. 
 The following section can be modified to define the concentrated load at each FE node:
 
 \begin{lstlisting}[frame = single]
@@ -92,7 +94,7 @@ The following section can be modified to define the concentrated load at each FE
    ! Define concentrated moment vector
    u%PointLoad%Moment(:,:) = 0.0D0
 \end{lstlisting}
-where the first index in each array ranges from 1 to 3 for load vector components along three directions and the second index of each array ranges from 1 to  \param{node\_total}, where the latter is the total number of FE nodes. 
+where the first index in each array ranges from 1 to 3 for load vector components along three global directions and the second index of each array ranges from 1 to  \param{node\_total}, where the latter is the total number of FE nodes. 
 For example, a time-dependent sinusoidal force acting along the $X$ direction applied at the $2^{nd}$ FE node can be defined as
 \begin{lstlisting}[frame = single]
    ! Define concentrated force vector
@@ -121,7 +123,7 @@ where p\%ngp is the number of quadrature points, InitInput\%DistrLoad(:) is the 
 The user can modify ``InitInput\%DistrLoad(:)'' to define the loads based on need. 
 
 We note that the distributed loads are defined at the quadrature points for numerical integrations. 
-For example, if Gauss quadrature is chosen (i.e., p\%quadrature .EQ. 1), then the distributed loads are defined at Gauss points plus the two end points of the beam (root and tip). 
+For example, if Gauss quadrature is chosen (i.e., p\%quadrature .EQ. 1), then the distributed loads are defined at Gauss points plus the two end points of the beam (root and tip).  For trapezoidal quadrature, p\%ngp stores the number of trapezoidal quadrature points.
 
 \subsection{Primary Input File}
 \param{InputFile} is the file name of the primary BeamDyn input file. 
@@ -165,53 +167,59 @@ This entry is not used in Gauss quadrature.
 \param{N\_Fact} specifies a parameter used in the modified Newton-Raphson scheme. 
 If $\param{N\_Fact} = 1$ a full Newton iteration scheme is used, i.e., the global tangent stiffness matrix is computed and factorized at each iteration; if $\param{N\_Fact} >  1$ a modified Newton iteration scheme is used, i.e., 
 the global stiffness matrix is computed and factorized every \param{N\_Fact} iterations within each time step. 
-The keyword ``DEFAULT'' set $\textbf{\textit{N\_Fact}} = 5$.
+The keyword ``DEFAULT'' sets $\textbf{\textit{N\_Fact}} = 5$.
 
 \param{DTBeam} specifies the constant time increment of the time-integration in seconds. 
 The keyword ``DEFAULT'' may be used to indicate that the module should employ the time increment prescribed by the driver code (FAST/stand-alone driver program).
 
-\param{NRMax} specifies the maximum number of iterations in the Newton-Raphson scheme. 
+\param{NRMax} specifies the maximum number of iterations per time step in the Newton-Raphson scheme. 
 If convergence is not reached within this number of iterations, BeamDyn returns an error message and terminates the simulation. 
 The keyword ``DEFAULT'' sets $\textbf{\textit{NRMax}} = 10$.
 
 \param{Stop\_Tol} specifies a tolerance parameter used in convergence criteria of a nonlinear solution that is used for the termination of the iteration. 
-The keyword ``DEFAULT'' sets $\textbf{\textit{Stop\_Tol}} = 1.0E-05$. Please refer to Section~\ref{sec:ConvergenceCriteria} for more details.
+The keyword ``DEFAULT'' sets $\textbf{\textit{Stop\_Tol}} = 1.0E-05$. Please refer to Section~\ref{sec:ConvergenceCriterion} for more details.
 
 %\mas{Please elaborate on the nature of the convergence criteria}
 
 \subsection{Geometry Parameter}
 
-The blade beam model is composed of several {\it members} in contiguous series and each member is defined by at least three key points in BeamDyn. 
+The blade geometry is defined by a curvilinear local blade reference axis. The blade beam model is composed of several {\it members} in contiguous series and each member is defined by at least three key points in BeamDyn. 
 A cubic-spline-fit pre-processor implemented in BeamDyn automatically generates the member based on the key points and then interconnects the members into a blade. 
 There is always a shared key point at adjacent members; therefore the total number of key points is related to number of members and key points in each member.
 
-\param{Member\_Total} specifies the total number of beam members used in the structure. 
-With the LSFE discretization, a single member and a sufficiently high element order, \param{Order\_Elem}, may well be sufficient.
+\param{member\_total} specifies the total number of beam members used in the structure. 
+With the LSFE discretization, a single member and a sufficiently high element order, \param{order\_elem} below, may well be sufficient.
 
-\param{KP\_Total} specifies the total number of key points used to define the beam members.   
+\param{kp\_total} specifies the total number of key points used to define the beam members.   
 
-The following section contains two header lines and \param{Member\_Total} lines. 
+The following section contains two header lines and \param{member\_total} lines. 
 Each line has two integers providing the member number (must be 1, 2, 3, etc., sequentially) and the number of key points in this member, respectively. 
 It is noted that the number of key points in each member is not independent of the total number of key points and they should satisfy the following equality:
 \begin{equation}
     \label{Keypoint}
-    KP_{t} = \sum_{i=1}^{M_t} n_i - M_t +1
+    kp\_total = \sum_{i=1}^{member\_total} n_i - member\_total +1
 \end{equation}
-where $KP_{t}$ is the total number of key points, $M_t$ is the total number of members, and $n_i$ is the number of key points in the $i^{th}$ member. 
+where $n_i$ is the number of key points in the $i^{th}$ member. 
 Because cubic splines are implemented in BeamDyn, $n_i$ must be greater than or equal to three. 
 Figure \ref{fig:Geometry1} shows two cases for member and key-point definition.
 \begin{figure}[h!tp]
 \centering
-    \subfigure[Case 1 \label{Geometry1:Case1}]{\includegraphics[width=4.0in]{\directory Geometry_Member1.png}}\\
-    \subfigure[Case 2 \label{Geometry1:Case2}]{\includegraphics[width=4.0in]{\directory Geometry_Member2.png}}
+    \subfigure[Case 1 \label{Geometry1:Case1}]{\includegraphics[width=2.5in]{\directory Geometry_Member1.png}}\\
+    \subfigure[Case 2 \label{Geometry1:Case2}]{\includegraphics[width=2.5in]{\directory Geometry_Member2.png}}
     \caption{Member and key point definition. Case 1: one member defined by four key points; and Case 2: two members defined by six key points.}
     \label{fig:Geometry1}
 \end{figure}
 
-The next section defines the key-point information. 
-Each key point is defined by three physical coordinates in the IEC standard blade coordinate system along with a structural twist angle in the unit of degrees. 
-The structural twist angle is also following the IEC standard which is defined as the twist about the negative Z axis. 
-The key points are entered sequentially and there should be a total of \param{KP\_Total} lines for BeamDyn to read in the information, after two header lines.
+The next section defines the key-point information, preceded by two header lines. 
+Each key point is defined by three physical coordinates (kp\_xr, kp\_yr, kp\_zr) in the IEC standard blade coordinate system (the blade reference coordinate system) along with a structural twist angle (initial\_twist) in the unit of degrees. 
+The structural twist angle is also following the IEC standard which is defined as the twist about the negative $Z_l$ axis. 
+The key points are entered sequentially (from the root to tip) and there should be a total of \param{kp\_total} lines for BeamDyn to read in the information, after two header lines. Please refer to Figure~\ref{fig:BladeGeometry} for more details on the blade geometry definition.
+\begin{figure}[h!tp]
+    \centering
+    \includegraphics[width = 8.0in,angle=-90,origin=c]{\directory BladeGeometry.jpg}
+    \caption{BeamDyn Blade Geometry - Left: Side View; Middle: Front View (Looking Downwind); Right: Cross Section View (Looking Toward the Tip, from the Root)}
+    \label{fig:BladeGeometry}
+\end{figure}
 
 \subsection{Mesh Parameter}
 
@@ -237,23 +245,23 @@ In future releases, specifying \param{UsePitchAct} $=$ TRUE will enable a second
 
 In this section of the primary input file, the user sets flags and switches for the desired output behavior.
 
-Specifying \param{SumPrint} $=$ TRUE causes BeamDyn to generate a summary file with name \param{PrimaryInputFile}.\textit{sum}. 
+Specifying \param{SumPrint} $=$ TRUE causes BeamDyn to generate a summary file with name \param{InputFile}.\textit{sum}. 
 See Section~\ref{sec:SumFile} for summary file details.
 
 \param{OutFmt} parameter controls the formatting of the results within the stand-alone BeamDyn output file. 
 It needs to be a valid Fortran format string, but BeamDyn currently does not check the validity. 
 This input is unused when BeamDyn is used coupled to FAST.
 
-\param{NNodeOuts} specifies the number of nodes to output to file. 
+\param{NNodeOuts} specifies the number of nodes where output can be written to a file. 
 Currently, BeamDyn can output quantities at a maximum of nine nodes. 
 
-\param{OutNd} is a list \param{NNodeOuts} long of node numbers between 1 and $node_total$ (total number of FE nodes), separated by any combination of commas, semicolons, spaces, and/or tabs.   
+\param{OutNd} is a list \param{NNodeOuts} long of node numbers between 1 and $node\_total$ (total number of FE nodes), separated by any combination of commas, semicolons, spaces, and/or tabs.   
 The nodal positions are given in the summary file, if output.
 
 The \param{OutList} block contains a list of output parameters. 
 Enter one or more lines containing quoted strings that in turn contain one or more output parameter names.  
 Separate output parameter names by any combination of commas, semicolons, spaces, and/or tabs.  
-If you prefix a parameter name with a minus sign, ``-", underscore, ``\_", or the characters ``m" or ``M", BeamDyn will multiply the value for that channel by Ð1 before writing the data.  
+If you prefix a parameter name with a minus sign, ``-", underscore, ``\_", or the characters ``m" or ``M", BeamDyn will multiply the value for that channel by -1 before writing the data.  
 The parameters are written in the order they are listed in the input file.  
 `BeamDyn allows you to use multiple lines so that you can break your list into meaningful groups and so the lines can be shorter. 
 You may enter comments after the closing quote on any of the lines.  
@@ -302,12 +310,12 @@ where $\mathcal{\underline{F}}^{Damp}$ is the damping force, $\underline{\underl
 \subsection{Distributed Properties}
 
 This section specifies the cross-sectional properties at each of the \textbf{\textit{Station\_Total}} stations. 
-For each station, a non-dimensional parameter $\eta$ specifies the station location along the blade axis ranging from $[0.0,1.0]$. 
-The first and last station parameters must be set to $0.0$ and $1.0$, respectively.
+For each station, a non-dimensional parameter $\eta$ specifies the station location along the local blade reference axis ranging from $[0.0,1.0]$. 
+The first and last station parameters must be set to $0.0$ (for the blade root) and $1.0$ (for the blade tip), respectively.
 
 Following the station location parameter $\eta$, there are two $6 \times 6$ matrices providing the structural and inertial properties for this cross-section. 
 First is the stiffness matrix and then the mass matrix. 
-We note that these matrices are defined in a local coordinate system along the blade axis following the IEC blade coordinate convention with $Z_{rl}$ directing toward the unit tangent vector of the axis. 
+We note that these matrices are defined in a local coordinate system along the blade axis with $Z_{l}$ directing toward the unit tangent vector of the axis. 
 For a cross-section without coupling effects, for example, the stiffness matrix is given as follows:
 \begin{equation}
     \label{Stiffness}
@@ -320,7 +328,7 @@ For a cross-section without coupling effects, for example, the stiffness matrix 
     0 & 0 & 0 & 0 & 0 & GJ
     \end{bmatrix}
 \end{equation}
-where $K_{ShrEdg}$ and $K_{ShrFlp}$ are the edge and flap shear stiffnesses, respectively; $EA$ is the extension stiffness; $EI_{Edg}$ and $EI_{Flp}$ are the edge and flap stiffnesses, respectively; and $GJ$ is the torsional stiffness.
+where $K_{ShrEdg}$ and $K_{ShrFlp}$ are the edge and flap shear stiffnesses, respectively; $EA$ is the extension stiffness; $EI_{Edg}$ and $EI_{Flp}$ are the edge and flap stiffnesses, respectively; and $GJ$ is the torsional stiffness. It is pointed out that for a generic cross-section, the sectional property matrices can be derived from a sectional analysis tool, e.g. VABS, BECAS, or NuMAD/BPE.
 
 A generalized sectional mass matrix is given by:
 \begin{equation}

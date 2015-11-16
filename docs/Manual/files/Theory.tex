@@ -1,4 +1,5 @@
 \chapter{BeamDyn Theory}
+\label{sec:Theory}
 
 This section focuses on the theory behind the BeamDyn module. 
 The theoretical foundation, numerical tools, and some special handling in the implementation will be introduced. References will be provided in each section detailing the theories and numerical tools.
@@ -6,7 +7,7 @@ The theoretical foundation, numerical tools, and some special handling in the im
 
 
 In this chapter, matrix notation is used to denote vectorial or vectorial-like quantities. 
-For example, an underline denotes a vector $\underline{u}$, a bar denotes unit vector $\bar{n}$, and a double underline denotes a tensor $\underline{\underline{\Delta}}$. 
+For example, an underline denotes a vector $\underline{u}$, an over bar denotes unit vector $\bar{n}$, and a double underline denotes a tensor $\underline{\underline{\Delta}}$. 
 Note that sometimes the underlines only denote the dimension of the corresponding matrix.
 
 \section{Coordinate Systems}
@@ -14,7 +15,7 @@ Figure~\ref{fig:BDFrame}  shows the coordinate system used in BeamDyn.
 \begin{figure}[h!tp]
     \centering
     \includegraphics[width = 3.5 in]{\directory BDFrame.pdf}
-    \caption{Global, blade, and internal coordinate systems in BeamDyn. Illustration by Al Hicks, NREL}
+    \caption{Global, blade reference, and internal coordinate systems in BeamDyn. Illustration by Al Hicks, NREL}
     \label{fig:BDFrame}
 \end{figure}
 
@@ -29,14 +30,17 @@ This is an inertial frame used internally in BeamDyn and its origin is placed at
 \subsection{Blade Reference Coordinate System}
 The blade reference coordinate system is denoted as \textbf{ {\it X$_r$}}, \textbf{ {\it Y$_r$}}, and \textbf{ {\it Z$_r$}} in Figure~\ref{fig:BDFrame} at instant $t$. 
 This is a floating frame that attaches at the blade root and is rotating with the blade. 
-Its origin is at the blade root and the directions of axes following the IEC standard, i.e., \textbf{ {\it Z$_r$}} is pointing along the blade axis from root to tip; \textbf{ {\it Y$_r$}} pointing towards the trailing edge of the blade and parallel with the chord line at the zero-twist blade station; and \textbf{ {\it X$_r$}} is orthogonal with the \textbf{ {\it Y$_r$}} and \textbf{ {\it Z$_r$}} axes, such that they form a right-handed coordinate system. 
+Its origin is at the blade root and the directions of axes following the IEC standard, i.e., \textbf{ {\it Z$_r$}} is pointing along the blade axis from root to tip; \textbf{ {\it Y$_r$}} pointing normally towards the trailing edge of the blade and parallel with the chord line at the zero-twist blade station; and \textbf{ {\it X$_r$}} is orthogonal with the \textbf{ {\it Y$_r$}} and \textbf{ {\it Z$_r$}} axes, such that they form a right-handed coordinate system (pointing nominally downwind). 
 We note that the initial blade reference coordinate system, denoted by subscript $r0$, coincides with the BD coordinate system, which is used internally in BeamDyn and introduced in the previous section. 
 The axis convention relations between the initial blade reference coordinate system and the BD coordinate system can be found in Table~\ref{tab:IECBD}. 
+
+\subsection{Local blade coordinate system}
+The local blade coordinate system is used for some output quantities, for example, the sectional force and moment resultants. This coordinate system is different from the blade reference coordinate system in that its $Z_l$ axis is always tangent to the blade axis. Note that a subscript $l$ denotes the local blade coordinate system.
 
 \section{Geometrically Exact Beam Theory}
 The theoretical foundation of BeamDyn is the geometrically exact beam theory. 
 This theory features the capability of beams that are initially curved and twisted and subjected to large displacement and rotations. 
-Along with a proper two-dimensional (2D) cross-sectional analysis, the coupling effects between all six DOFs, including extension, bending, shear, and torque, can be captured by GEBT as well . 
+Along with a proper two-dimensional (2D) cross-sectional analysis, the coupling effects between all six DOFs, including extension, bending, shear, and torsion, can be captured by GEBT as well . 
 The term, ``geometrically exact'' refer to the fact that there is no approximation made on the geometries, including both initial and deformed geometries, in formulating the equations \cite{HodgesBeamBook}.    
 
  The governing equations of motion for geometrically exact beam theory can be written as \cite{Bauchau:2010}
@@ -120,7 +124,7 @@ where $\vec{k} = axial [(\tens{R R_0})^\prime (\tens{R R_0})^T]$ is the sectiona
 curvature vector resolved in the inertial basis; $\tens{R}_0$ is the initial rotation tensor; and $\bar{\imath}_1$ is the unit vector along $x_1$ direction in the inertial basis. 
 These three sets of equations, including equations of motion Eq.~\eqref{GovernGEBT-1} and \eqref{GovernGEBT-2}, constitutive equations
 Eq.~\eqref{ConstitutiveMass} and \eqref{ConstitutiveStiff}, and kinematical
-equations Eq.~\eqref{1DStrain}, provide a full mathematical description of elasticity problems. 
+equations Eq.~\eqref{1DStrain}, provide a full mathematical description of the beam elasticity problems. 
 
 \section{Numerical Implementation with Legendre Spectral Finite Elements}
 \label{sec:NumImp}
@@ -141,17 +145,18 @@ where $\tens{N}$ is the shape function matrix and $(\hat{\cdot})$ denotes a colu
 The displacement fields in an element are approximated as
 \begin{align}
     \label{InterpolateDisp}
-    \vec{u}(\xi) &= \sum_{k=1}^{p+1} h^k(\xi) \vec{\hat{u}}^k \\
+%    \vec{u}(\xi) &= \sum_{k=1}^{p+1} h^k(\xi) \vec{\hat{u}}^k \\
+    \vec{u}(\xi) &=  h^k(\xi) \vec{\hat{u}}^k \\
     \label{InterpolateDispp}
-    \vec{u}^\prime(\xi) &= \sum_{k=1}^{p+1} h^{k\prime}(\xi) \vec{\hat{u}}^k
+    \vec{u}^\prime(\xi) &=  h^{k\prime}(\xi) \vec{\hat{u}}^k
 \end{align}
 where $h^k(\xi)$, the component of shape function matrix $\tens{N}$, is the $p^{th}$-order polynomial Lagrangian-interpolant shape function of node $k$, $k=\{1,2,...,p+1\}$, $\vec{\hat{u}}^k$ is the $k^{th}$ nodal value, and $\xi \in \left[-1,1\right]$ is the element natural coordinate.
 However, as discussed in \cite{Bauchau-etal:2008}, the 3D rotation field cannot simply be interpolated as the displacement field in the form of
 \begin{align}
     \label{InterpolateRot}
-    \vec{c}(\xi) &= \sum_{k=1}^{p+1} h^k(\xi) \vec{\hat{c}}^k \\
+    \vec{c}(\xi) &= h^k(\xi) \vec{\hat{c}}^k \\
     \label{InterpolateRotp}
-    \vec{c}^\prime(\xi) &= \sum_{k=1}^{p+1} h^{k \prime}(\xi) \vec{\hat{c}}^k 
+    \vec{c}^\prime(\xi) &= h^{k \prime}(\xi) \vec{\hat{c}}^k 
 \end{align}    
 where $\vec{c}$ is the rotation field in an element and $\vec{\hat{c}}^k$ is the nodal value at the $k^{th}$ node, for three reasons: 1) rotations do not form a linear space so that they must be  ``composed'' rather than added; 2) a rescaling operation is needed to eliminate the singularity existing in the vectorial rotation parameters; 3) the rotation field lacks objectivity, which, as defined by \cite{Crisfield1999}, refers to the invariance of strain measures computed through interpolation to the addition of a rigid-body motion. 
 Therefore, we adopt the more robust interpolation approach proposed by \cite{Crisfield1999} to deal with the finite rotations. Our approach is described as follows
@@ -412,6 +417,7 @@ where the newly introduced matrices are defined as
       \tilde{E}_1^T \tens{\mu} \tens{C}_{11} &   \tilde{E}_1^T \tens{\mu} \tens{C}_{12}
     \end{bmatrix} \\
 \end{align}
+where $\tens{O}_{12}$ and $\tens{G}_{12}$ are the $3 \times 3$ sub matrices of $\mathcal{\tens{O}}$ and $\mathcal{\tens{G}}$ as $\tens{C}_{12}$ in Eq.~\eqref{PartC}.
 
 \section{Convergence Criterion and Generalized-$\alpha$ Time Integrator}
 \label{sec:ConvergenceCriterion}
@@ -429,16 +435,16 @@ Time integration is performed using the generalized-$\alpha$ scheme in BeamDyn, 
 The scheme allows for users to choose integration parameters that introduce high-frequency numerical dissipation. 
 More details regarding the generalized-$\alpha$ method can be found in \cite{Chung-Hulbert:1993,Bauchau:2010}.  
 
-\section{Calculation of Reaction Forces}
-Since the root motion of the wind turbine blade, including displacements and rotations, translational and angular velocities, and translational and angular accelerates, are prescribed as inputs to BeamDyn either by the driver (in stand-alone mode) or by FAST glue code (in FAST-coupled mode), the reaction forces at the root is needed to satisfy equality of the governing equations. 
-Also this is the loads passing from blade to hub in a full turbine analysis. 
+\section{Calculation of Reaction Loads}
+Since the root motion of the wind turbine blade, including displacements and rotations, translational and angular velocities, and translational and angular accelerates, are prescribed as inputs to BeamDyn either by the driver (in stand-alone mode) or by FAST glue code (in FAST-coupled mode), the reaction loads at the root are needed to satisfy equality of the governing equations. 
+The reaction loads at the root are also the loads passing from blade to hub in a full turbine analysis. 
 
 The governing equations in Eq.~\ref{GovernGEBT-1} and \ref{GovernGEBT-2} can be recast in a compact form
 \begin{equation}
     \label{CompactGovern}
     \vec{\mathcal{F}}^I - \vec{\mathcal{F}}^{C\prime} + \vec{\mathcal{F}}^D = \vec{\mathcal{F}}^{ext}
 \end{equation}
-with all the force vectors are defined in Sectoin~\ref{sec:LinearProcess}.  
+with all the vectors defined in Section~\ref{sec:LinearProcess}.  
 At the blade root, the governing equation is revised as
 \begin{equation}
     \label{CompactGovernRoot}
@@ -446,9 +452,9 @@ At the blade root, the governing equation is revised as
 \end{equation}
 where $\vec{\mathcal{F}}^R = \left[ \vec{F}^R~~~\vec{M}^R\right]^T$ is the reaction force vector and it can be solved from Eq.~\ref{CompactGovernRoot} given that the motion fields are known at this point.
 
-\section{Calculation of Blade Forces}
-BeamDyn can also calculate the blade forces at each finite element node along the blade axis. 
-The governing equation in Eq.~\ref{CompactGovern} is recast as
+\section{Calculation of Blade Loads}
+BeamDyn can also calculate the blade loads at each finite element node along the blade axis. 
+The governing equation in Eq.~\ref{CompactGovern} are recast as
 \begin{equation}
     \label{GovernBF}
      \vec{\mathcal{F}}^A + \vec{\mathcal{F}}^V - \vec{\mathcal{F}}^{C\prime} + \vec{\mathcal{F}}^D = \vec{\mathcal{F}}^{ext}
@@ -466,7 +472,7 @@ where the inertial force vector $\vec{\mathcal{F}}^I$ is split into $\vec{\mathc
      \tilde{\omega} \tens{\rho} \vec{\omega}
     \end{Bmatrix} \\    
 \end{align}
-The blade force is thus defined as
+The blade loads are thus defined as
 \begin{equation}
     \label{BladeForce}
     \vec{\mathcal{F}}^{BF} \equiv \vec{\mathcal{F}}^V - \vec{\mathcal{F}}^{C\prime} + \vec{\mathcal{F}}^D

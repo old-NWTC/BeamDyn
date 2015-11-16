@@ -250,7 +250,7 @@ Newton-Raphson method is adopted here to solve this nonlinear system:
 \label{fig:CoupledDTPC}
 \end{figure}
  
- For validation purpose, we analyzed this case in ANSYS using 20 BEAM188 element. The time step size is set to $1E-04$ and the ANSYS solution is used as benchmark in the following comparisons. The root and tip displacements of the beam can be found in Figure~\ref{fig:E1Disp}. The beam is discretized in BeamDyn by a single $5^{th}$-order element. Good agreement can be observed between the benchmark solution and the BeamDyn results.
+ For validation purpose, we analyzed this case in ANSYS using 20 BEAM188 element and the time step size is set to $1E-05$. With this well-refined mesh in both time and spectral domains, the ANSYS solution is used as benchmark in the following comparisons. The root and tip displacements of the beam can be found in Figure~\ref{fig:E1Disp}. The beam is discretized in BeamDyn by a single $5^{th}$-order element. The time increment in BeamDyn for these results is $2E-05$ to resolve all the frequencies. Good agreements can be observed between the benchmark solution and the BeamDyn results. 
  \begin{figure}
     \centering
     \begin{tabular}{c}
@@ -260,26 +260,30 @@ Newton-Raphson method is adopted here to solve this nonlinear system:
 \caption{Comparisons of root and tip displacements between ANSYS and BeamDyn results}
 \label{fig:E1Disp}
 \end{figure} 
-Next we studied the numerical performance of BeamDyn as a function of total number of nodes. The accuracy and efficiency of the present results of the coupled system were examined by the root-mean-square (RMS) errors, which aggregates the magnitudes of the errors in predictions for various times into a single measure of predictive performance. The error was calculated using
+The root velocity and accelerations are also compared between current model and ANSYS benchmark solution in Figure~\ref{fig:E1VelAcc}. Again, good agreements are found in those quantities. It is noted that high-frequency fluctuations can be observed in the acceleration plot of BeamDyn results. We believe that the fluctuation is the constraint on the time step size and numerical damping damps some of these out thus in turn helps increasing the time step size as shown in Figure~\ref{fig:CoupledDTPC}. Introducing numerical damping into the coupling algorithm could be a solution to further reduce such high frequency behavior and thus allow larger time step size in the future. 
+ \begin{figure}
+    \centering
+    \begin{tabular}{c}
+    \subfloat[Root Velocity]{\label{fig:E1VelRoot}\includegraphics[width=3.0 in]{\directory  Vel_Root.eps}} \qquad
+\subfloat[Root Acceleration]{\label{fig:E1AccRoot}\includegraphics[width=3.0in]{\directory  Acc_Root.eps}}\\
+\end{tabular}
+\caption{Comparisons of root velocity and acceleration between ANSYS and BeamDyn results}
+\label{fig:E1VelAcc}
+\end{figure} 
+
+Next we studied the numerical performance of BeamDyn. The accuracy and efficiency of the present results of the coupled system were examined by the root-mean-square (RMS) errors, which aggregates the magnitudes of the errors in predictions for various times into a single measure of predictive performance. The error was calculated using
 \begin{equation}
 \varepsilon_{RMS}=\sqrt{\frac{\sum_{k=0}^{n_{max}}[U_z^k-U_b(t^k)]^2}{\sum_{k=0}^{n_{max}}[U_b(t^k)]^2}}
 \label{RMSdefi}
 \end{equation} 
-where $U_b(t)$ is the benchmark solution given by ANSYS. Figure~\ref{fig:ConvNode} shows the RMS error of the tip displacements along $Z$ direction as a function of total number of nodes.
+where $U_b(t)$ is the benchmark solution given by ANSYS. Figure~\ref{fig:ConvDTNode} shows the RMS error of the tip displacements along $Z$ direction as a function of total number of nodes for three different time increment sizes and number of predictor-correction times. The time increments for Case 1, Case 2, and Case 3 are $2E-5$, $5E-4$, and $1E-3$, respectively; and the number of corrections for the three cases are 0 (no correction), 2, and 3, respectively.
 \begin{figure}
 \centering
-\includegraphics[width=5.0in]{\directory RMS_Nodes.eps}
-\caption{Normalized RMS error of $U_z$ histories as a function of total number of nodes for the coupled system analysis. The dashed line shows ideal second-order convergence.} 
-\label{fig:ConvNode}
+\includegraphics[width=5.0in]{\directory RMS_dt_node.eps}
+\caption{Normalized RMS error of $U_z$ histories as a function of total number of nodes for three different time increments and number of corrections. The dashed line shows ideal second-order convergence.} 
+\label{fig:ConvDTNode}
 \end{figure}
-It can be concluded that although other factors have been introduced into the simulation, exponential convergence rate which is a feature of LSFEs in space discritization can be observed. $5^{th}$-order element (six nodes) being used in this case is a reasonable choice for a converged analysis. 
-Finally the accelerations of the lumped mass, which is also the beam root acceleration, along $Z$ direction are compared, see Figure~\ref{fig:Acc}. Although good agreement between ANSYS and current results can be seen, it is noted that high frequency behavior can be found in the current coupled solution. Introducing numerical damping into the coupling algorithm could be a solution to reduce such high frequency behavior and thus allow larger time step size in the future.
-\begin{figure}
-\centering
-\includegraphics[width=5.0in]{\directory Acc_Root.eps}
-\caption{Comparison of lumped mass (beam root) accelerations between ANSYS and current results.} 
-\label{fig:Acc}
-\end{figure}
+It can be concluded that although other factors have been introduced into the simulation, exponential convergence rate which is a feature of LSFEs in space discritization can be observed. $5^{th}$-order element (six nodes) being used in this case is a reasonable choice for a converged analysis. Moreover, results obtained by corrections are more accurate than those with smaller time increments but no correction.
 
 \subsection{Example 2: NREL 5-MW Wind Turbine}
 The second example is a coupled analysis of NREL 5-MW reference wind turbine system. The three blades are modeled by BeamDyn while the scheme discussed in this paper  were implemented to couple BeamDyn to FAST. 

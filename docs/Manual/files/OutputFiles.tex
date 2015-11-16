@@ -6,14 +6,14 @@ BeamDyn produces three types of output files, depending on the options selected:
 The following sections detail the purpose and contents of these files.
 
 \section{Echo File}
-If the user sets the  \param{Echo} flag to TRUE in the BeamDyn primary input file, the contents of this file will be echoed to a file with the naming convention  \param{PrimaryInputFile.ech}. 
+If the user sets the  \param{Echo} flag to TRUE in the BeamDyn primary input file, the contents of this file will be echoed to a file with the naming convention  \param{InputFile.ech}. 
 The echo file is helpful for debugging the input files. 
 The contents of an echo file will be truncated if BeamDyn encounters an error while parsing an input file. 
 The error usually corresponds to the line after the last successfully echoed line.
 
 \section{Summary File}
 \label{sec:SumFile}
-BeamDyn generates a summary file with the naming convention,  \param{PrimaryInputFile.sum} if the  \param{SumPrint} parameter is set to TRUE. 
+In stand-alone mode, BeamDyn generates a summary file with the naming convention,  \param{InputFile.sum} if the  \param{SumPrint} parameter is set to TRUE. When coupled to FAST, the summary file is named \param{InputFile.BD.sum}. 
 This file summarizes key information about the simulation, including:
 \begin{itemize}
   \item Blade mass.
@@ -35,14 +35,14 @@ This file summarizes key information about the simulation, including:
   \item Initial rotation vectors of FE nodes in BD coordinate system.
   \item Quadrature point position vectors in BD coordinate system. For Gauss quadrature, the physical coordinates of Gauss points are listed. For trapezoidal quadrature, the physical coordinates of the quadrature points are listed.
   \item Sectional stiffness and mass matrices at quadrature points in local blade reference coordinate system. These are the data being used in calculations at quadrature points and they can be different from the section in Blade Input File since BeamDyn linearly interpolates the sectional properties into quadrature points based on need.
-  \item Initial displacement vectors in BD coordinate system.
-  \item Initial rotation displacement vectors in BD coordinate system.
-  \item Initial translational velocity vectors in BD coordinate system.
-  \item Initial angular velocity vectors in BD coordinate system.
+  \item Initial displacement vectors of FE nodes in BD coordinate system.
+  \item Initial rotational displacement vectors of FE nodes in BD coordinate system.
+  \item Initial translational velocity vectors of FE nodes in BD coordinate system.
+  \item Initial angular velocity vectors of FE nodes in BD coordinate system.
   \item Requested output information.
 \end{itemize}
 All of these quantities are output in this file in the BD coordinate system, the one being used internally in BeamDyn calculations. 
-The initial blade coordinate system, denoted by a subscript $r0$ that follows the IEC standard, is related to the internal BD coordinate system by Table \ref{tab:IECBD}. 
+The initial blade reference coordinate system, denoted by a subscript $r0$ that follows the IEC standard, is related to the internal BD coordinate system by Table \ref{tab:IECBD}. 
 \begin{table}
 \centering
 \caption{Transformation between blade coordinate system and BD coordinate system.}
