@@ -25,15 +25,15 @@
 \renewcommand{\skew}[1]{\widetilde{#1}}
 %------------------------------------------------------------------------------
 
-\title{Partitioned nonlinear structural analysis of wind turbines using BeamDyn}
+\title{Partitioned nonlinear structural analysis\\
+of wind turbines using BeamDyn}
 
-
-\author[1]{Qi Wang\thanks{Research Engineer, National Wind Technology Center, AIAA Member. Email: Qi.Wang2@nrel.gov}}
- \author[1]{Michael A. Sprague\thanks{Senior Research Scientist, 
+\author[]{Qi Wang\thanks{Research Engineer, National Wind Technology Center, AIAA Member. Email: Qi.Wang2@nrel.gov}}
+ \author[]{Michael A. Sprague\thanks{Senior Research Scientist, 
 Computational Science Center.}}
- \author[1]{Jason Jonkman\thanks{Senior Engineer, National Wind Technology Center, AIAA Professional Member.}}
-  \author[1]{Bonnie Jonkman\thanks{Senior Engineer, National Wind Technology Center.}}
- \affil[1]{National Renewable Energy Laboratory, Golden, CO 80401}
+ \author[]{Jason Jonkman\thanks{Senior Engineer, National Wind Technology Center, AIAA Professional Member.}}
+  \author[]{Bonnie Jonkman\thanks{Senior Engineer, National Wind Technology Center.}}
+ \affil[]{National Renewable Energy Laboratory, Golden, CO 80401}
  
  \renewcommand\Authands{, and }
 
@@ -42,23 +42,38 @@ Computational Science Center.}}
 \maketitle
 
 \begin{abstract}
-{In this paper, we present the numerical implementation of BeamDyn, a finite element beam solver based on geometrically exact beam theory (GEBT), and its coupling to different partitions in the FAST modularization framework. The theory is being reviewed first. Then the coupling algorithm and numerical integration scheme specifically designed for wind turbine analysis are introduced. The implicit loose coupling method for BeamDyn coupling is used where nonlinear input-output relations are solved by Newton-Raphson method. Finally, numerical examples are provided to validate both the beam solver and the coupling algorithm. }     
+{We present the numerical implementation of BeamDyn, a finite element beam solver based on geometrically exact beam theory (GEBT), and its coupling to different modules in the FAST modularization framework. 
+After reviewing the underlying BeamDyn theory and implementation, we describe the coupling algorithm and numerical integration scheme specifically designed for wind turbine analysis. 
+The loose coupling method between BeamDyn and other modules is used where the nonlinear input-output coupling relations are solved by the Newton-Raphson method. 
+Finally, numerical examples are provided to verify both BeamDyn and the coupling algorithm. }     
 \end{abstract}
 
 \section{Introduction} 
-Recently, NREL has developed BeamDyn, a nonlinear structural dynamics module for composite wind turbine blade analysis in the FAST modularization framework. This work is motivated by a fact that composite materials have been introduced into the wind energy industry which makes manufacturing of much lighter, larger wind turbine blade a possibility. However, the use of composites also introduces some difficulties in the design and analysis stage. For example, the coupling behavior that exists in composite materials can hardly be captured by the conventional theories which are usually based on isotropic assumptions. Moreover, as the increasing size of the wind turbines, the deformations of the blades cannot be assumed to be linear anymore. This beam solver, BeamDyn, is implemented based on the geometrically exact beam theory (GEBT), which is a beam-deformation model useful in efficient analysis of highly flexible composite structures. GEBT was first proposed by Reissner\cite{Ressiner1973} and then extended to three-dimensional (3D) beams by Simo\cite{Simo1985} and Simo and Vu-Quoc\cite{Simo1986}. Readers are referred to
+Recently, researchers at the National Renewable Energy Laboratory (NREL) 
+developed BeamDyn, a nonlinear structural dynamics module for composite wind turbine blade analysis, in the FAST modularization framework. 
+%This work is motivated by a fact that composite materials have been introduced into the wind energy industry which makes manufacturing of much lighter, larger wind turbine blade a possibility. 
+%However, the use of composites also introduces some difficulties in the design and analysis stage. 
+%For example, the coupling behavior that exists in composite materials can hardly be captured by the conventional theories which are usually based on isotropic assumptions. 
+%Moreover, as the increasing size of the wind turbines, the deformations of the blades cannot be assumed to be linear anymore. 
+BeamDyn, which is founded on geometrically exact beam theory (GEBT), was created to acurately simulate the large, nonlinear deflections of modern wind turbine blades that are designed with aero-elastic tailoring and complicated composite structures.
+%which is a beam-deformation model useful in efficient analysis of highly flexible composite structures. 
+GEBT was first proposed by Reissner\cite{Ressiner1973} and then extended to three-dimensional (3D) beams by Simo\cite{Simo1985} and Simo and Vu-Quoc\cite{Simo1986}. 
+Readers are referred to
 Hodges\cite{HodgesBeamBook}, in which comprehensive derivations and discussions
-on nonlinear composite-beam theories can be found. The numerical tool in BeamDyn to discritize the space domain is the Legendre spectral finite elements (LSFE), which is a $p$-type high-order element that combines the accuracy of global spectral methods with the geometric modeling flexibility of $h$-type finite elements (FEs). More details on BeamDyn can be found in Wang et al.\cite{Wang:GEBT2014}.
+on nonlinear composite-beam theories can be found. 
+In the BeamDyn implementation, the GEBT equations are discrretized spatially with Legendre spectral finite elements (LSFEs), which are $p$-type high order elements that combine the accuracy of global spectral methods with the geometric modeling flexibility of low-order $h$-type elements.
+More details on BeamDyn can be found in Wang et al.\cite{Wang:GEBT2014}.
 
-FAST is the flagship multi-physics engineering tool developed at the National Renewable Energy Laboratory
-(NREL) for analyzing both land-based and
-offshore wind turbines under realistic operating conditions.  The previous
-beam model in FAST was not capable of predictive analysis of highly flexible,
-composite wind turbine blades. FAST has been reformulated under a
-new modularized framework that provides a rigorous means by which various
-mathematical systems are implemented in distinct modules. The restructuring of FAST greatly enhanced flexibility and expandability to enable further developments of functionality without the need to recode established modules. These modules are interconnected to solve for the globally coupled dynamic responses of wind turbines and wind plants \cite{Jonkman:2013,website:FASTModularizationFramework}. In previous work, this framework is extended to handle the non-matching spatial grids at interfaces and non-matching temporal meshes that allow module solutions to advance with different time increments and different time integrators. \cite{Sprague:2014}
+FAST is NREL's flagship multi-physics engineering tool for analyzing both land-based and offshore wind turbines under realistic operating conditions.  
+The established FAST blade model included in the module Elastodyn, is incabable 
+of predictive analysis of highly flexible, composite wind turbine blades. 
+FAST has been reformulated under a new modularized framework that provides a rigorous means by which various mathematical systems are implemented in distinct modules and coupled to other modules. 
+The restructuring of FAST greatly enhanced flexibility and expandability to enable further developments of functionality without the need to recode established modules. 
+These modules are interconnected to solve for the globally coupled dynamic responses of wind turbines and wind plants \cite{Jonkman:2013,website:FASTModularizationFramework}. In previous work, this framework is extended to handle the non-matching spatial grids at interfaces and non-matching temporal meshes that allow module solutions to advance with different time increments and different time integrators.\cite{Sprague:2014}
 
-In this paper, the formulation of the beam theory is firstly reviewed. Then the coupling algorithm of BeamDyn with other modules is presented. Numerical integration scheme that specifically implemented for wind turbine analysis is also introduced. Numerical examples are provided to validate the proposed beam solver and its coupling algorithm when it is running in a couple-to-FAST mode.
+In this paper, the formulation of the beam theory is first reviewed, and then the coupling algorithm of BeamDyn with other modules is presented. 
+%The numerical integration scheme that specifically implemented for wind turbine analysis is also introduced. 
+Numerical examples are provided to verify the proposed beam solver and its coupling algorithm when it is running in a coupled-to-FAST mode.
 
 \section{Geometrically Exact Beam Theory}
 
