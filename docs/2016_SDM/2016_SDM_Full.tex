@@ -75,9 +75,15 @@ In this paper, the formulation of the beam theory is first reviewed, and then th
 %The numerical integration scheme that specifically implemented for wind turbine analysis is also introduced. 
 Numerical examples are provided to verify the proposed beam solver and its coupling algorithm when it is running in a coupled-to-FAST mode.
 
-\section{Geometrically Exact Beam Theory}
+\section{Formulation and Implementation}
 
-This section briefly reviews the geometrically exact beam theory. Further details on the content of this section can be found in many other papers and textbooks \cite{HodgesBeamBook,Bauchau:2010,YuGEBT}.
+\subsection{Geometrically Exact Beam Theory}
+
+
+
+
+
+This section briefly reviews the geometrically exact beam theory. Further details on the content of this section can be found in many other papers\cite{YuGEBT} and textbooks \cite{HodgesBeamBook,Bauchau:2010}.
 Figure~\ref{Kinematics} shows a beam in its initial undeformed
 and deformed states. A reference frame $\mathbf{b}_i$ is introduced along the
 beam axis for the undeformed state and a frame $\mathbf{B}_i$ is introduced
@@ -131,10 +137,10 @@ $\underline{\epsilon}$ and $\underline{\kappa}$ are the 1D strains and
 curvatures, respectively; and, $\underline{\omega}$ is the angular velocity
 vector that is defined by the rotation tensor $\underline{\underline{R}}$ as
 $\underline{\omega} =
-axial(\dot{\underline{\underline{R}}}~\underline{\underline{R}}^T)$. The axial vector $\vec{a}$ associated with a second-order tensor $\tens{A}$ is denoted $\vec{a}=axial(\tens{A})$ and its components are defined as
+\mathrm{axial}(\dot{\underline{\underline{R}}}~\underline{\underline{R}}^T)$. The axial vector $\vec{a}$ associated with a second-order tensor $\tens{A}$ is denoted $\vec{a}=\mathrm{axial}(\tens{A})$ and its components are defined as
 \begin{equation}
     \label{axial}
-    \vec{a} = axial(\tens{A})=\begin{Bmatrix}
+    \vec{a} = \mathrm{axial}(\tens{A})=\begin{Bmatrix}
     a_1 \\
     a_2 \\
     a_3
@@ -159,7 +165,7 @@ The 1D strain measures are defined as
         \vec{k}
     \end{Bmatrix}
 \end{equation}
-where $\vec{k} = axial [(\tens{R R_0})^\prime (\tens{R R_0})^T]$ is the sectional
+where $\vec{k} = \mathrm{axial}[(\tens{R R_0})^\prime (\tens{R R_0})^T]$ is the sectional
 curvature vector resolved in the inertial basis and $\bar{\imath}_1$ is the unit
 vector along $x_1$ direction in the inertial basis. Note that these
 three sets of equations, including equations of motion
@@ -188,8 +194,41 @@ displacement, velocity, and acceleration are written as
 where $\tens{N}$ is the shape function matrix and $(\hat{\cdot})$ denotes a
 column matrix of nodal values.
 
-\section{Implicit Coupling Algorithm}
-For clarification, ``implicit" here refers to a module that needs information from other modules before the solution can be time-advanced; the modules are thus tied together in a linear or nonlinear system that must be solved for time advancement. Specifically to the BeamDyn module, which is used to represent a blade in the wind turbine system, the inputs are the root motion including displacements/rotations, linear and angular velocities, and linear and angular accelerations; and the outputs are the root reaction forces and moments transferred to the hub. The inputs and outputs can be written as
+\subsection{Legendre Spectral Finite Elements}
+
+\subsection{Finite-Element Quadrature}
+
+We describe here BeamDyn options for numerical integration (quadrature) of the finite-element inner products over an element domain.   
+Typically, the quadrature rule employed in a finite-element implementation is Gauss-Legendre (GL), for which the number of quadrature points is chosen based on the polynomial order of the underlying FE basis functions.  
+In the case where material properties vary signifcantly over an element domain, the accuracy of the quadrature is degraded, which can affect the overall accuracy of the solution.   If the number of quadrature points is fixed to the FE basis-function order, accuracy is increased by either increasing number of elements ($h$-refinement) or the order of the elements ($p$-refinement).  However, if the the quadrature order is chosen for accurate evaluation of FE inner products, then the choice in FE resolution can be chosen based on overall solution accuracy.
+
+The material sectional properties are defined discretely at $n_s$ stations along the beam axis.
+BeamDyn is equipped with two quadrature options: Gauss-Legendre quadrature and trapezoidal-rule (TR) quadrature.  
+For GL quadrature, $n_q= p + 1$, where $n_q$ is the number of quadrature points and $p$ is the order of the LSFE.  Material properties are linearly interpolated from the nearest-neighbor discrete stations. 
+Depending on the nature of the material properties, an increase in the element order $p$ could show a dramatically different response, simply becuase the quadrature points captured different material properties.
+For TR quadrature, $n_q = j n_s$ is user specified, where $j$ is a positive integer. 
+TR quadrature enables a user to model a modern turbine blade definited by many cross-sectional-proper stations with few node points (i.e., $p \ll n_s$), while capture all of the provided material properties.
+For example, 
+the widely used NREL 5-MW reference wind turbine blade is defined by 49 stations along the blade axis.   If one were using first-order FEs with a fixed quadrature scheme, at least 48 elements would be required to accurately capture the material data in the FE inner products.
+BeamDyn, with the GEBT model and LSFE $p$-type discretiztion, is equipped to model a wind turbine blade with a \textit{single} element, or very few elements.  
+LSFE discretizaiton with TR quadrature 
+is an effective modeling approach when the beam deformation can be described accurately with relatively few points, despite the large number of material-propery stations.    However, for a given element order and $n_q \gg p$, solutions will be significantly more expensive than if $n_q \approx p$ because inner products are evaluated at least once per time time step. 
+
+
+%The numerical analysis of wind turbine blade features a large number of cross-sectional data along the blade, usually ranging from dozens to more than one hundred stations. A typical practice in dealing with those cross-sectional data is interpolating a subset of the data to the quadrature point, for example, Gauss point. However, there are two drawbacks of this method. One is that it is very difficult to include all the data given the large number of cross sections used in wind turbine modeling. 
+%The widely used NREL 5-MW reference wind turbine blade, for example, provides 49 stations along the blade axis. If linearly discretizing this blade, 48 first-order finite elements, with two end points align with two adjacent stations, are needed to make sure that all the cross-sectional data being used in the simulation. The other drawback is that there is no rigorous way to interpolate the station data to the quadrature points. 
+ 
+% Given the discussion above, we implemented a new trapezoidal quadrature into BeamDyn, see Eq.~\ref{eqn:Trapezoidal}.
+% \begin{equation}
+%     \label{eqn:Trapezoidal}
+%     \int_a^b f(x) dx \approx \displaystyle \frac{1}{2} \sum_{k=1}^{N}(x_{k+1}-%x_k)\left[f(x_{k+1}) + f(x_k)\right] 
+% \end{equation}  
+% where $N$ is the total number of intervals. Generally, this is a over-integration scheme by assuming that each station point is a quadrature point regardless of the number of the finite element nodes. Based on this assumption, all the cross-sectional data are included in the calculation and no interpolation is needed since the quadrature points are exactly located on the cross-sectional station points. 
+
+\subsection{Module-Coupling Algorithm}
+%For clarification, ``implicit" here refers to a module that needs information from other modules before the solution can be time-advanced; the modules are thus tied together in a linear or nonlinear system that must be solved for time advancement. 
+
+Specifically to the BeamDyn module, which is used to represent a blade in the wind turbine system, the inputs are the root motion including displacements/rotations, linear and angular velocities, and linear and angular accelerations; and the outputs are the root reaction forces and moments transferred to the hub. The inputs and outputs can be written as
 \begin{align}
     \label{BDInput}
     \mathbf{u}_{BD} &= \left[ \vec{q}~~~\vec{v}~~~\vec{a}\right]^T \\
@@ -235,19 +274,11 @@ Newton-Raphson method is adopted here to solve this nonlinear system:
  \end{equation}
  where $\mathbf{e}_j$ is the unit vector in the $\mathbf{u}_j$ direction and $\epsilon_j$ represents a small increment.
  
- \section{Trapezoidal Quadrature}
- The numerical analysis of wind turbine blade features a large number of cross-sectional data along the blade, usually ranging from dozens to more than one hundred stations. A typical practice in dealing with those cross-sectional data is interpolating a subset of the data to the quadrature point, for example, Gauss point. However, there are two drawbacks of this method. One is that it is very difficult to include all the data given the large number of cross sections used in wind turbine modeling. The widely used NREL 5-MW reference wind turbine blade, for example, provides 49 stations along the blade axis. If linearly discretizing this blade, 48 first-order finite elements, with two end points align with two adjacent stations, are needed to make sure that all the cross-sectional data being used in the simulation. The other drawback is that there is no rigorous way to interpolate the station data to the quadrature points. 
  
- Given the discussion above, we implemented a new trapezoidal quadrature into BeamDyn, see Eq.~\ref{eqn:Trapezoidal}.
- \begin{equation}
-     \label{eqn:Trapezoidal}
-     \int_a^b f(x) dx \approx \displaystyle \frac{1}{2} \sum_{k=1}^{N}(x_{k+1}-x_k)\left[f(x_{k+1}) + f(x_k)\right] 
- \end{equation}  
- where $N$ is the total number of intervals. Generally, this is a over-integration scheme by assuming that each station point is a quadrature point regardless of the number of the finite element nodes. Based on this assumption, all the cross-sectional data are included in the calculation and no interpolation is needed since the quadrature points are exactly located on the cross-sectional station points. 
+\section{Numerical Examples}
  
- \section{Numerical Examples}
- 
- \subsection{Example 1: Partitioned Analysis}
+\subsection{Example 1: Partitioned Analysis}
+
  This example validates and examines the accuracy and numerical behavior of the proposed coupling algorithm. A beam attaches its root to a spring-mass-damper system, which is a simplified blade-hub system, see Figure~\ref{fig:CoupledSystem}. 
  \begin{figure}
 \centering
