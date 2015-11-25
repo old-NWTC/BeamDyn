@@ -127,13 +127,18 @@ SUBROUTINE Mod1_BD_InputOutputSolve(time, &
 
    ErrStat = ErrID_None
    ErrMsg  = ""
-   ! Solve input-output relations; this section of code corresponds to Eq. (35) in Gasmi et al. (2013)
-   ! This code will be specific to the underlying modules; could be placed in a separate routine.
-   ! Note that Module2 has direct feedthrough, but Module1 does not. Thus, Module1 should be called first.
 
+
+   ! eps is the perturbation magnitude in the approximation of the Jacobian
+   ! mas: I think the system is linear here, and should thus be insensitive to changes in eps; Qi verified that results
+   ! are indeed insensitive.
+    
    eps = 0.01D+00
+
+   ! These BD inputs come directly from the Mod1 states; no solve required
    BD_Input%RootMotion%TranslationDisp(3,1) = Mod1_Output%PointMesh%TranslationDisp(1,1)
    BD_Input%RootMotion%TranslationVel(3,1) = Mod1_Output%PointMesh%TranslationVel(1,1)
+
    DO i=1,iter_max
 !WRITE(*,*) 'i=',i
        CALL Mod1_CalcOutput( time, Mod1_Input, Mod1_Parameter, Mod1_ContinuousState, Mod1_DiscreteState, &
@@ -146,9 +151,13 @@ SUBROUTINE Mod1_BD_InputOutputSolve(time, &
 
        BD_Force = BD_Output%ReactionForce%Force(3,1)
        BD_RootAcc = BD_Input%RootMotion%TranslationAcc(3,1)
+
+
+       ! calculate RHS, which is the current iteration residual
        RHS(:) = 0.0D0
        RHS(1) = -(Mod1_Input%PointMesh%Force(1,1) - BD_Output%ReactionForce%Force(3,1))
        RHS(2) = -(BD_Input%RootMotion%TranslationAcc(3,1) - Mod1_Output%PointMesh%TranslationAcc(1,1))
+
        IF(TwoNorm(RHS) .LE. TOLF) THEN
            RETURN
        ENDIF
@@ -157,34 +166,41 @@ SUBROUTINE Mod1_BD_InputOutputSolve(time, &
        Coef(1,1) = 1.0D0
 
        BD_Input%RootMotion%TranslationAcc(3,1) = BD_Input%RootMotion%TranslationAcc(3,1) + eps
+
 !       CALL BD_InputClean(BD_Input)
-CALL BD_CopyOutput(BD_Output, OT_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
+       CALL BD_CopyOutput(BD_Output, OT_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
+
        CALL BD_CalcOutput( time, BD_Input, BD_Parameter, BD_ContinuousState, BD_DiscreteState, &
                     BD_ConstraintState, BD_OtherState, OT_tmp, ErrStat, ErrMsg )
+
        Coef(1,2) = -((OT_tmp%ReactionForce%Force(3,1)-BD_Force)/eps)
+
+       ! replace BD_Input with unperturbed value
        BD_Input%RootMotion%TranslationAcc(3,1) = BD_RootAcc
 
        Coef(2,2) = 1.0D0
+
        Mod1_Force = Mod1_Input%PointMesh%Force(1,1)
        Mod1_Acc = Mod1_Output%PointMesh%TranslationAcc(1,1)
 
        Mod1_Input%PointMesh%Force(1,1) = Mod1_Input%PointMesh%Force(1,1) + eps
-CALL Mod1_CopyOutput(Mod1_Output, Mod1OT_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
+       CALL Mod1_CopyOutput(Mod1_Output, Mod1OT_tmp, MESH_NEWCOPY, ErrStat, ErrMsg)
        CALL Mod1_CalcOutput( time, Mod1_Input, Mod1_Parameter, Mod1_ContinuousState, Mod1_DiscreteState, &
                              Mod1_ConstraintState, Mod1_OtherState, Mod1OT_tmp, ErrStat, ErrMsg )
        Coef(2,1) = -((Mod1OT_tmp%PointMesh%TranslationAcc(1,1) - Mod1_Acc)/eps)
        Mod1_Input%PointMesh%Force(1,1) = Mod1_Force
  
-       CALL LAPACK_getrf( 2, 2, Coef,indx,&
-                          ErrStat2, ErrMsg2) 
+       CALL LAPACK_getrf( 2, 2, Coef,indx, ErrStat2, ErrMsg2) 
           CALL SetErrStat( ErrStat2, ErrMsg2, ErrStat, ErrMsg, RoutineName )
-       CALL LAPACK_getrs( 'N',2, Coef,indx,RHS,&
-                          ErrStat2, ErrMsg2) 
+       CALL LAPACK_getrs( 'N',2, Coef,indx,RHS, ErrStat2, ErrMsg2) 
           CALL SetErrStat( ErrStat2, ErrMsg2, ErrStat, ErrMsg, RoutineName )
+
        uinc(:) = RHS(:)
+
 !WRITE(*,*) 'uinc'
 !WRITE(*,*) uinc
        IF(TwoNorm(uinc) .LE. TOLF) RETURN
+
        Mod1_Input%PointMesh%Force(1,1) = Mod1_Input%PointMesh%Force(1,1) + uinc(1)
        BD_Input%RootMotion%TranslationAcc(3,1) = BD_Input%RootMotion%TranslationAcc(3,1) + uinc(2)
       
