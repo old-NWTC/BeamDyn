@@ -258,12 +258,13 @@ SUBROUTINE BD_InputSolve( t, u,  p, InitInput, IniVelo, ErrStat, ErrMsg)
        u%RootMotion%Orientation(i,i,1) = 1.0D0
        u%HubMotion%Orientation(i,i,1) = 1.0D0
    ENDDO
-   temp33=u%RootMotion%Orientation(:,:,1) !possible type conversion
-   CALL BD_CrvMatrixR(temp_vec,temp33,ErrStat,ErrMsg)
-   temp_rr(:) = MATMUL(u%RootMotion%Orientation(:,:,1),temp_r0)
-   u%RootMotion%Orientation(:,:,1) = TRANSPOSE(u%RootMotion%Orientation(:,:,1))
+!   temp33=u%RootMotion%Orientation(:,:,1) !possible type conversion
+!   CALL BD_CrvMatrixR(temp_vec,temp33,ErrStat,ErrMsg)
+!   temp_rr(:) = MATMUL(u%RootMotion%Orientation(:,:,1),temp_r0)
+!   u%RootMotion%Orientation(:,:,1) = TRANSPOSE(u%RootMotion%Orientation(:,:,1))
    u%RootMotion%TranslationDisp(:,:)  = 0.0D0
-   u%RootMotion%TranslationDisp(:,1) = temp_rr(:) - temp_r0(:)
+   u%RootMotion%TranslationDisp(1,1)  = 0.1*SIN(2.0*pi_d*t/2.5)
+!   u%RootMotion%TranslationDisp(:,1) = temp_rr(:) - temp_r0(:)
    ! END Calculate root displacements and rotations
 
    ! Calculate root translational and angular velocities
@@ -272,15 +273,17 @@ SUBROUTINE BD_InputSolve( t, u,  p, InitInput, IniVelo, ErrStat, ErrMsg)
    u%RootMotion%RotationVel(2,1) = IniVelo(6)
    u%RootMotion%RotationVel(3,1) = IniVelo(4)
    u%RootMotion%TranslationVel(:,:) = 0.0D0
-   u%RootMotion%TranslationVel(:,1) = MATMUL(BD_Tilde(real(u%RootMotion%RotationVel(:,1),BDKi)),temp_rr)
+!   u%RootMotion%TranslationVel(:,1) = MATMUL(BD_Tilde(real(u%RootMotion%RotationVel(:,1),BDKi)),temp_rr)
+   u%RootMotion%TranslationVel(1,1) = 0.1*(2.0*pi_d/2.5)*COS(2.0*pi_d*t/2.5)
    ! END Calculate root translational and angular velocities
 
 
    ! Calculate root translational and angular accelerations
    u%RootMotion%TranslationAcc(:,:) = 0.0D0
    u%RootMotion%RotationAcc(:,:) = 0.0D0
-   u%RootMotion%TranslationAcc(:,1) = MATMUL(BD_Tilde(real(u%RootMotion%RotationVel(:,1),BDKi)), &
-               MATMUL(BD_Tilde(real(u%RootMotion%RotationVel(:,1),BDKi)),temp_rr))
+   u%RootMotion%RotationAcc(1,1) = -0.1*(2.0*pi_d/2.5)*(2.0*pi_d/2.5)*SIN(2.0*pi_d*t/2.5)
+!   u%RootMotion%TranslationAcc(:,1) = MATMUL(BD_Tilde(real(u%RootMotion%RotationVel(:,1),BDKi)), &
+!               MATMUL(BD_Tilde(real(u%RootMotion%RotationVel(:,1),BDKi)),temp_rr))
    ! END Calculate root translational and angular accelerations
 
    u%PointLoad%Force(:,:)  = 0.0D0
