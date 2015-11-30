@@ -1,0 +1,26 @@
+------- BEAMDYN V1.00.* Driver INPUT FILE -------------------------------------
+For stand-alone application
+---------------------- SIMULATION CONTROL --------------------------------------
+0          t_initial     - Starting time of simulation
+1.0       t_final       - Ending time of simulation
+1E-03      dt            - Time increment size
+---------------------- GRAVITY PARAMETER --------------------------------------
+0.0        Gx            - Component of gravity vector along X direction
+0.0        Gy            - Component of gravity vector along Y direction
+0.0        Gz            - Component of gravity vector along Z direction
+---------------------- FRAME PARAMETER --------------------------------------
+0.0        GlbPos(1)     - Component of position vector of the origin of the blade frame along X direction
+0.0        GlbPos(2)     - Component of position vector of the origin of the blade frame along Y direction
+0.0        GlbPos(3)     - Component of position vector of the origin of the blade frame along Z direction
+0.0        GlbRot(1)     - Rotation angle of the blade frame in Radian about X axis
+0.0        GlbRot(2)     - Rotation angle of the blade frame in Radian about Y axis
+0.0        GlbRot(3)     - Rotation angle of the blade frame in Radian about Z axis
+---------------------- INITIAL VELOCITY PARAMETER ----------------------------------
+0.0       IniRootVel(1)     - Component of velocity vector of the beam root along X direction
+0.0        IniRootVel(2)     - Component of velocity vector of the beam root along Y direction
+0.0        IniRootVel(3)     - Component of velocity vector of the beam root along Z direction
+0.0       IniRootVel(4)     - Component of angular velocity vector of the beam root about X axis
+0.0        IniRootVel(5)     - Component of angular velocity vector of the beam root about Y axis
+0.0        IniRootVel(6)     - Component of angular velocity vector of the beam root about Z axis
+---------------------- PRIMARY INPUT FILE --------------------------------------
+"Static_Curved.inp"    InputFile - Name of the primary input file

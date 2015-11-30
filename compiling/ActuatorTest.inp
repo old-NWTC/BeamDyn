@@ -1,0 +1,43 @@
+--------- BEAMDYN V1.01.* INPUT FILE -------------------------------------------
+Sample
+---------------------- SIMULATION CONTROL --------------------------------------
+FALSE         Echo       - Echo input data to "<RootName>.ech" (flag)
+2        analysis_type   - 0: Rigid Body analysis; 1: Static analysis; 2: Dynamic analysis
+1.0       rhoinf         - Parameter for GA2
+1         quadrature     - 1: Gauss; 2: Trapezoidal
+DEFAULT   refine         - Refinement factor for quadrature 2. DEFAULT = 1
+DEFAULT   n_fact         - Factorization frequency: The Jacobian is computed every n_fact steps in N-R iteration. DEFAULT = 5
+DEFAULT   DTBeam         - Time step size
+DEFAULT   NRMax			 - Max number of iterations in Newton-Ralphson algorithm
+DEFAULT   stop_tol       - Tolerance for stopping criterion
+---------------------- GEOMETRY PARAMETER --------------------------------------
+  1     member_total    - Total number of member (-)
+3    kp_total        - Total number of key point (-)
+1    3
+kp_xb kp_yb   kp_zb    initial_twist
+(m)    (m)    (m)     (deg)
+  0.000000   0.000000   0.000000   0.000000
+  0.000000   0.000000   0.50000   0.000000
+  0.000000   0.000000   1.000000   0.000000
+---------------------- MESH PARAMETER ------------------------------------------
+5    order_elem    - Order of interpolation (basis) function (-)
+---------------------- MATERIAL PARAMETER --------------------------------------
+"ActuatorTest_Beam.inp"    BldFile - Name of file containing properties for blade
+---------------------- PITCH ACTUATOR PARAMETERS -------------------------------
+TRUE False     UsePitchAct - Whether a pitch actuator should be used (flag)
+200       PitchJ      - Pitch actuator inertia (kg-m^2) [used only when UsePitchAct is true]
+2.0E+5    PitchK      - Pitch actuator stiffness (kg-m^2/s^2) [used only when UsePitchAct is true]
+5.0E+2    PitchC      - Pitch actuator damping (kg-m^2/s) [used only when UsePitchAct is true]
+---------------------- OUTPUTS -------------------------------------------------
+True      SumPrint       - Print summary data to "<RootName>.sum" (flag)
+"ES10.3E2"    OutFmt          - Format used for text tabular output, excluding the time channel.  Resulting field should be 10 characters. (quoted string)
+          0   NNodeOuts           - Number of nodes to output to file [0 - 9] (-)
+ 1         OutNd               - Nodes whose values will be output  (-)
+              OutList             - The next line(s) contains a list of output parameters.  See OutListParameters.xlsx for a listing of available output channels, (-)
+"RootFxr, RootFyr, RootFzr"
+"RootMxr, RootMyr, RootMzr"
+"PAngInp, PAngAct, PRatAct,PAccAct"
+"TipTDxr, TipTDyr, TipTDzr"
+"TipRDxr, TipRDyr, TipRDzr"
+END of input file (the word "END" must appear in the first 3 columns of this last OutList line)
+--------------------------------------------------------------------------------

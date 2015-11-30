@@ -1,0 +1,49 @@
+--------- BEAMDYN V1.01.* INPUT FILE -------------------------------------------
+Debug trapezoidal quadrature
+---------------------- SIMULATION CONTROL --------------------------------------
+False     Echo           - Echo input data to "<RootName>.ech" (flag)
+2         analysis_type  - 1: Static analysis; 2: Dynamic analysis
+0.0       rhoinf         - Numerical Damping Parameter for Generalized-alpha integrator
+2         quadrature     - 1: Gauss; 2: Trapezoidal
+DEFAULT   refine         - Refinement factor for quadrature 2. DEFAULT = 1
+DEFAULT   n_fact         - Factorization frequency: The Jacobian is computed every n_fact steps in N-R iteration. DEFAULT = 5
+DEFAULT   DTBeam         - Time step size
+DEFAULT   NRMax          - Max number of iterations in Newton-Ralphson algorithm
+DEFAULT   stop_tol       - Tolerance for stopping criterion
+---------------------- GEOMETRY PARAMETER --------------------------------------
+1     member_total       - Total number of member (-)
+6    kp_total           - Total number of key point (-)
+1    6                  - Member number; Number of key points in this member
+kp_xb kp_yb   kp_zb    initial_twist
+(m)    (m)    (m)     (deg)
+  0.000000   0.000000   0.000000   0.000000
+  0.000000   0.000000   1.000000   0.000000
+  0.000000   0.000000   2.000000   0.000000
+  0.000000   0.000000   4.000000   0.000000
+  0.000000   0.000000   6.000000   0.000000
+  0.000000   0.000000   8.000000   0.000000
+---------------------- MESH PARAMETER ------------------------------------------
+3         order_elem     - Order of interpolation (basis) function (-)
+---------------------- MATERIAL PARAMETER --------------------------------------
+"Trap_Blade_Test.inp"  BldFile - Name of file containing properties for blade
+---------------------- OUTPUTS -------------------------------------------------
+True      SumPrint       - Print summary data to "<RootName>.sum" (flag)
+"ES10.3E2"    OutFmt          - Format used for text tabular output, excluding the time channel.  Resulting field should be 10 characters. (quoted string)
+      2   NNodeOuts      - Number of nodes to output to file [0 - 9] (-)
+ 1, 3     OutNd          - Nodes whose values will be output  (-)
+          OutList        - The next line(s) contains a list of output parameters.  See OutListParameters.xlsx for a listing of available output channels, (-)
+"RootFxr, RootFyr, RootFzr"
+"RootMxr, RootMyr, RootMzr"
+"TipTDxr, TipTDyr, TipTDzr"
+"N1Fxl,N1Fyl,N1Fzl"
+"N1Mxl,N1Myl,N1Mzl"
+END of input file (the word "END" must appear in the first 3 columns of this last OutList line)
+--------------------------------------------------------------------------------
+
+
+
+"N1TDXr, N1TDYr, N1TDZr"
+"N1TVXg, N1TVYg, N1TVZg"
+"N1TAXg, N1TAYg, N1TAZg"
+"N1RVXg, N1RVYg, N1RVZg"
+"N1RAXg, N1RAYg, N1RAZg"
