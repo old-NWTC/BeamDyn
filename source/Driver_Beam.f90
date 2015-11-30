@@ -70,6 +70,7 @@ PROGRAM MAIN
    REAL(BDKi):: temp_R(3,3)
    REAL(R8Ki):: start, finish
    REAL(BDKi) , DIMENSION(:), ALLOCATABLE  :: IniVelo      ! Initial Position Vector between origins of Global and blade frames [-]
+INTEGER(IntKi),PARAMETER:: QiDisUnit = 20
    ! -------------------------------------------------------------------------
    ! Initialization of glue-code time-step variables
    ! -------------------------------------------------------------------------
@@ -145,6 +146,11 @@ PROGRAM MAIN
                              BD_OtherState,  BD_Output(2), ErrStat, ErrMsg)
         CALL CheckError()
 
+!IF(MOD(n_t_global,5) .EQ. 0) THEN
+      WRITE(QiDisUnit,3000) t_global,&
+                            &BD_OutPut(2)%BldMotion%TranslationDisp(1:3,BD_Parameter%node_elem*BD_Parameter%elem_total)
+!ENDIF
+
      CALL Dvr_WriteOutputLine(t_global,DvrOut,BD_Parameter%OutFmt,BD_Output(2),ErrStat,ErrMsg)
         CALL CheckError()
 
@@ -167,6 +173,9 @@ PROGRAM MAIN
    WRITE(*,*) 'Time: ', finish-start
 
    CALL Dvr_End()
+
+3000 FORMAT (ES12.5,3ES21.12)
+CLOSE (QiDisUnit)
 
 CONTAINS
 
