@@ -16,6 +16,14 @@
 #BITS = 32
 BITS = 64
 
+# on peregrine, following as been tested with following modules:
+# login4 >> module list
+# Currently Loaded Modulefiles:
+#   1) gcc/4.8.1                 2) lapack/3.4.2/gcc          3) compiler/intel/13.5.192
+
+# Name of compiler to use and flags to use.
+FC     = gfortran
+#FC     = ifort
 
    # Location of source files for ModuleName and the NWTC Library.  You will probably need to change these for your system.
 # these settings are overridden below
@@ -25,26 +33,24 @@ ifeq ($(OS),Windows_NT)
    REGISTRY = $(FAST_dir)/bin/Registry_Win32.exe
    LAPACK_LINK  = -llapack -lblas -LC:/LAPACK/win32
 else
-   FAST_dir=/Users/qwang2/Desktop/BeamDyn/SVN/BJonkman/
-#   FAST_dir=/Users/mspragu2/SVN/BJonkman/
+#   FAST_dir=/Users/qwang2/Desktop/BeamDyn/SVN/BJonkman/
+   FAST_dir=/Users/mspragu2/SVN/BJonkman/
+   FAST_dir=/home/mspragu2/SVN/BJonkman/
 
    REGISTRY   = $(FAST_dir)Source/dependencies/registry.exe
-   LAPACK_LINK  = -llapack -lblas
+   LAPACK_LINK  = -L$(LAPACK_LIB) -llapack -lblas
 endif
 
 BD_DIR = ../source
 LIB_DIR = $(FAST_dir)/Source/dependencies/NWTC_Library/
 NETLIB_DIR = $(FAST_dir)/Source/dependencies/NetLib/
 
-   # Name of compiler to use and flags to use.
 
-FC     = gfortran
-OPT    =
 #FFLAGS = -O2 -m$(BITS) -fbacktrace -ffree-line-length-none -x f95-cpp-input  -fcheck=bounds -C
 #FFLAGS = -O3 -fbacktrace -ffree-line-length-none -x f95-cpp-input
 #LDFLAGS = -O2 -m$(BITS)  -fbacktrace $(BLAS_LAPACK_LIBS)
-FFLAGS = $(OPT) -O2 -m$(BITS) -fdefault-real-8 -fdefault-double-8 -fbacktrace -ffree-line-length-none -x f95-cpp-input -Wsurprising -DDOUBLE_PRECISION #-g
-LDFLAGS = $(OPT) -O2 -m$(BITS) -fbacktrace #-g
+
+
 
 
    # Precision.
@@ -75,7 +81,19 @@ else
    MD_CMD    = @mkdir -p
    OBJ_EXT   = .o
    PATH_SEP  = /
-   SYS_FILE  = SysGnuLinux
+   ifeq ($(FC),gfortran)
+      SYS_FILE  = SysGnuLinux
+   else
+      SYS_FILE  = SysIFL
+   endif
+endif
+
+ifeq ($(FC),gfortran)
+   FFLAGS = -O2 -m$(BITS) -fdefault-real-8 -fdefault-double-8 -fbacktrace -ffree-line-length-none -x f95-cpp-input -Wsurprising -DDOUBLE_PRECISION -J $(INTER_DIR) 
+   LDFLAGS = $(OPT) -O2 -m$(BITS) -fbacktrace #-g
+else
+   FFLAGS  = -O2 -r8 -fpconstant -fpp -DDOUBLE_PRECISION  -module $(INTER_DIR) -B $(INTER_DIR)
+   LDFLAGS = -O2 
 endif
 
    # Destination and RootName for executable
@@ -127,9 +145,9 @@ default: $(INTER_DIR) $(DEST_DIR)/$(OUTPUT_NAME)$(EXE_EXT)
 
    # General rule for making the files.
 
-# -B is needed for MinGW version of Gfortran
+
 %.obj: %.f90
-	$(FC) -I $(INTER_DIR) $(FFLAGS) -c $< -o $(INTER_DIR)/$@ -J $(INTER_DIR) #-B $(INTER_DIR)
+	$(FC) -I $(INTER_DIR) $(FFLAGS) -c $< -o $(INTER_DIR)/$@ 
 
    #  Dependency rules.
 
