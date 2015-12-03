@@ -10,10 +10,10 @@
 NotebookFileLineBreakTest
 NotebookFileLineBreakTest
 NotebookDataPosition[       157,          7]
-NotebookDataLength[     89047,       1492]
-NotebookOptionsPosition[     88559,       1470]
-NotebookOutlinePosition[     88915,       1486]
-CellTagsIndexPosition[     88872,       1483]
+NotebookDataLength[     89141,       1493]
+NotebookOptionsPosition[     88653,       1471]
+NotebookOutlinePosition[     89009,       1487]
+CellTagsIndexPosition[     88966,       1484]
 WindowFrame->Normal*)
 
 (* Beginning of Notebook Content *)
@@ -1408,7 +1408,8 @@ IiIiIiIiIiIialD/A7PV3ow=
    3.652381901410219*^9, 3.652704928119059*^9, 3.652802256150422*^9, 
    3.6530633691353283`*^9, 3.653067449463451*^9, 3.653216779080913*^9, 
    3.653216814802023*^9, 3.653673732753633*^9, {3.6536738626198683`*^9, 
-   3.653673899234207*^9}, 3.656076289047133*^9, 3.656082417209055*^9}]
+   3.653673899234207*^9}, 3.656076289047133*^9, 3.656082417209055*^9, 
+   3.658089013338893*^9}]
 }, Open  ]],
 
 Cell[CellGroupData[{
@@ -1416,7 +1417,7 @@ Cell[CellGroupData[{
 Cell[BoxData[
  RowBox[{"Export", "[", 
   RowBox[{
-  "\"\</Users/qwang2/spectral-fe/beam/docs/Manual/Figure/BladeGeometry.jpg\>\"\
+  "\"\</Users/qwang2/spectral-fe/beam/docs/Manual/Figure/BladeGeometry.eps\>\"\
 ", ",", "temp1"}], "]"}]], "Input",
  CellChangeTimes->{{3.569264393793912*^9, 3.5692644027831078`*^9}, {
    3.569264466653459*^9, 3.569264470256415*^9}, {3.569264507105528*^9, 
@@ -1442,10 +1443,10 @@ Cell[BoxData[
    3.653067452629135*^9, 3.6530674547869062`*^9}, {3.653216826222166*^9, 
    3.65321682843375*^9}, {3.653673903695383*^9, 3.653673905681958*^9}, {
    3.656076293098037*^9, 3.6560762947682753`*^9}, {3.6560824229409513`*^9, 
-   3.656082428218964*^9}}],
+   3.656082428218964*^9}, {3.658089020474106*^9, 3.658089021696115*^9}}],
 
 Cell[BoxData["\<\"/Users/qwang2/spectral-fe/beam/docs/Manual/Figure/\
-BladeGeometry.jpg\"\>"], "Output",
+BladeGeometry.eps\"\>"], "Output",
  CellChangeTimes->{
   3.569264475382967*^9, 3.56926451825847*^9, 3.569264649200338*^9, 
    3.569264818299542*^9, 3.569608798668754*^9, 3.569611657555169*^9, 
@@ -1462,14 +1463,14 @@ BladeGeometry.jpg\"\>"], "Output",
    3.652381905415098*^9, 3.6527049374228077`*^9, 3.652802266070692*^9, 
    3.653063372357656*^9, 3.6530674561676893`*^9, 3.6532168310467787`*^9, {
    3.653673867043396*^9, 3.653673907809922*^9}, 3.656076298829678*^9, 
-   3.656082429434794*^9}]
+   3.656082429434794*^9, 3.658089023227334*^9}]
 }, Open  ]],
 
 Cell[BoxData[""], "Input",
  CellChangeTimes->{{3.65321800847666*^9, 3.6532180188962297`*^9}}]
 },
 WindowSize->{740, 867},
-WindowMargins->{{145, Automatic}, {13, Automatic}},
+WindowMargins->{{305, Automatic}, {13, Automatic}},
 FrontEndVersion->"8.0 for Mac OS X x86 (32-bit, 64-bit Kernel) (October 5, \
 2011)",
 StyleDefinitions->"Default.nb"
@@ -1487,13 +1488,13 @@ CellTagsIndex->{}
 Notebook[{
 Cell[CellGroupData[{
 Cell[579, 22, 2143, 32, 27, "Input"],
-Cell[2725, 56, 82495, 1354, 234, "Output"]
+Cell[2725, 56, 82521, 1355, 234, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[85257, 1415, 1964, 29, 43, "Input"],
-Cell[87224, 1446, 1223, 18, 27, "Output"]
+Cell[85283, 1416, 2010, 29, 43, "Input"],
+Cell[87296, 1447, 1245, 18, 27, "Output"]
 }, Open  ]],
-Cell[88462, 1467, 93, 1, 27, "Input"]
+Cell[88556, 1468, 93, 1, 27, "Input"]
 }
 ]
 *)

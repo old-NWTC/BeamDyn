@@ -25,8 +25,8 @@
 \renewcommand{\skew}[1]{\widetilde{#1}}
 %------------------------------------------------------------------------------
 
-\title{Partitioned nonlinear structural analysis\\
-of wind turbines using BeamDyn}
+\title{Partitioned Nonlinear Structural Analysis\\
+of Wind Turbines using BeamDyn}
 
 \author[]{Qi Wang\thanks{Research Engineer, National Wind Technology Center, AIAA Member. Email: Qi.Wang2@nrel.gov}}
  \author[]{Michael A. Sprague\thanks{Senior Research Scientist, 
@@ -42,10 +42,10 @@ Computational Science Center.}}
 \maketitle
 
 \begin{abstract}
-{We present the numerical implementation of BeamDyn, a finite element beam solver based on geometrically exact beam theory (GEBT), and its coupling to different modules in the FAST modularization framework. 
+{We present the numerical implementation of BeamDyn, a finite element beam solver based on geometrically exact beam theory, and its coupling to different modules in the FAST modularization framework. 
 After reviewing the underlying BeamDyn theory and implementation, we describe the coupling algorithm and numerical integration scheme specifically designed for wind turbine analysis. 
 The loose coupling method between BeamDyn and other modules is used where the nonlinear input-output coupling relations are solved by the Newton-Raphson method. 
-Finally, numerical examples are provided to verify both BeamDyn and the coupling algorithm. }     
+Finally, we provide numerical examples to verify both BeamDyn and the coupling algorithm. }     
 \end{abstract}
 
 \section{Introduction} 
@@ -59,19 +59,19 @@ BeamDyn, which is founded on geometrically exact beam theory (GEBT), was created
 %which is a beam-deformation model useful in efficient analysis of highly flexible composite structures. 
 GEBT was first proposed by Reissner\cite{Ressiner1973} and then extended to three-dimensional (3D) beams by Simo\cite{Simo1985} and Simo and Vu-Quoc\cite{Simo1986}. 
 Readers are referred to
-Hodges\cite{HodgesBeamBook}, in which comprehensive derivations and discussions
+Hodges,\cite{HodgesBeamBook} in which comprehensive derivations and discussions
 on nonlinear composite-beam theories can be found. 
-In the BeamDyn implementation, the GEBT equations are discrretized spatially with Legendre spectral finite elements (LSFEs), which are $p$-type high order elements that combine the accuracy of global spectral methods with the geometric modeling flexibility of low-order $h$-type elements.
-More details on BeamDyn can be found in Wang et al.\cite{Wang:GEBT2014}.
+In the BeamDyn implementation, the GEBT equations are discrretized spatially with Legendre spectral finite elements (LSFEs), which are $p$-type high-order elements that combine the accuracy of global spectral methods with the geometric modeling flexibility of low-order $h$-type elements.
+More details on BeamDyn can be found in Wang et al.\cite{Wang:GEBT2014}
 
 FAST is NREL's flagship multi-physics engineering tool for analyzing both land-based and offshore wind turbines under realistic operating conditions.  
-The established FAST blade model included in the module Elastodyn, is incabable 
+The established FAST blade model included in the module Elastodyn is incapable 
 of predictive analysis of highly flexible, composite wind turbine blades. 
 FAST has been reformulated under a new modularized framework that provides a rigorous means by which various mathematical systems are implemented in distinct modules and coupled to other modules. 
 The restructuring of FAST greatly enhanced flexibility and expandability to enable further developments of functionality without the need to recode established modules. 
-These modules are interconnected to solve for the globally coupled dynamic responses of wind turbines and wind plants \cite{Jonkman:2013,website:FASTModularizationFramework}. In previous work, this framework is extended to handle the non-matching spatial grids at interfaces and non-matching temporal meshes that allow module solutions to advance with different time increments and different time integrators.\cite{Sprague:2014}
+These modules are interconnected to solve for the globally coupled dynamic responses of wind turbines and wind plants. \cite{Jonkman:2013,website:FASTModularizationFramework} In previous work, this framework is extended to handle the nonmatching spatial grids at interfaces and nonmatching temporal meshes that allow module solutions to advance with different time increments and different time integrators.\cite{Sprague:2014}
 
-In this paper, the formulation of the beam theory is first reviewed, and then the coupling algorithm of BeamDyn with other modules is presented. 
+In this paper, the formulation of the beam theory is first reviewed and then the coupling algorithm of BeamDyn with other modules is presented. 
 %The numerical integration scheme that specifically implemented for wind turbine analysis is also introduced. 
 Numerical examples are provided to verify the proposed beam solver and its coupling algorithm when it is running in a coupled-to-FAST mode.
 
@@ -83,7 +83,7 @@ Numerical examples are provided to verify the proposed beam solver and its coupl
 
 
 
-This section briefly reviews the geometrically exact beam theory. Further details on the content of this section can be found in many other papers\cite{YuGEBT} and textbooks \cite{HodgesBeamBook,Bauchau:2010}.
+This section briefly reviews the geometrically exact beam theory. Further details on the content of this section can be found in many other papers\cite{YuGEBT} and textbooks. \cite{HodgesBeamBook,Bauchau:2010}
 Figure~\ref{Kinematics} shows a beam in its initial undeformed
 and deformed states. A reference frame $\mathbf{b}_i$ is introduced along the
 beam axis for the undeformed state and a frame $\mathbf{B}_i$ is introduced
@@ -100,7 +100,7 @@ In this paper, matrix notation is used to denote vectorial or vectorial-like qua
 	\label{GovernGEBT-2}
 	\dot{\underline{g}} + \dot{\tilde{u}} \underline{h} - \underline{M}^\prime + (\tilde{x}_0^\prime + \tilde{u}^\prime)^T \underline{F} &= \underline{m}
 \end{align}
-where $\vec{h}$ and $\vec{g}$ are the linear and angular momenta resolved in the inertial coordinate system, respectively; $\vec{F}$ and $\vec{M}$ are the beam's sectional force and moment resultants, respectively; $\vec{u}$ is the one-dimensional (1D) displacement of a point on the reference line; $\vec{x}_0$ is the position vector of a point along the beam's reference line;  and $\vec{f}$ and $\vec{m}$ are the distributed force and moment applied to the beam structure.  The notation $(\bullet)^\prime$ indicates a derivative with respect to beam axis $x_1$ and $\dot{(\bullet)}$ indicates a derivative with respect to time. The tilde operator $(\skew{\bullet})$ defines a skew-symmetric tensor corresponding to the given vector. In the literature, it is also termed as ``cross-product matrix". For example,
+where $\vec{h}$ and $\vec{g}$ are the linear and angular momenta resolved in the inertial coordinate system, respectively; $\vec{F}$ and $\vec{M}$ are the beam's sectional force and moment resultants, respectively; $\vec{u}$ is the one-dimensional (1D) displacement of a point on the reference line; $\vec{x}_0$ is the position vector of a point along the beam's reference line;  and $\vec{f}$ and $\vec{m}$ are the distributed force and moment applied to the beam structure.  The notation $(\bullet)^\prime$ indicates a derivative with respect to beam axis $x_1$ and $\dot{(\bullet)}$ indicates a derivative with respect to time. The tilde operator $(\skew{\bullet})$ defines a skew-symmetric tensor corresponding to the given vector. In the literature, it is also termed as ``cross-product matrix." For example,
 \[
 	\skew{n} = 
 	     		\begin{bmatrix}
@@ -196,30 +196,30 @@ column matrix of nodal values.
 
 \subsection{Spatial and Temporal Discretization}
 
-As described above, the GEBT model is discretized in space with Legendre Spectral Finite Elements\cite{Ronquist-Patera:1987} (LSFEs), which are a high-order $p$-type finite element (FE).   
+As described above, the GEBT model is discretized in space with LSFEs\cite{Ronquist-Patera:1987} , which are a high-order $p$-type finite element (FE).   
 Elements have $p+1$ nodes located at the Gauss-Lobatto-Legendre points, where $p$ is the polynomial order of the Lagrangian-interpolant basis functions.  
 For a given number of nodes, we have shown\cite{Wang:SFE2013,Wang:GEBT2014} that LSFEs for GEBT-based models can be dramatically more accurate than low-order elements.   
-As a tool in BeamDyn, an LSFE evaluated with an appropriate quadrature scheme provides the option to model a modern, highly flexibly turbine blade with a single element.  
+As a tool in BeamDyn, an LSFE evaluated with an appropriate quadrature scheme provides the option to model a modern, highly flexible turbine blade with a single element.  
 The choice of numerical quadrature is described in the next section.
-The GEBT-LSFE equations are time-integrated with a second-order-accurate generalized-alpha algorithm that is equipped with user-defined numerical damping (see Wang et al. \cite{Wang:GEBT2014} for details).  
+The GEBT-LSFE equations are time-integrated with a second-order-accurate generalized-alpha algorithm that is equipped with user-defined numerical damping (see Ref.~\cite{Wang:GEBT2014} for details).  
 
 \subsection{Finite-Element Quadrature}
 
-We describe here BeamDyn options for numerical integration (quadrature) of the finite-element inner products over an element domain.   
+In this section, we describe BeamDyn options for numerical integration (quadrature) of the finite-element inner products over an element domain.   
 Typically, the quadrature rule employed in a finite-element implementation is Gauss-Legendre (GL), for which the number of quadrature points is chosen based on the polynomial order of the underlying FE basis functions.  
 In the case where material properties vary significantly over an element domain, the accuracy of the quadrature is degraded, which can affect the overall accuracy of the solution.   If the number of quadrature points is fixed to the FE basis-function order, accuracy is increased by either increasing number of elements ($h$-refinement) or the order of the elements ($p$-refinement).  However, if the quadrature order is chosen for accurate evaluation of FE inner products, then the choice in FE resolution can be chosen based on overall solution accuracy.
 
 The material sectional properties are defined discretely at $n_s$ stations along the beam axis.
 BeamDyn is equipped with two quadrature options: Gauss-Legendre quadrature and trapezoidal-rule (TR) quadrature.  
 For GL quadrature, $n_q= p + 1$, where $n_q$ is the number of quadrature points and $p$ is the order of the LSFE.  Material properties are linearly interpolated from the nearest-neighbor discrete stations. 
-Depending on the nature of the material properties, an increase in the element order $p$ could instigate a dramatically different response, simply because the quadrature points captured different material properties.
+Depending on the nature of the material properties, an increase in the element order $p$ could instigate a dramatically different response, because the quadrature points captured different material properties.
 For TR quadrature, $n_q = j n_s$ is user specified, where $j$ is a positive integer. 
-TR quadrature enables a user to model a modern turbine blade defined by many cross-sectional-proper stations with few node points (i.e., $p \ll n_s$), while capturing all of the provided material properties.
+Trapezoidal-rule quadrature enables a user to model a modern turbine blade defined by many cross-sectional-proper stations with few node points (i.e., $p \ll n_s$) while capturing all of the provided material properties.
 For example, 
 the widely used NREL 5-MW reference wind turbine blade is defined by 49 stations along the blade axis.   If one were using first-order FEs with a fixed quadrature scheme, at least 48 elements would be required to accurately capture the material data in the FE inner products.
 BeamDyn, with the GEBT model and LSFE $p$-type discretization, is equipped to model a wind turbine blade with a \textit{single} element, or very few elements.  
 LSFE discretization with TR quadrature 
-is an effective modeling approach when the beam deformation can be described accurately with relatively few points, despite the large number of material-property stations.    However, for a given element order and $n_q \gg p$, solutions will be significantly more expensive than if $n_q \approx p$ because inner products are evaluated at least once per time time step. 
+is an effective modeling approach when the beam deformation can be described accurately with relatively few points, despite the large number of material-property stations.    However, for a given element order and $n_q \gg p$, solutions will be significantly more expensive than if $n_q \approx p$ because inner products are evaluated at least once per time step. 
 
 
 %The numerical analysis of wind turbine blade features a large number of cross-sectional data along the blade, usually ranging from dozens to more than one hundred stations. A typical practice in dealing with those cross-sectional data is interpolating a subset of the data to the quadrature point, for example, Gauss point. However, there are two drawbacks of this method. One is that it is very difficult to include all the data given the large number of cross sections used in wind turbine modeling. 
@@ -236,12 +236,12 @@ is an effective modeling approach when the beam deformation can be described acc
 %For clarification, ``implicit" here refers to a module that needs information from other modules before the solution can be time-advanced; the modules are thus tied together in a linear or nonlinear system that must be solved for time advancement. 
 
 The FAST modularization framework was created to loosely couple multi-physics modules for time domain simulation.  
-Modules interact through input-output relationships, where inputs and outputs are defined on spatial meshes , and a predictor-corrector algorithm is employed to improve stability and accuracy of the coupled system.    
-The modularization environment provides utilities for coupling non-matching meshes in space and time.
-A detailed description of the coupling algorithm can be found in Sprague et al.\cite{Sprague:2014}.  
+Modules interact through input-output relationships, where inputs and outputs are defined on spatial meshes, and a predictor-corrector algorithm is employed to improve stability and accuracy of the coupled system.    
+The modularization environment provides utilities for coupling nonmatching meshes in space and time.
+A detailed description of the coupling algorithm can be found in Ref.~\cite{Sprague:2014}.  
 
-We describe here the inputs and outputs of the BeamDyn module.  In the context of wind turbine blade modeling, 
-BeamDyn inputs are root motion (including displacements/rotations, linear and angular velocities, and linear and angular accelerations), point loads (forces and moments), and distrbuted loads (e.g., those from the AeroDyn module). BeamDyn outputs are root reaction forces and moments, and beam motions. 
+In this section, we describe the inputs and outputs of the BeamDyn module.  In the context of wind turbine blade modeling, 
+BeamDyn inputs are root motion (including displacements/rotations, linear and angular velocities, and linear and angular accelerations), point loads (forces and moments), and distrbuted loads (e.g., those from the AeroDyn module). BeamDyn outputs are root reaction forces and moments and beam motions. 
 The BeamDyn mesh defining distributed-load inputs is a contiguous number of two-node line elements with nodes located at the BeamDyn quadrature points and the beam end points.  The mesh definining point-load inputs is composed of points collocated with the BeamDyn nodes.  The root-motion input is a point mesh at the beam root.  
 
 %\mas{The following is incomplete, but I think we can delete}
@@ -253,7 +253,7 @@ The inputs and outputs can be written as
     \label{BDOutput}
     \mathbf{y}_{BD} &= \left[ \vec{f}~~~\vec{m} \right]^T
 \end{align}
-The inputs and outputs of the module that being coupled to BeamDyn have the form
+The inputs and outputs of the module that is being coupled to BeamDyn have the form
 \begin{align}
     \label{OtherInput}
     \mathbf{u}_{O} &= \left[ \vec{f}~~~\vec{m} \right]^T\\
@@ -297,7 +297,7 @@ Newton-Raphson method is adopted here to solve this nonlinear system:
  
 \subsection{Example 1: Partitioned Analysis}
 
-This example verifies our numerical implementation and examines the accuracy and numerical behavior of the coupling algorithm. A beam is cantilevered its root to the mass in a spring-mass-damper system, 
+This example verifies our numerical implementation and examines the accuracy and numerical behavior of the coupling algorithm. A beam is cantilevered to the mass in a spring-mass-damper system, 
 see Figure~\ref{fig:CoupledSystem}. 
 %which is a simplified blade-hub system, 
 
@@ -308,17 +308,17 @@ see Figure~\ref{fig:CoupledSystem}.
 \label{fig:CoupledSystem}
 \end{figure}
 
-The beam is modeled by BeamDyn and the time integrator for the spring-damper-mass system is Adams-Bashforth-Moulton (ABM4), , which is a 4th-order accurate explicit integrator without numerical damping. 
+The beam is modeled by BeamDyn and the time integrator for the spring-damper-mass system is Adams-Bashforth-Moulton (ABM4), which is a 4th-order accurate explicit integrator without numerical damping. 
 The material properties, coordinate system, and geometric parameters can be found in Figure~\ref{fig:CoupledSystem}. 
 The dimensions of the cross-section of the beam is $0.1$ m $\times$ 0.1 m. 
 The natural frequency of the uncoupled mass-spring-damper system is $6.28$ rad/s and the first five natural frequencies for the uncoupled beam (in a clamped/cantilevered configuration) are $0.26, 1.72, 5.78, 22.62$, and $24.21$ rad/s, respectively, as determined by a refined ANSYS modal analysis. 
 The first five natural frequencies of the coupled system, obtained by ANSYS modal analysis, are $0.25, 0.85, 1.80, 4.76$, and $9.34$ rad/s, respectively.
  
 In the present study, the system has quiescent initial conditions with an initial displacement of $0.1$ m from the neutral position in the positive $Z$ direction (see Figure ~\ref{fig:CoupledSystem}). 
-We examine first the stability of the proposed coupling algorithm, for which the beam is discretized by a single fifth-order LSFE. 
+First we examined the stability of the proposed coupling algorithm for which the beam is discretized by a single fifth-order LSFE. 
 Figure~\ref{fig:CoupledDTPC} shows the maximum stable time increments obtained by numerical experiment against the number of correction iterations in the predictor-coupling scheme.  
 For this system, increasing the number of correction iterations increases the allowable time increment for stability.  However, the savings offered by a larger time increment must be considered against the additional computational cost of the correction steps.  For example, adding a correction step makes each time step about twice as expensive.
-Moreover, by introducing numerical damping in the BeamDyn module, the maximum stable time increments also increase for most cases at the cost of accuracy, see Ref~\cite{Bauchau:2010}
+Moreover, by introducing numerical damping in the BeamDyn module, the maximum stable time increments also increase for most cases at the cost of accuracy.\cite{Bauchau:2010}
 
  \begin{figure}
 \centering
@@ -331,8 +331,7 @@ Moreover, by introducing numerical damping in the BeamDyn module, the maximum st
 For verification, we analyzed this case in ANSYS using 20 BEAM188 elements (cantilevered to a point mass with spring and damper) and the time increment was $10^{-5}$ s. 
 With this well-refined mesh in both time and space, the ANSYS solution is used as the benchmark in the following comparisons. 
 The root and tip displacements of the beam can be found in Figure~\ref{fig:E1Disp}. 
-For the BeamDyn results, the beam was discretized by a single $5^{th}$-order element, and the time increment was  
-The time increment was $2\times10^{-5}$ s. 
+For the BeamDyn results, the beam was discretized by a single fifth-order element, and the time increment was  $2\times10^{-5}$ s. 
 %to resolve all the frequencies. 
 Good agreements can be observed between the benchmark solution and the BeamDyn results. 
 
@@ -375,12 +374,12 @@ where $U_b(t)$ is the benchmark solution given by ANSYS. Figure~\ref{fig:ConvDTN
 \caption{Normalized RMS error of $U_z$ histories as a function of total number of nodes for three different time increments and number of corrections. The dashed line shows ideal second-order convergence.} 
 \label{fig:ConvDTNode}
 \end{figure}
-It can be concluded that although other factors have been introduced into the simulation, exponential convergence rate which is a feature of LSFEs in space discritization can be observed. $5^{th}$-order element (six nodes) being used in this case is a reasonable choice for a converged analysis. Moreover, results obtained by corrections are more accurate than those with smaller time increments but no correction.
+It can be concluded that although other factors have been introduced into the simulation, exponential convergence rate, which is a feature of LSFEs, in space discritization can be observed. The fifth-order element (six nodes) being used in this case is a reasonable choice for a converged analysis. Moreover, results obtained by corrections are more accurate than those with smaller time increments but no correction.
 
 \subsection{Example 2: NREL 5-MW Wind Turbine}
-The second example is a coupled analysis of NREL 5-MW reference wind turbine system. The three blades are modeled by BeamDyn while the scheme discussed in this paper  were implemented to couple BeamDyn to FAST. 
+The second example is a coupled analysis of NREL 5-MW reference wind turbine system. The three blades are modeled by BeamDyn, and the scheme discussed in this paper  was implemented to couple BeamDyn to FAST. 
 
-Firstly we examines the numerical performance of two different quadrature methods, Gauss and trapezoidal quadratures, on this realistic blade analysis. A static cantilevered blade under a uniformly distributed force of magnitude $1E+04$ N/m along the flap direction were analyzed. Figure~\ref{fig:5MWStaticTip} shows the results. Monotonous convergence can be observed for the trapezoidal quadrature results with increasing number of nodes; while the convergence curve for the Gauss quadrature is very jagged, depending on which stations are used and how these data are interpolated to the Gauss points. This can be even clearly observed from the mass calculation, see Figure~\ref{fig:5MWMass}: the constant mass by trapezoidal quadrature, which includes all the cross-sectional data regardless of the finite element discretization, and the mass calculated by Gauss quadrature is more random depending on the different data sets used and the interpolation methods. Hence, the trapezoidal quadrature will be applied to all the simulations in this section.
+First, we examined the numerical performance of two different quadrature methods, Gauss and trapezoidal quadratures, on this realistic blade analysis. A static cantilevered blade under a uniformly distributed force of magnitude $1E+04$ N/m along the flap direction was analyzed. Figure~\ref{fig:5MWStaticTip} shows the results. Monotonous convergence can be observed for the trapezoidal quadrature results with an increasing number of nodes; however, the convergence curve for the Gauss quadrature is very jagged, depending on which stations are used and how these data are interpolated to the Gauss points. This can be observed from the mass calculation, as shown in Figure~\ref{fig:5MWMass}: the constant mass by trapezoidal quadrature, which includes all the cross-sectional data regardless of the finite element discretization, and the mass calculated by Gauss quadrature is more random depending on the different data sets used and the interpolation methods. Hence, the trapezoidal quadrature will be applied to all the simulations in this section.
 \begin{figure}
 \centering
 \includegraphics[clip,width=5.0in]{\directory 5MW_Static_Tip.pdf}
@@ -391,11 +390,11 @@ Firstly we examines the numerical performance of two different quadrature method
 \begin{figure}
     \centering
 \includegraphics[clip,width=5.0in]{\directory  5MW_Mass.pdf}
-\caption{Total blade mass of a NREL 5-MW reference blade calculated by Gauss and trapezoidal quadratures.}
+\caption{Total blade mass of an NREL 5-MW reference blade calculated by Gauss and trapezoidal quadratures.}
 \label{fig:5MWMass}
 \end{figure} 
 
-Next the time step sizes required for stability of BeamDyn in stand-alone and couple-to-FAST modes are studied. Figure~\ref{fig:5MWdt_node} shows the maximum time step size versus the number of nodes. In the stand-alone mode, we are using FAST as the driver but turning off all the coupling options so that the blade is rotating at a fixed speed under gravity. For the coupled-to-FAST case, we conducted a coupled aero-servo-elastic wind turbine analysis under mean wind speed of $12~m/s^2$ with turbulence, which is a certification test case \#26 in the FAST archive. There are no numerical damping and predictor-corrections introduced in these simulations.  
+Next, we studied the time step sizes required for stability of BeamDyn in stand-alone and couple-to-FAST modes. Figure~\ref{fig:5MWdt_node} shows the maximum time step size versus the number of nodes. In the stand-alone mode, we used FAST as the driver but turning off all the coupling options so that the blade rotated at a fixed speed under gravity. For the coupled-to-FAST case, we conducted a coupled aero-servo-elastic wind turbine analysis under a mean wind speed of $12~m/s^2$ with turbulence, which is a certification test case \#26 in the FAST archive. There are no numerical damping and predictor-corrections introduced in these simulations.  
 
 \begin{figure}
     \centering
@@ -404,7 +403,7 @@ Next the time step sizes required for stability of BeamDyn in stand-alone and co
 \label{fig:5MWdt_node}
 \end{figure} 
 
-The convergence of the time integrator is also evaluated using the RMS error defined in Eq.~\eqref{RMSdefi}. Again, fixed speed spinning case under gravity which uses FAST as a driver code is studied for the convergence, see Figure~\ref{fig:5MWdt_rms}. The blade is discretized by a single fifth-order element and the benchmark solution is obtained  with a time step size of $0.001$ seconds. Second-order convergence rate can be observed in the plot.
+The convergence of the time integrator is also evaluated using the RMS error defined in Eq.~\eqref{RMSdefi}. Again, fixed-speed spinning case under gravity that uses FAST as a driver code is studied for the convergence, see Figure~\ref{fig:5MWdt_rms}. The blade is discretized by a single fifth-order element, and the benchmark solution is obtained  with a time step size of $0.001$ seconds. Second-order convergence rate can be observed in the plot.
 
 \begin{figure}
     \centering
@@ -413,7 +412,7 @@ The convergence of the time integrator is also evaluated using the RMS error def
 \label{fig:5MWdt_rms}
 \end{figure} 
 
-Finally we studied the performance of BeamDyn in the coupled FAST analysis. Figures~\ref{fig:5MW_Coupled_dt} and \ref{fig:5MW_Coupled_Mesh} show the tip flap displacement histories under different time and space discretizations. Note that all the quantities studied here are resolved in the body-attached blade reference coordinate system following the IEC standard, where $X$ direction towards the suction side of the airfoil, $Y$ direction towards the trailing edge, and $Z$ direction towards the blade tip from root. It can be observed that for this case, reasonable results can be obtained by the $2E-3$ s time increment and a single fifth-order element.  
+Finally, we studied the performance of BeamDyn in the coupled FAST analysis. Figures~\ref{fig:5MW_Coupled_dt} and \ref{fig:5MW_Coupled_Mesh} show the tip flap displacement histories under different time and space discretizations. Note that all the quantities studied here are resolved in the body-attached blade reference coordinate system following the IEC standard, where the $X$ direction is toward the suction side of the airfoil, the $Y$ direction is toward the trailing edge, and the $Z$ direction is toward the blade tip from root. It can be observed that for this case, reasonable results can be obtained by the $2E-3$ s time increment and a single fifth-order element.  
 
 \begin{figure}
     \centering
@@ -440,7 +439,7 @@ Finally we studied the performance of BeamDyn in the coupled FAST analysis. Figu
 \label{fig:5MWTip}
 \end{figure}  
 
-We compared the results obtained by BeamDyn with those obtained by ElastoDyn for this case. The tip displacements of blade 1 are shown in Figure~\ref{fig:5MWTip}. Good agreements can be observed. It is noted that due to the Trapeze effect and elastic stretching considered in BeamDyn, the mean value the the axial displacement in Figure~\ref{fig:5MWTipZ} by BeamDyn is different from ElastoDyn. Figure~\ref{fig:5MWRootF} shows the root reaction forces calculated by BeamDyn and ElastoDyn. Again, reasonable agreement can be found in these quantities.
+We compared the results obtained by BeamDyn with those obtained by ElastoDyn for this case. The tip displacements of blade 1 are shown in Figure~\ref{fig:5MWTip}. Good agreements can be observed. It is noted that because of the Trapeze effect and elastic stretching considered in BeamDyn, the mean value of the axial displacement in Figure~\ref{fig:5MWTipZ} by BeamDyn is different from ElastoDyn. Figure~\ref{fig:5MWRootF} shows the root reaction forces calculated by BeamDyn and ElastoDyn. Again, reasonable agreement can be found in these quantities.
 
 \begin{figure}[h!t]
     \centering
@@ -458,7 +457,7 @@ We compared the results obtained by BeamDyn with those obtained by ElastoDyn for
 
 \section{Conclusion}
 
-In this paper, we examined the beam theory and the coupling algorithm for partitioned mechanical system analysis. The full set of governing equations for BeamDyn are reviewed and the coupling schemes between BeamDyn and other mechanical modules are derived. For wind turbine analysis which features a large number of cross-sectional stations along blade axis, we implemented a trapezoidal numerical integration so that all the cross-sectional data, including inertial and stiffness matrices, can be used in the analysis. The users do not need to pick certain stations in a large set of data neither numerically interpolates them, which usually introduces errors. The new integration method, coupling algorithm as well as fully coupled mode have been validated in the numerical examples. The results obtained by trapezoidal quadrature were monotonously converged while those obtained by conventional Gauss integration were randomly converged depending on the stations chosen and interpolation method. In the coupled analysis, exponential convergence rate can be seen in the BeamDyn results, which is a prominent feature of the LSFEs. In the full turbine analysis, reasonable agreement between BeamDyn and ElastoDyn results is found. More verification and validation results can be found in  Ref.~\cite{Sri:SciTech2016}
+In this paper, we examined the beam theory and the coupling algorithm for partitioned mechanical system analysis. The full set of governing equations for BeamDyn were reviewed and the coupling schemes between BeamDyn and other mechanical modules were derived. For wind turbine analysis, which features a large number of cross-sectional stations along the blade axis, we implemented a trapezoidal numerical integration so that all the cross-sectional data, including inertial and stiffness matrices, can be used in the analysis. The users do not need to pick certain stations in a large set of data neither numerically interpolates them, which usually introduces errors. The new integration method, the coupling algorithm as well as the fully coupled mode have been validated in the numerical examples. The results obtained by trapezoidal quadrature were monotonously converged while those obtained by conventional Gauss integration were randomly converged depending on the stations chosen and interpolation method. In the coupled analysis, exponential convergence rate can be seen in the BeamDyn results, which is a prominent feature of the LSFEs. In the full turbine analysis, reasonable agreement between BeamDyn and ElastoDyn results is found. More verification and validation results can be found in  Ref.~\cite{Sri:SciTech2016}
   
 \section*{Acknowledgments} 
 
