@@ -33,12 +33,18 @@ ifeq ($(OS),Windows_NT)
    REGISTRY = $(FAST_dir)/bin/Registry_Win32.exe
    LAPACK_LINK  = -llapack -lblas -LC:/LAPACK/win32
 else
+
 #   FAST_dir=/Users/qwang2/Desktop/BeamDyn/SVN/BJonkman/
    FAST_dir=/Users/mspragu2/SVN/BJonkman/
-   FAST_dir=/home/mspragu2/SVN/BJonkman/
+   #FAST_dir=/home/mspragu2/SVN/BJonkman/
 
    REGISTRY   = $(FAST_dir)Source/dependencies/registry.exe
-   LAPACK_LINK  = -L$(LAPACK_LIB) -llapack -lblas
+
+   ifdef LAPACK_LIB 
+      LAPACK_LINK  = -L$(LAPACK_LIB) -llapack -lblas
+   else
+      LAPACK_LINK  = -llapack -lblas
+   endif
 endif
 
 BD_DIR = ../source
