@@ -17,13 +17,14 @@
 BITS = 64
 
 # on peregrine, following as been tested with following modules:
-# login4 >> module list
-# Currently Loaded Modulefiles:
-#   1) gcc/4.8.1                 2) lapack/3.4.2/gcc          3) compiler/intel/13.5.192
+#ifort
+#module load comp-intel/13.1.1 lapack/3.4.2/intel
+#gfortran
+#module load gcc/4.8.1 lapack/3.4.2/gcc
 
 # Name of compiler to use and flags to use.
-FC     = gfortran
-#FC     = ifort
+#FC     = gfortran
+FC     = ifort
 
    # Location of source files for ModuleName and the NWTC Library.  You will probably need to change these for your system.
 # these settings are overridden below
@@ -36,7 +37,7 @@ else
 
 #   FAST_dir=/Users/qwang2/Desktop/BeamDyn/SVN/BJonkman/
    FAST_dir=/Users/mspragu2/SVN/BJonkman/
-   #FAST_dir=/home/mspragu2/SVN/BJonkman/
+   FAST_dir=/home/mspragu2/SVN/BJonkman/
 
    REGISTRY   = $(FAST_dir)Source/dependencies/registry.exe
 
@@ -50,13 +51,6 @@ endif
 BD_DIR = ../source
 LIB_DIR = $(FAST_dir)/Source/dependencies/NWTC_Library/
 NETLIB_DIR = $(FAST_dir)/Source/dependencies/NetLib/
-
-
-#FFLAGS = -O2 -m$(BITS) -fbacktrace -ffree-line-length-none -x f95-cpp-input  -fcheck=bounds -C
-#FFLAGS = -O3 -fbacktrace -ffree-line-length-none -x f95-cpp-input
-#LDFLAGS = -O2 -m$(BITS)  -fbacktrace $(BLAS_LAPACK_LIBS)
-
-
 
 
    # Precision.
@@ -98,8 +92,8 @@ ifeq ($(FC),gfortran)
    FFLAGS = -O2 -m$(BITS) -fdefault-real-8 -fdefault-double-8 -fbacktrace -ffree-line-length-none -x f95-cpp-input -Wsurprising -DDOUBLE_PRECISION -J $(INTER_DIR) 
    LDFLAGS = $(OPT) -O2 -m$(BITS) -fbacktrace #-g
 else
-   FFLAGS  = -O2 -r8 -fpconstant -fpp -DDOUBLE_PRECISION  -module $(INTER_DIR) -B $(INTER_DIR)
-   LDFLAGS = -O2 
+   FFLAGS  = -O2 -r8 -fpconstant -fpp -DDOUBLE_PRECISION  -module $(INTER_DIR) -B $(INTER_DIR) #-g
+   LDFLAGS = -O2 #-g
 endif
 
    # Destination and RootName for executable

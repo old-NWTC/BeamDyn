@@ -438,7 +438,7 @@ SUBROUTINE Mod1_CalcOutput( t, u, p, x, xd, z, OtherState, y, ErrStat, ErrMsg )
       y%PointMesh%TranslationAcc(2,1) = 0.
       y%PointMesh%TranslationAcc(3,1) = 0.
 
-      write(67,*) t,  y%PointMesh%TranslationAcc(1,1)
+      !write(67,*) t,  y%PointMesh%TranslationAcc(1,1)
 
 END SUBROUTINE Mod1_CalcOutput
 !----------------------------------------------------------------------------------------------------------------------------------
