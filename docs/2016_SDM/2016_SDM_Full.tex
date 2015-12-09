@@ -201,7 +201,7 @@ Elements have $p+1$ nodes located at the Gauss-Lobatto-Legendre points, where $p
 For a given number of nodes, we have shown\cite{Wang:SFE2013,Wang:GEBT2014} that LSFEs for GEBT-based models can be dramatically more accurate than low-order elements.   
 As a tool in BeamDyn, an LSFE evaluated with an appropriate quadrature scheme provides the option to model a modern, highly flexible turbine blade with a single element.  
 The choice of numerical quadrature is described in the next section.
-The GEBT-LSFE equations are time-integrated with a second-order-accurate generalized-alpha algorithm that is equipped with user-defined numerical damping (see Ref.~\cite{Wang:GEBT2014} for details).  
+The GEBT-LSFE equations are time-integrated with a second-order-accurate generalized-alpha algorithm that is equipped with user-defined numerical damping (see Wang et al.\cite{Wang:GEBT2014} for details).  
 
 \subsection{Finite-Element Quadrature}
 
@@ -236,93 +236,114 @@ is an effective modeling approach when the beam deformation can be described acc
 \subsection{Module-Coupling Algorithm}
 %For clarification, ``implicit" here refers to a module that needs information from other modules before the solution can be time-advanced; the modules are thus tied together in a linear or nonlinear system that must be solved for time advancement. 
 
-The FAST modularization framework was created to loosely couple multi-physics modules for time domain simulation.  
-Modules interact through input-output relationships, where inputs and outputs are defined on spatial meshes, and a predictor-corrector algorithm is employed to improve stability and accuracy of the coupled system.    
+The FAST modularization framework\cite{Jonkman:2013,Sprague:2014,Sprague:FAST2015} was created to loosely couple multi-physics modules for time domain simulation.  
+Each module's dependent variables are described as states that are either continuous-in-time, discrete-in-time, or are contraints.  
+Modules interact through input-output relationships, where input and output quantities are derived from states, and where inputs and outputs are defined on spatial meshes, and a predictor-corrector algorithm is employed to improve stability and accuracy of the time-update of the coupled system.    
 The modularization environment provides utilities for coupling nonmatching meshes in space and time.
-A detailed description of the coupling algorithm can be found in Ref.~\cite{Sprague:2014}.  
+A detailed description of the coupling algorithm employed here can be found in Sprague et al.\cite{Sprague:FAST2015}, which we summarize as follows for the simplified case where each module is advanced with the same time increment $\Delta t$, and where we ignore details regarding the mapping of information between modules with non-matching meshes.   
+Assume that we know all states, inputs, and outpus at time $t$.  In order to advance the states of all modules from time $t$ to $t+ \Delta t$, 
+\begin{enumerate}
 
-In this section, we describe the inputs and outputs of the BeamDyn module  and the input-output solve used to couple BeamDyn to another structural module.  In the context of wind turbine blade modeling, 
-BeamDyn inputs are root motion ( e.g., from the ElastoDyn structural-dynamics module accounting for the drivetrain, nacelle, and support structure, including displacements/rotations, linear and angular velocities, and linear and angular accelerations), point loads (forces and moments), and distributed loads (e.g., those from the AeroDyn aerodynamics module). BeamDyn outputs are root reaction forces and moments and beam motions. 
-The BeamDyn mesh defining distributed-load inputs is a contiguous number of two-node line elements with nodes located at the BeamDyn quadrature points and the beam end points.  The mesh definining point-load inputs is composed of points collocated with the BeamDyn FE nodes.  The root-motion input is a point mesh at the beam root. The beam motion outputs is a contiguous number of two-node line elements with nodes located at the BeamDyn FE nodes and the beam end points. 
+\item Using linear or quadratic exptrapolation of known inputs, approximate the inputs at $t+\Delta t$.  
+
+\item Update the states of all modules to $t + \Delta t$.  
+
+\item Solve the global system of input-output equations at $t + \Delta t$.  Depending on the relationship between modules and the module output equations, this system can range from a simple transfer of information to a nonlinear-system solve.  
+
+\item Either accept the states, intputs, and outputs, or apply a correction by repeating step (2) with the inputs calculated in Step (3), and then repeating Step (3).
+
+\end{enumerate}
+It was shown, using simple numerical examples, in Sprague et al.\cite{Sprague:2014,Sprague:FAST2015} that employing one or more correction steps can increase the accuracy of a the coupled simulation and can increase stability by permiting the use of larger time increments.  However, these increases in accuracy and stability must be weighed against the additional cost of additional ``update state'' calculations for each module.
+
+
+\mas{CLEAN THE FOLLOWING UP}
+Here, we describe the inputs and outputs of the BeamDyn module.
+BeamDyn was designed for wind turbine blade modeling, and,  as such, its inputs are root motion (e.g., from the ElastoDyn structural-dynamics module accounting for the drivetrain, nacelle, and support structure, including displacements/rotations, linear and angular velocities, and linear and angular accelerations), point loads (forces and moments), and distributed loads (e.g., those from the AeroDyn aerodynamics module). 
+BeamDyn root output are root reaction forces and moments and beam motions. 
+The BeamDyn mesh defining distributed-load inputs is a contiguous number of two-node line elements with nodes located at the BeamDyn quadrature points and the beam end points.  
+The mesh defining point-load inputs is composed of points collocated with the BeamDyn FE nodes.  
+The root-motion input is a point mesh at the beam root. 
+The beam motion output mesh is a contiguous number of two-node line elements with nodes located at the BeamDyn FE nodes and the beam end points. 
 
 %\mas{The following is incomplete, but I think we can delete}
-
-The BeamDyn inputs and outputs at the root (where the structural coupling of BeamDyn occurs) can be written as
-\begin{align}
-    \label{BDInput}
-    \mathbf{u}_{BD}^T &= \left[ \vec{q}^T~~~\vec{v}^T~~~\vec{a}^T\right] \\
-    \label{BDOutput}
-    \mathbf{y}_{BD}^T &= \left[ \vec{f}^T~~~\vec{m}^T \right] = \mathbf{Y}_{BD}(\mathbf{x}_{BD},\mathbf{u}_{BD},t)
-\end{align}
-The inputs and outputs of the module that is being coupled to BeamDyn often have the form
-\begin{align}
-    \label{OtherInput}
-    \mathbf{u}_{O}^T &= \left[ \vec{f}^T~~~\vec{m}^T \right] \\
-    \label{OtherOutput}
-    \mathbf{y}_{O}^T &= \left[ \vec{q}^T~~~\vec{v}^T~~~\vec{a}^T\right] = \mathbf{Y}_{O}(\mathbf{x}_{O},\mathbf{u}_{O},t) 
-\end{align}
-where $\mathbf{x}_{BD}$ and $\mathbf{x}_{O}$ are the states for the BeamDyn module and the coupled module, respectively. They include the displacement and velocity quantities in a standard state-space formulation.
-The input-output equations can be written as
-\begin{align}
-    \label{IOEq1}
-    \mathbf{U}_1: ~~&\mathbf{u}_{BD} - \mathbf{Y}_{O}(\mathbf{x}_{O},\mathbf{u}_{O},t) = 0 \\
-    \label{IOEq2}
-     \mathbf{U}_2: ~~&\mathbf{u}_{O} - \mathbf{Y}_{BD}(\mathbf{x}_{BD},\mathbf{u}_{BD},t) = 0
-\end{align}
-Newton-Raphson method is adopted here to solve this nonlinear system: 
-\begin{equation}
-    \label{NREq}
-    \begin{bmatrix}
-    \frac{\partial \mathbf{U}_1}{\partial \mathbf{u}_{BD}}  &  \frac{\partial \mathbf{U}_{1}}{\partial \mathbf{u}_{O}} \\
-    \frac{\partial \mathbf{U}_2}{\partial \mathbf{u}_{BD}}  &  \frac{\partial \mathbf{U}_{2}}{\partial \mathbf{u}_{O}} 
-    \end{bmatrix}
-    \begin{Bmatrix}
-     \Delta \mathbf{u}_{BD} \\
-     \Delta \mathbf{u}_{O}
-    \end{Bmatrix} 
-    =
-    -
-    \begin{Bmatrix}
-     \mathbf{U}_1 \\
-     \mathbf{U}_2
-    \end{Bmatrix}
-\end{equation}
- The Jacobian matrix $\mathbf{J}$ on the left-hand-side is computed numerically using the forward-difference formulae
- \begin{equation}
-     \label{Jacobian}
-     \mathbf{J}_{ij} = \frac{1}{\epsilon}_j \left[\mathbf{U}_i(\mathbf{u}+\epsilon_j \mathbf{e}_j) - \mathbf{U}_i(\mathbf{u}) \right]
- \end{equation}
- where $\mathbf{e}_j$ is the unit vector in the $\mathbf{u}_j$ direction and $\epsilon_j$ represents a small increment.
- 
- It is pointed out that the initial guessed values of the unknown inputs in the above nonlinear system are obtained by numerically interpolation (or extrapolation) based on the known quantities, i.e., the previous time step values. A corrector scheme has also introduced in the FAST modularization framework that can be used to improve the accuracy of initial guess. Moreover, some simplifications have been introduced to FAST glue code to improve the efficiency. For example, the state variables, $\vec{q}$ and $\vec{v}$,  in the inputs Eq.~\eqref{BDInput} and \eqref{OtherInput}, are not involved in the input-output solve in Eq.~\eqref{NREq} because states can only be changed in time marching (UpdateStates). Interested readers please refer to Ref.~\cite{Sprague:FAST2015} for more details on the predictor-corrector scheme for coupling and Ref.~\cite{Jonkman:2013} for FAST modularization framework.
+%
+%The BeamDyn inputs and outputs at the root (where the structural coupling of BeamDyn occurs) can be written as
+%\begin{align}
+    %\label{BDInput}
+    %\mathbf{u}_{BD}^T &= \left[ \vec{q}^T(0)~~~\vec{v}^T(0)~~~\vec{a}^T\right] \\
+    %\label{BDOutput}
+    %\mathbf{y}_{BD}^T &= \left[ \vec{f}^T~~~\vec{m}^T \right] = \mathbf{Y}_{BD}(\mathbf{x}_{BD},\mathbf{u}_{BD},t)
+%\end{align}
+%The inputs and outputs of the module that is being coupled to BeamDyn often have the form
+%\begin{align}
+    %\label{OtherInput}
+    %\mathbf{u}_{O}^T &= \left[ \vec{f}^T~~~\vec{m}^T \right] \\
+    %\label{OtherOutput}
+    %\mathbf{y}_{O}^T &= \left[ \vec{q}^T~~~\vec{v}^T~~~\vec{a}^T\right] = \mathbf{Y}_{O}(\mathbf{x}_{O},\mathbf{u}_{O},t) 
+%\end{align}
+%where $\mathbf{x}_{BD}$ and $\mathbf{x}_{O}$ are the states for the BeamDyn module and the coupled module, respectively. They include the displacement and velocity quantities in a standard state-space formulation.
+%The input-output equations can be written as
+%\begin{align}
+    %\label{IOEq1}
+    %\mathbf{U}_1: ~~&\mathbf{u}_{BD} - \mathbf{Y}_{O}(\mathbf{x}_{O},\mathbf{u}_{O},t) = 0 \\
+    %\label{IOEq2}
+     %\mathbf{U}_2: ~~&\mathbf{u}_{O} - \mathbf{Y}_{BD}(\mathbf{x}_{BD},\mathbf{u}_{BD},t) = 0
+%\end{align}
+%Newton-Raphson method is adopted here to solve this nonlinear system: 
+%\begin{equation}
+    %\label{NREq}
+    %\begin{bmatrix}
+    %\frac{\partial \mathbf{U}_1}{\partial \mathbf{u}_{BD}}  &  \frac{\partial \mathbf{U}_{1}}{\partial \mathbf{u}_{O}} \\
+    %\frac{\partial \mathbf{U}_2}{\partial \mathbf{u}_{BD}}  &  \frac{\partial \mathbf{U}_{2}}{\partial \mathbf{u}_{O}} 
+    %\end{bmatrix}
+    %\begin{Bmatrix}
+     %\Delta \mathbf{u}_{BD} \\
+     %\Delta \mathbf{u}_{O}
+    %\end{Bmatrix} 
+    %=
+    %-
+    %\begin{Bmatrix}
+     %\mathbf{U}_1 \\
+     %\mathbf{U}_2
+    %\end{Bmatrix}
+%\end{equation}
+ %The Jacobian matrix $\mathbf{J}$ on the left-hand-side is computed numerically using the forward-difference formulae
+ %\begin{equation}
+     %\label{Jacobian}
+     %\mathbf{J}_{ij} = \frac{1}{\epsilon}_j \left[\mathbf{U}_i(\mathbf{u}+\epsilon_j \mathbf{e}_j) - \mathbf{U}_i(\mathbf{u}) \right]
+ %\end{equation}
+ %where $\mathbf{e}_j$ is the unit vector in the $\mathbf{u}_j$ direction and $\epsilon_j$ represents a small increment.
+ %
+%%It is pointed out that the initial guessed values of the unknown inputs in the above nonlinear system are obtained by numerically interpolation (or extrapolation) based on the known quantities, i.e., the previous time step values. A corrector scheme has also introduced in the FAST modularization framework that can be used to improve the accuracy of initial guess. Moreover, some simplifications have been introduced to FAST glue code to improve the efficiency. For example, the state variables, $\vec{q}$ and $\vec{v}$,  in the inputs Eq.~\eqref{BDInput} and \eqref{OtherInput}, are not involved in the input-output solve in Eq.~\eqref{NREq} because states can only be changed in time marching (UpdateStates). Interested readers please refer to Sprague et al.\cite{Sprague:FAST2015} for more details on the predictor-corrector scheme for coupling and Jonkman\cite{Jonkman:2013} for the FAST modularization framework.
  
  
 \section{Numerical Examples}
  
 \subsection{Example 1: Partitioned Analysis}
 
-This example verifies our numerical implementation and examines the accuracy and numerical behavior of the coupling algorithm. A beam is cantilevered to the mass in a spring-mass-damper system, 
-see Figure~\ref{fig:CoupledSystem}. 
-%which is a simplified blade-hub system, 
+This example verifies our numerical implementation and examines the accuracy and numerical behavior of the coupling algorithm. 
+A BeamDyn beam is ``clamped'' to the mass in a spring-damper-mass (SDM) system as shown in Figure~\ref{fig:CoupledSystem}.     
+Here, the relevant output from BeamDyn is translation reaction force, whereas its inputs are root translational displacement, velocity, and acceleration.  
+The inputs and outputs are the same, but swapped, for the SDM system.
+The time integrator in BeamDyn is a second-order implicit generalized-$\alpha$ algorithm (see Wang et al.\cite{Wang:2014}), and the time integrator for the SDM system is fourth-order Adams-Bashforth-Moulton (ABM4), which is a predictor-corrector algorithm.
+The material properties, coordinate system, and geometric parameters can be found in Figure~\ref{fig:CoupledSystem}. 
+The cross-section dimensions of the beam is $0.1$ m $\times$ 0.1 m. 
+The natural frequency of the uncoupled mass-spring-damper system is $6.28$ rad/s and the first five natural frequencies for the uncoupled beam (in a clamped/cantilevered configuration) are $0.26, 1.72, 5.78, 22.62$, and $24.21$ rad/s, respectively, as determined by a refined ANSYS modal analysis. 
+The first five natural frequencies of the coupled system, obtained by ANSYS modal analysis, are $0.25, 0.85, 1.80, 4.76$, and $9.34$ rad/s, respectively.
 
- \begin{figure}
+\begin{figure}
 \centering
 \includegraphics[clip,width=4.0in]{\directory CoupledSystem.pdf}
 \caption{Schematic showing a 0.1 m $\times$ 0.1 m beam attached to a spring-mass-damper system with system properties and dimensions.} 
 \label{fig:CoupledSystem}
 \end{figure}
-
-The beam is modeled by BeamDyn and the time integrator for the spring-damper-mass system is Adams-Bashforth-Moulton (ABM4), which is a fourth-order accurate explicit integrator without numerical damping. 
-The material properties, coordinate system, and geometric parameters can be found in Figure~\ref{fig:CoupledSystem}. 
-The dimensions of the cross-section of the beam is $0.1$ m $\times$ 0.1 m. 
-The natural frequency of the uncoupled mass-spring-damper system is $6.28$ rad/s and the first five natural frequencies for the uncoupled beam (in a clamped/cantilevered configuration) are $0.26, 1.72, 5.78, 22.62$, and $24.21$ rad/s, respectively, as determined by a refined ANSYS modal analysis. 
-The first five natural frequencies of the coupled system, obtained by ANSYS modal analysis, are $0.25, 0.85, 1.80, 4.76$, and $9.34$ rad/s, respectively.
  
 In the present study, the system has quiescent initial conditions with an initial displacement of $0.1$ m from the neutral position in the positive $Z$ direction (see Figure ~\ref{fig:CoupledSystem}). 
 First we examined the stability of the proposed coupling algorithm for which the beam is discretized by a single fifth-order LSFE. 
-Figure~\ref{fig:CoupledDTPC} shows the maximum stable time increments obtained by numerical experiment against the number of correction iterations in the predictor-coupling scheme.  
-For this system, increasing the number of correction iterations increases the allowable time increment for stability.  However, the savings offered by a larger time increment must be considered against the additional computational cost of the correction steps.  For example, adding one correction step makes each time step about twice as expensive.
-Moreover, by introducing numerical damping in the BeamDyn module, the maximum stable time increments also increase for most cases at the cost of accuracy.\cite{Bauchau:2010}
+Figure~\ref{fig:CoupledDTPC} shows the maximum stable time increments obtained by numerical experiments against the number of correction iterations in the predictor-coupling scheme.  
+For this system, increasing the number of correction iterations increases the allowable time increment for stability.  However, the savings offered by a larger time increment must be considered against the additional computational cost of the correction steps.  
+For example, adding one correction step makes each time step about twice as expensive.
+Figure~\ref{fig:CoupledDTPC} also shows maximum time increments when numerical damping is included in the BeamDyn module, and we see that such damping can also increase stability of the coupled system.  We note, however, that the maximum stable time increments for the uncoupled BeamDyn and SDM models are XX and XX respectively.  Thus, the coupled-system algorithm is significantly more stiff.
 
  \begin{figure}
 \centering
@@ -461,7 +482,7 @@ We compared the results obtained by BeamDyn with those obtained by ElastoDyn for
 
 \section{Conclusion}
 
-In this paper, we examined the beam theory and the coupling algorithm for partitioned mechanical system analysis. The governing equations for BeamDyn were reviewed and the coupling schemes between BeamDyn and other mechanical modules were explained. For wind turbine blade analysis, which features a large number of cross-sectional stations along the blade axis, we implemented a trapezoidal numerical integration so that all the cross-sectional data, including inertial and stiffness matrices, can be used in the analysis. The users do not need to pick certain stations in a large set of data neither numerically interpolates them, which usually introduces errors. This new spatial integration method and the coupling algorithm have been verified in the numerical examples. The results obtained by trapezoidal quadrature were monotonously converged while those obtained by conventional Gauss integration were randomly converged depending on the stations chosen and interpolation method. In the coupled analysis, exponential convergence rate can be seen in the BeamDyn results, which is a prominent feature of the LSFEs. In the full turbine analysis, reasonable agreement between BeamDyn and ElastoDyn results is found. More verification and validation results can be found in  Ref.~\cite{Sri:SciTech2016}.
+In this paper, we examined the beam theory and the coupling algorithm for partitioned mechanical system analysis. The governing equations for BeamDyn were reviewed and the coupling schemes between BeamDyn and other mechanical modules were explained. For wind turbine blade analysis, which features a large number of cross-sectional stations along the blade axis, we implemented a trapezoidal numerical integration so that all the cross-sectional data, including inertial and stiffness matrices, can be used in the analysis. The users do not need to pick certain stations in a large set of data neither numerically interpolates them, which usually introduces errors. This new spatial integration method and the coupling algorithm have been verified in the numerical examples. The results obtained by trapezoidal quadrature were monotonously converged while those obtained by conventional Gauss integration were randomly converged depending on the stations chosen and interpolation method. In the coupled analysis, exponential convergence rate can be seen in the BeamDyn results, which is a prominent feature of the LSFEs. In the full turbine analysis, reasonable agreement between BeamDyn and ElastoDyn results is found. More verification and validation results can be found in Guntar et al.\cite{Sri:SciTech2016}.
   
 \section*{Acknowledgments} 
 
