@@ -125,10 +125,13 @@ SUBROUTINE Mod1_BD_InputOutputSolve(time, &
    CHARACTER(ErrMsgLen)    :: ErrMsg2                      ! Temporary Error message
    CHARACTER(*), PARAMETER :: RoutineName = 'BD_InputOutputSolve'
 
+   REAL(BDKi)                                   :: Pi
+
    ErrStat = ErrID_None
    ErrMsg  = ""
 
-
+   Pi = acos(-1.d0)
+  
    ! eps is the perturbation magnitude in the approximation of the Jacobian
    ! mas: I think the system is linear here, and should thus be insensitive to changes in eps; Qi verified that results
    ! are indeed insensitive.
@@ -142,6 +145,21 @@ SUBROUTINE Mod1_BD_InputOutputSolve(time, &
 !   BD_Input%RootMotion%TranslationDisp(2,1) = 0.0D0
 !   BD_Input%RootMotion%TranslationVel(1,1) = 0.0D0
 !   BD_Input%RootMotion%TranslationVel(2,1) = 0.0D0
+
+   BD_Input%RootMotion%TranslationDisp(3,1) = 0.1*Cos(2*Pi*time)*(1 + 0.0001*Sin(40*Pi*time))
+   BD_Input%RootMotion%TranslationVel(3,1) = 0.0012566370614359175*Cos(2*Pi*time)*Cos(40*Pi*time) -  &
+     &   0.6283185307179586*Sin(2*Pi*time)*(1 + 0.0001*Sin(40*Pi*time))
+   BD_Input%RootMotion%TranslationAcc(3,1) = -0.015791367041742974*Cos(40*Pi*time)*Sin(2*Pi*time) - &
+     &  3.947841760435743*Cos(2*Pi*time)*(1 + 0.0001*Sin(40*Pi*time)) - &
+     &  0.15791367041742976*Cos(2*Pi*time)*Sin(40*Pi*time)
+
+    CALL BD_CalcOutput( time, BD_Input, BD_Parameter, BD_ContinuousState, BD_DiscreteState, &
+                    BD_ConstraintState, BD_OtherState, BD_Output, ErrStat, ErrMsg )
+
+
+   Mod1_Input%PointMesh%Force(1,1) = 0.
+
+   RETURN
 
    DO i=1,iter_max
 !WRITE(*,*) 'i=',i
@@ -200,6 +218,9 @@ SUBROUTINE Mod1_BD_InputOutputSolve(time, &
           CALL SetErrStat( ErrStat2, ErrMsg2, ErrStat, ErrMsg, RoutineName )
 
        uinc(:) = RHS(:)
+
+       CALL BD_CalcOutput( time, BD_Input, BD_Parameter, BD_ContinuousState, BD_DiscreteState, &
+                    BD_ConstraintState, BD_OtherState, BD_Output, ErrStat, ErrMsg )
 
 !WRITE(*,*) 'uinc'
 !WRITE(*,*) uinc
@@ -337,6 +358,8 @@ PROGRAM MAIN
    INTEGER(IntKi),PARAMETER:: Mod1Vel = 50
    INTEGER(IntKi),PARAMETER:: Mod1Acc = 60
 
+   REAL(DbKi)                         :: bd_pi         ! global-loop time marker
+
 REAL(R8Ki):: start, finish
    ! -------------------------------------------------------------------------
    ! MAPPING STUFF; Likely needs to be added to ModMesh
@@ -354,8 +377,10 @@ REAL(R8Ki):: start, finish
    ! Initialization of glue-code time-step variables
    ! -------------------------------------------------------------------------
 
+   bd_pi = acos(-1.d0)
+
    t_initial = 0.d0
-   t_final   = 5.0D+00
+   t_final   = 2.0D+00
 
    pc_max = 1  ! Number of predictor-corrector iterations; 1 corresponds to an explicit calculation where UpdateStates
                ! is called only once  per time step for each module; inputs and outputs are extrapolated in time and
@@ -367,7 +392,7 @@ REAL(R8Ki):: start, finish
    ! -- pc_max = 2 => dt_global <= 5e-5
    ! -- pc_max = 3 => dt_global <= 7e-4
    ! -- pc_max = 4 => dt_global <= 1e-3
-   dt_global = 2.0D-05!*0.5
+   dt_global = 0.1D-05!*0.5
 
    n_t_final = ((t_final - t_initial) / dt_global )
 
@@ -563,6 +588,17 @@ ENDIF
 
       CALL BD_CopyInput (u2,  BD_Input(1),  MESH_UPDATECOPY, Errstat, ErrMsg)
       CALL BD_CopyOutput (y2, BD_Output(1),  MESH_UPDATECOPY, Errstat, ErrMsg)
+
+   BD_Input(1)%RootMotion%TranslationDisp(3,1) = 0.1*Cos(2.*bd_Pi*(t_global+dt_global))*(1.+ 0.0001*Sin(40*bd_Pi*(t_global+dt_global)))
+   BD_Input(1)%RootMotion%TranslationVel(3,1) = 0.0012566370614359175*Cos(2*bd_Pi*(t_global+dt_global))&
+     &   *Cos(40*bd_Pi*(t_global+dt_global)) -  &
+     &   0.6283185307179586*Sin(2.*bd_Pi*(t_global+dt_global))*(1.+ 0.0001*Sin(40*bd_Pi*(t_global+dt_global)))
+   BD_Input(1)%RootMotion%TranslationAcc(3,1) = -0.015791367041742974*Cos(40.*bd_Pi*(t_global+dt_global))&
+     &    *Sin(2*bd_Pi*(t_global+dt_global)) - &
+     &  3.947841760435743*Cos(2.*bd_Pi*(t_global+dt_global))*(1 + 0.0001*Sin(40.*bd_Pi*(t_global+dt_global))) - &
+     &  0.15791367041742976*Cos(2.*bd_Pi*(t_global+dt_global))*Sin(40.*bd_Pi*(t_global+dt_global))
+
+
       BD_InputTimes(1) = t_global + dt_global
       BD_OutputTimes(1) = t_global + dt_global
 
@@ -629,6 +665,10 @@ ENDIF
          endif
 
       enddo
+
+
+      write(67,*) t_global, BD_Input(1)%RootMotion%TranslationAcc(3,1)
+      write(68,*) t_global, Mod1_Input(1)%PointMesh%Force(1,1)
 
       ! Save all final variables
 

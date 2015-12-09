@@ -25,6 +25,9 @@ BITS = 64
 # Name of compiler to use and flags to use.
 FC     = gfortran
 #FC     = ifort
+# gfortran debug flags
+DEBUG = -Wall -g
+
 
    # Location of source files for ModuleName and the NWTC Library.  You will probably need to change these for your system.
 # these settings are overridden below
@@ -37,6 +40,8 @@ else
 
    FAST_dir=/Users/qwang2/Desktop/BeamDyn/SVN/BJonkman/
 #   FAST_dir=/Users/mspragu2/SVN/BJonkman/
+#   FAST_dir=/Users/qwang2/Desktop/BeamDyn/SVN/BJonkman/
+   FAST_dir=/Users/mspragu2/SVN/BJonkman/
 #   FAST_dir=/home/mspragu2/SVN/BJonkman/
 
    REGISTRY   = $(FAST_dir)Source/dependencies/registry.exe
@@ -88,8 +93,10 @@ else
    endif
 endif
 
+#-fdefault-double-8
+
 ifeq ($(FC),gfortran)
-   FFLAGS = -O2 -m$(BITS) -fdefault-real-8 -fdefault-double-8 -fbacktrace -ffree-line-length-none -x f95-cpp-input -Wsurprising -DDOUBLE_PRECISION -J $(INTER_DIR) 
+   FFLAGS = -O2 -m$(BITS) -fdefault-real-8 -fbacktrace -ffree-line-length-none -x f95-cpp-input -Wsurprising $(DEBUG) -DDOUBLE_PRECISION -J $(INTER_DIR) 
    LDFLAGS = $(OPT) -O2 -m$(BITS) -fbacktrace #-g
 else
    FFLAGS  = -O2 -r8 -fpconstant -fpp -DDOUBLE_PRECISION  -module $(INTER_DIR) -B $(INTER_DIR) #-g
@@ -198,7 +205,8 @@ $(DEST_DIR)/$(OUTPUT_NAME)$(EXE_EXT): $(ALL_OBJS) | $(INTER_DIR)
 
    # Cleanup afterwards.
 
+# got rid of *.out and *.dat in clean statement
 clean:
 	$(DEL_CMD) $(INTER_DIR)$(PATH_SEP)*.mod $(INTER_DIR)$(PATH_SEP)*.obj $(OUTPUT_NAME)$(EXE_EXT) \
-	"$(BD_DIR)"$(PATH_SEP)BeamDyn_Types.f90 *.dat *.out "$(BD_DIR)"$(PATH_SEP)Module1_Types.f90
+	"$(BD_DIR)"$(PATH_SEP)BeamDyn_Types.f90 "$(BD_DIR)"$(PATH_SEP)Module1_Types.f90
 
