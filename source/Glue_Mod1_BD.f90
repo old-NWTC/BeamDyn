@@ -521,7 +521,7 @@ REAL(R8Ki):: start, finish
 CALL CPU_TIME(start)
    DO n_t_global = 0, n_t_final
 WRITE(*,*) "Time Step: ", n_t_global
-!IF(n_t_global .EQ. 0) STOP
+!IF(n_t_global .EQ. 5) STOP
       ! Solve input-output relations; this section of code corresponds to Eq. (35) in Gasmi et al. (2013)
       ! This code will be specific to the underlying modules
 IF(MOD(n_t_global,5) .EQ. 0) THEN
@@ -597,7 +597,7 @@ ENDIF
      &    *Sin(2*bd_Pi*(t_global+dt_global)) - &
      &  3.947841760435743*Cos(2.*bd_Pi*(t_global+dt_global))*(1 + 0.0001*Sin(40.*bd_Pi*(t_global+dt_global))) - &
      &  0.15791367041742976*Cos(2.*bd_Pi*(t_global+dt_global))*Sin(40.*bd_Pi*(t_global+dt_global))
-
+   BD_Input(1)%RootMotion%Orientation(:,:,1) = BD_InitInput%RootOri(1:3,1:3)
 
       BD_InputTimes(1) = t_global + dt_global
       BD_OutputTimes(1) = t_global + dt_global

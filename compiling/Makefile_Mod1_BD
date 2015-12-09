@@ -41,7 +41,7 @@ else
    FAST_dir=/Users/qwang2/Desktop/BeamDyn/SVN/BJonkman/
 #   FAST_dir=/Users/mspragu2/SVN/BJonkman/
 #   FAST_dir=/Users/qwang2/Desktop/BeamDyn/SVN/BJonkman/
-   FAST_dir=/Users/mspragu2/SVN/BJonkman/
+#   FAST_dir=/Users/mspragu2/SVN/BJonkman/
 #   FAST_dir=/home/mspragu2/SVN/BJonkman/
 
    REGISTRY   = $(FAST_dir)Source/dependencies/registry.exe
