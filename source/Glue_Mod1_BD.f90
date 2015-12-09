@@ -454,7 +454,8 @@ REAL(R8Ki):: start, finish
 !   ALLOCATE(BD_InitInput%GlbRot(3,3)) 
    BD_InitInput%GlbRot(:,:) = 0.0D0
    temp_vec(1) = 0.0
-   temp_vec(2) = 4.0D0*TAN((3.1415926D0/2.0D0)/4.0D0)
+   !temp_vec(2) = 4.0D0*TAN((3.1415926D0/2.0D0)/4.0D0)
+   temp_vec(2) = 4.0D0*TAN((Pi_D/2.0D0)/4.0D0)
    temp_vec(3) = 0.0
    CALL BD_CrvMatrixR(temp_vec,temp_R,ErrStat,ErrMsg)
    BD_InitInput%GlbRot(1:3,1:3) = TRANSPOSE(temp_R(1:3,1:3))
@@ -465,7 +466,7 @@ REAL(R8Ki):: start, finish
 !   ALLOCATE(BD_InitInput%RootOri(3,3))
    BD_InitInput%RootOri(:,:) = 0.0D0
    temp_vec(1) = 0.0
-   temp_vec(2) = 4.0D0*TAN((3.1415926D0/2.0D0)/4.0D0)
+   temp_vec(2) = 4.0D0*TAN((Pi_D/2.0D0)/4.0D0)
    temp_vec(3) = 0.0
    CALL BD_CrvMatrixR(temp_vec,temp_R,ErrStat,ErrMsg)
    BD_InitInput%RootOri(1:3,1:3) = TRANSPOSE(temp_R(1:3,1:3))
