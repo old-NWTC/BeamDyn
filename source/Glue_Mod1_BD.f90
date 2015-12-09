@@ -138,6 +138,10 @@ SUBROUTINE Mod1_BD_InputOutputSolve(time, &
    ! These BD inputs come directly from the Mod1 states; no solve required
    BD_Input%RootMotion%TranslationDisp(3,1) = Mod1_Output%PointMesh%TranslationDisp(1,1)
    BD_Input%RootMotion%TranslationVel(3,1) = Mod1_Output%PointMesh%TranslationVel(1,1)
+!   BD_Input%RootMotion%TranslationDisp(1,1) = 0.0D0
+!   BD_Input%RootMotion%TranslationDisp(2,1) = 0.0D0
+!   BD_Input%RootMotion%TranslationVel(1,1) = 0.0D0
+!   BD_Input%RootMotion%TranslationVel(2,1) = 0.0D0
 
    DO i=1,iter_max
 !WRITE(*,*) 'i=',i

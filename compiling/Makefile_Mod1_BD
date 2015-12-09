@@ -23,8 +23,8 @@ BITS = 64
 #module load gcc/4.8.1 lapack/3.4.2/gcc
 
 # Name of compiler to use and flags to use.
-#FC     = gfortran
-FC     = ifort
+FC     = gfortran
+#FC     = ifort
 
    # Location of source files for ModuleName and the NWTC Library.  You will probably need to change these for your system.
 # these settings are overridden below
@@ -35,9 +35,9 @@ ifeq ($(OS),Windows_NT)
    LAPACK_LINK  = -llapack -lblas -LC:/LAPACK/win32
 else
 
-#   FAST_dir=/Users/qwang2/Desktop/BeamDyn/SVN/BJonkman/
-   FAST_dir=/Users/mspragu2/SVN/BJonkman/
-   FAST_dir=/home/mspragu2/SVN/BJonkman/
+   FAST_dir=/Users/qwang2/Desktop/BeamDyn/SVN/BJonkman/
+#   FAST_dir=/Users/mspragu2/SVN/BJonkman/
+#   FAST_dir=/home/mspragu2/SVN/BJonkman/
 
    REGISTRY   = $(FAST_dir)Source/dependencies/registry.exe
 
