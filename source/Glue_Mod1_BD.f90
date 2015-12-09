@@ -367,7 +367,7 @@ REAL(R8Ki):: start, finish
    ! -- pc_max = 2 => dt_global <= 5e-5
    ! -- pc_max = 3 => dt_global <= 7e-4
    ! -- pc_max = 4 => dt_global <= 1e-3
-   dt_global = 1.0D-05!*0.5
+   dt_global = 2.0D-05!*0.5
 
    n_t_final = ((t_final - t_initial) / dt_global )
 
@@ -496,10 +496,10 @@ REAL(R8Ki):: start, finish
 CALL CPU_TIME(start)
    DO n_t_global = 0, n_t_final
 WRITE(*,*) "Time Step: ", n_t_global
-!IF(n_t_global .EQ. 0) STOP
+IF(n_t_global .EQ. 100) STOP
       ! Solve input-output relations; this section of code corresponds to Eq. (35) in Gasmi et al. (2013)
       ! This code will be specific to the underlying modules
-IF(MOD(n_t_global,10) .EQ. 0) THEN
+IF(MOD(n_t_global,5) .EQ. 0) THEN
  CALL BD_CrvExtractCrv(BD_OutPut(1)%BldMotion%Orientation(1:3,1:3,BD_Parameter%node_elem*BD_Parameter%elem_total),temp_cc,ErrStat,ErrMsg)
       WRITE(QiDisUnit,6000) t_global,&
                             &BD_OutPut(1)%BldMotion%TranslationDisp(1:3,BD_Parameter%node_elem*BD_Parameter%elem_total),&
