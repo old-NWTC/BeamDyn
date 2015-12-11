@@ -357,7 +357,7 @@ REAL(R8Ki):: start, finish
    t_initial = 0.d0
    t_final   = 5.0D+00
 
-   pc_max = 3  ! Number of predictor-corrector iterations; 1 corresponds to an explicit calculation where UpdateStates
+   pc_max = 1  ! Number of predictor-corrector iterations; 1 corresponds to an explicit calculation where UpdateStates
                ! is called only once  per time step for each module; inputs and outputs are extrapolated in time and
                ! are available to modules that have an implicit dependence on other-module data
 
@@ -367,7 +367,7 @@ REAL(R8Ki):: start, finish
    ! -- pc_max = 2 => dt_global <= 5e-5
    ! -- pc_max = 3 => dt_global <= 7e-4
    ! -- pc_max = 4 => dt_global <= 1e-3
-   dt_global = 5.0D-04!*0.5
+   dt_global = 2.0D-05!*0.5
 
    n_t_final = ((t_final - t_initial) / dt_global )
 
@@ -499,7 +499,7 @@ CALL CPU_TIME(start)
 !IF(n_t_global .EQ. 100) STOP
       ! Solve input-output relations; this section of code corresponds to Eq. (35) in Gasmi et al. (2013)
       ! This code will be specific to the underlying modules
-!IF(MOD(n_t_global,2) .EQ. 0) THEN
+IF(MOD(n_t_global,5) .EQ. 0) THEN
  CALL BD_CrvExtractCrv(BD_OutPut(1)%BldMotion%Orientation(1:3,1:3,BD_Parameter%node_elem*BD_Parameter%elem_total),temp_cc,ErrStat,ErrMsg)
       WRITE(QiDisUnit,6000) t_global,&
                             &BD_OutPut(1)%BldMotion%TranslationDisp(1:3,BD_Parameter%node_elem*BD_Parameter%elem_total),&
@@ -514,7 +514,7 @@ CALL CPU_TIME(start)
       WRITE(Mod1Vel,6000) t_global,&
                            &Mod1_OutPut(1)%PointMesh%TranslationVel(1:3,1),&
                            &Mod1_Output(1)%PointMesh%TranslationAcc(1:3,1)
-!ENDIF
+ENDIF
       ! after all InputOutputSolves, we can reset the mapping flags on the meshes:
          Mod1_Input(1)%PointMesh%RemapFlag    = .FALSE. 
          Mod1_Output(1)%PointMesh%RemapFlag   = .FALSE.
