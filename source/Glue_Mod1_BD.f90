@@ -357,7 +357,7 @@ REAL(R8Ki):: start, finish
    t_initial = 0.d0
    t_final   = 5.0D+00
 
-   pc_max = 3  ! Number of predictor-corrector iterations; 1 corresponds to an explicit calculation where UpdateStates
+   pc_max = 1  ! Number of predictor-corrector iterations; 1 corresponds to an explicit calculation where UpdateStates
                ! is called only once  per time step for each module; inputs and outputs are extrapolated in time and
                ! are available to modules that have an implicit dependence on other-module data
 
@@ -367,7 +367,7 @@ REAL(R8Ki):: start, finish
    ! -- pc_max = 2 => dt_global <= 5e-5
    ! -- pc_max = 3 => dt_global <= 7e-4
    ! -- pc_max = 4 => dt_global <= 1e-3
-   dt_global = 1.0D-03!*0.5
+   dt_global = 2.0D-04!*0.5
 
    n_t_final = ((t_final - t_initial) / dt_global )
 

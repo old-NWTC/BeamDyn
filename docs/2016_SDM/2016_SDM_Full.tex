@@ -311,7 +311,7 @@ For the BeamDyn-SDM system, we consider first stability of the coupling algorith
 Figure~\ref{fig:CoupledDTPC} shows the maximum stable time increments for the BeamDyn-SDM system, obtained by numerical experiments against the number of correction iterations in the coupling scheme.  
 Increasing the number of correction iterations increases the allowable time increment for stability.  However, the savings offered by a larger time increment must be considered against the additional computational cost of the correction steps.  
 For example, adding one correction step makes each time step about twice as expensive.
-Figure~\ref{fig:CoupledDTPC} also shows maximum time increments when numerical damping is included in the BeamDyn module, and we see that such damping can also increase stability of the coupled system.  We note, however, that the maximum stable time increments for the uncoupled BeamDyn model is $5 \times 10^{-3}$ s.  Thus, the coupled-system is significantly more stiff.
+Figure~\ref{fig:CoupledDTPC} also shows maximum time increments when numerical damping is included in the BeamDyn module, and we see that such damping can also increase stability of the coupled system.  We note, however, that the maximum stable time increments for the uncoupled BeamDyn model is $5 \times 10^{-3}$ s.  Thus, the coupled-system is more stiff.
 
 \begin{figure}[h!tp]
 \centering
@@ -331,6 +331,21 @@ and where $U_b(t)$ is the benchmark solution calculated with an LSFE as shown in
 The fifth-order element (six nodes) being used in this case is a reasonable choice for a converged analysis. 
 Moreover, results obtained by corrections are more accurate than those with smaller time increments but no correction.
 \mas{waiting for updated results}
+\begin{table}[h]
+    \centering
+    \begin{tabular}{| l | l | l |}
+    \hline
+    $\Delta t (s)$ & \# of corrections & $RMS error$ \\ \hline
+    2E-4 & 0 & 3.8494E-02 \\ \hline
+    5E-4 & 1 & 5.7842E-02 \\ \hline
+    1E-3 & 2 & 3.8491E-02 \\ \hline
+    3E-3 & 3 & 3.8328E-02 \\ \hline
+    3E-3 & 4 & 3.8156E-02 \\
+    \hline
+    \end{tabular}
+    \label{tab:RMS_pc}
+    \caption{RMS errors of tip displacement as a function of time step size and number of corrections.}
+\end{table}
 
 \begin{figure}[h!tp]
 \centering
