@@ -35,9 +35,9 @@ U.S.\ Government purposes.} }
 
 \author[]{Qi Wang\thanks{Research Engineer, National Wind Technology Center, AIAA Professional Member. Email: Qi.Wang2@nrel.gov}}
  \author[]{Michael A. Sprague\thanks{Senior Research Scientist, 
-Computational Science Center, AIAA Professional Member. Email: Michael.A.Sprague@nrel.gov}}
+Computational Science Center, AIAA Professional Member.}}
  \author[]{Jason Jonkman\thanks{Senior Engineer, National Wind Technology Center, AIAA Professional Member.}}
-  \author[]{Bonnie Jonkman\thanks{Senior Engineer, National Wind Technology Center, AIAA Professional Member.}}
+  \author[]{Bonnie Jonkman\thanks{Senior Scientist, National Wind Technology Center, AIAA Professional Member.}}
  \affil[]{National Renewable Energy Laboratory, Golden, CO 80401}
  
  \renewcommand\Authands{, and }
@@ -214,7 +214,7 @@ BeamDyn is equipped with two quadrature options: Gauss-Legendre quadrature and t
 For GL quadrature, $n_q= p + 1$, where $n_q$ is the number of quadrature points and $p$ is the order of the LSFE  (however, the GL quadrature point locations differ from the $p+1$ GLL nodal locations).  Material properties are linearly interpolated from the nearest-neighbor discrete stations. 
 Depending on the nature of the material properties, an increase in the element order $p$ could instigate a dramatically different response, because the quadrature points may capture different material properties.
 For TR quadrature, $n_q = n_s + (n_s-1) \times (j-1)
-= ( n_s - 1 ) \times j + 1$ is user specified, where $j$ is a positive integer. 
+= ( n_s - 1 ) \times j + 1$, where $j$ is a positive integer that is user specified. 
 Trapezoidal-rule quadrature enables a user to model a modern turbine blade defined by many cross-sectional property stations with few node points (i.e., $p \ll n_s$) while capturing all of the provided material properties.
 For example, 
 the widely used NREL 5-MW reference wind turbine\cite{Jonkman-etal:2009} blade is defined by 49 stations along the blade axis.   If one were using first-order FEs with a fixed quadrature scheme, at least 48 elements would be required to accurately capture the material data in the FE inner products.
@@ -268,8 +268,8 @@ The inputs and outputs are the same, but swapped, for the SDM system.
 The time integrator in BeamDyn is a second-order implicit generalized-$\alpha$ algorithm (see Wang et al.\cite{Wang:2014}), and the time integrator for the SDM system is fourth-order Adams-Bashforth-Moulton (ABM4), which is a predictor-corrector algorithm.
 The material properties, coordinate system, and geometric parameters can be found in Figure~\ref{fig:CoupledSystem}. 
 The cross-section dimensions of the beam is $0.1$ m $\times$ 0.1 m. 
-The natural frequency of the uncoupled mass-spring-damper system is $6.28$ rad/s and the first five natural frequencies for the uncoupled beam (in a clamped/cantilevered configuration) are $0.26, 1.72, 5.78, 22.62$, and $24.21$ rad/s, respectively, as determined by a refined ANSYS$^{\circledR}$ Mechanical modal analysis. 
-The first five natural frequencies of the coupled system, obtained by ANSYS modal analysis, are $0.25, 0.85, 1.80, 4.76$, and $9.34$ rad/s, respectively.
+The natural frequency of the uncoupled mass-spring-damper system is $6.28$ rad/s and the first five distinct natural frequencies for the uncoupled beam (in a clamped/cantilevered configuration) are $0.26, 1.72, 5.78, 22.62$, and $24.21$ rad/s, respectively, as determined by a refined ANSYS$^{\circledR}$ Mechanical modal analysis. 
+The first five distinct natural frequencies of the coupled system, obtained by ANSYS modal analysis, are $0.25, 0.85, 1.80, 4.76$, and $9.34$ rad/s, respectively.
 For time-domain analysis, the system has quiescent initial conditions with an initial displacement of $0.1$ m from the neutral position in the positive $Z$ direction (see Figure ~\ref{fig:CoupledSystem}). 
 
 \begin{figure}
@@ -282,7 +282,7 @@ For time-domain analysis, the system has quiescent initial conditions with an in
 For verification, we analyzed the system in ANSYS using 60 BEAM188 elements (cantilevered to a point mass with spring and damper) and the time increment was $10^{-5}$ s. The Newmark-$\beta$ time integrator is adopted in ANSYS without numerical damping. 
 For the BeamDyn results, the beam was discretized by a single eighth-order element, and the time increment was  $10^{-5}$ s.  BeamDyn inner products were evaluated with standard Gauss-Legendre quadrature.
 Unless otherwise noted, BeamDyn numerical damping was disabled and there was no correction step in the coupling algorithm.
-The root and tip displacements of the beam calculated with the two models are shown in Figure~\ref{fig:E1Disp}. 
+Based on initial conditions corresponding to translating the mass and beam 0.1-m along Z and letting go, the root and tip displacements of the beam calculated with the two models are shown in Figure~\ref{fig:E1Disp}. 
 Excellent agreement is demonstrated between the ANSYS and BeamDyn results.
 The root horizontal velocity and acceleration are also compared between the current model and the ANSYS benchmark solution in Figure~\ref{fig:E1VelAcc}. 
 Again, excellent agreement is shown.
@@ -311,7 +311,7 @@ For the BeamDyn-SDM system, we consider first stability of the coupling algorith
 Figure~\ref{fig:CoupledDTPC} shows the maximum stable time increments for the BeamDyn-SDM system, obtained by numerical experiments against the number of correction iterations in the coupling scheme.  
 Increasing the number of correction iterations increases the allowable time increment for stability.  However, the savings offered by a larger time increment must be considered against the additional computational cost of the correction steps.  
 For example, adding one correction step makes each time step about twice as expensive.
-Figure~\ref{fig:CoupledDTPC} also shows maximum time increments when numerical damping is included in the BeamDyn module, and we see that such damping can also increase stability of the coupled system.  We note, however, that the maximum stable time increments for the uncoupled BeamDyn model is $5 \times 10^{-3}$ s.  Thus, the coupled-system is more stiff.
+Figure~\ref{fig:CoupledDTPC} also shows maximum time increments when numerical damping is included in the BeamDyn module, and we see that such damping can also increase stability of the coupled system.  We note, however, that the maximum stable time increment for the uncoupled BeamDyn model is $5 \times 10^{-3}$ s.  Thus, the coupled-system is more stiff.
 
 \begin{figure}[h!tp]
 \centering
@@ -327,7 +327,7 @@ Accuracy was quantified by root-mean-square (RMS) error, $\varepsilon_{RMS}$,  w
 \varepsilon_{RMS}=\sqrt{\frac{\sum_{k=0}^{n_{max}}[U_z^k-U_b(t^k)]^2}{\sum_{k=0}^{n_{max}}[U_b(t^k)]^2}}
 \label{RMSdefi}
 \end{equation} 
-and where $U_b(t)$ is the benchmark solution calculated with an LSFE as shown in Figure \ref{fig:E1Disp}. Figure~\ref{fig:ConvDTNode} shows the RMS error of the horizontal tip displacements as a function of the total number of nodes for two different time increments ($2 \times 10^{-5}$ s and $10^{-5}$ s).
+and where $U_b(t)$ is the benchmark solution calculated with the finely resolved BeamDyn solution shown in Figure \ref{fig:E1DispTip}. Figure~\ref{fig:ConvDTNode} shows the RMS error of the horizontal tip displacements as a function of the total number of nodes for two different time increments ($2 \times 10^{-5}$ s and $10^{-5}$ s).
 The fifth-order element (six nodes) being used in this case is a reasonable choice for a converged analysis. 
 Moreover, results obtained by corrections are more accurate than those with smaller time increments but no correction.
 \mas{waiting for updated results}
@@ -356,12 +356,12 @@ Moreover, results obtained by corrections are more accurate than those with smal
 
 \subsection{Example 2: NREL 5-MW Wind Turbine}
 
-The second example is an analysis of the NREL 5-MW reference wind turbine\cite{Jonkman-etal:2009}, which has straight, 61.5 m blades.  
+The second example is an analysis of the NREL 5-MW reference wind turbine\cite{Jonkman-etal:2009}, which has straight 61.5-m blades.  
 We examine simulation results where the three blades are modeled by BeamDyn or ElastoDyn.
-The blade structural-dynamics model in the ElastoDyn module of FAST is applicable to straight isotropic blades dominated by bending.  The model includes two flapwise-bending modes and one edgewise-bending mode, coupled through a structural pre-twist, but neglects axial, shear, and torsional DOFs and mass and elastic offsets from the pitch axis.  Several geometric and kinematic nonlinearities are accounted for, including radial shortening and centrifugal, Coriolis, and gyroscopic loading.
+The blade structural-dynamics model in the ElastoDyn module of FAST is applicable to straight isotropic blades dominated by bending.  The model includes two flapwise-bending modes and one edgewise-bending mode, coupled through a structural pre-twist, but neglects axial, shear, and torsional degrees of freedom and mass and elastic offsets from the pitch axis.  Several geometric and kinematic nonlinearities are accounted for, including radial shortening and centrifugal, Coriolis, and gyroscopic loading.
 
 We examine here the numerical performance of two different BeamDyn quadrature methods (c.f., Section~II.C), Gauss-Legendre and trapezoidal, for this realistic-blade analysis.  
-As described above, the sectional properties for the NREL 5-MW reference turbine blade are defined at 49 stations along its 61.5 m length.  
+As described above, the sectional properties for the NREL 5-MW reference turbine blade are defined at 49 stations along its 61.5-m length.  
 First, a cantilevered blade under a uniformly distributed static force of magnitude $10^4$ N/m along the flap direction is analyzed.
 Figure~\ref{fig:5MWStaticTip} shows the tip displacement in the flap direction as a function of the number of nodes.  
 Monotonic convergence of tip-displacement is shown for the trapezoidal-quadrature results with an increasing number of nodes.  
@@ -370,7 +370,7 @@ This is also demonstrated in the calculation of total blade mass as shown in Fig
 The total blade mass as calculated with trapezoidal quadrature is independent of the number of nodes, whereas the mass calculated by Gauss quadrature  depends on the number of nodes in the
 element, and a large number of nodes is required for an accurate total-mass
 calculation.  
-We note that a scaling factor has been applied to the calculation of blade mass so that it is consistent with ElastoDyn.  
+We note that a small scaling factor has been applied to the calculation of blade mass so that it is consistent with ElastoDyn.  
 In all subsequent calculations with BeamDyn, trapezoidal quadrature is employed. 
 \begin{figure}
 \centering
@@ -386,7 +386,7 @@ In all subsequent calculations with BeamDyn, trapezoidal quadrature is employed.
 \label{fig:5MWMass}
 \end{figure} 
 
-Next, we studied the time step sizes required for stable simulation of BeamDyn in stand-alone and couple-to-FAST modes. Figure~\ref{fig:5MWdt_node} shows the maximum time step size versus the number of nodes for a BeamDyn model composed of a single element. In the stand-alone mode, we used FAST as the driver but with all coupling options disabled so that the blade rotated at a fixed speed under gravity load. For the coupled-to-FAST case, we conducted an aero-servo-elastic wind turbine analysis under a mean wind speed of $12~m/s^2$ with turbulence, which is  certification test case \#26 in the FAST archive.  BeamDyn numerical damping was disabled and there were no correction iterations in the coupling algorithm.
+Next, we studied the time step sizes required for stable simulation of BeamDyn in stand-alone and couple-to-FAST modes. Figure~\ref{fig:5MWdt_node} shows the maximum time step size versus the number of nodes for a BeamDyn model composed of a single element. In the stand-alone mode, we used FAST as the driver but with all coupling options disabled so that the blade rotated at a fixed speed loaded only by gravity. For the coupled-to-FAST case, we conducted an aero-servo-elastic wind turbine analysis under a mean wind speed of $12~m/s^2$ with turbulence, which is  certification test case \#26 in the FAST archive.  BeamDyn numerical damping was disabled and there were no correction iterations in the coupling algorithm.
 
 \begin{figure}
     \centering
@@ -411,20 +411,20 @@ Finally, we studied the performance of BeamDyn in the coupled FAST analysis. Fig
 \label{fig:5MW_Coupled_Mesh}
 \end{figure} 
 
-We compared the results obtained by BeamDyn with those obtained by ElastoDyn for the fully-coupled analysis (as described above).  The BeamDyn blades were each modeled with a single fifth-order element, and the FAST-BeamDyn system was time-integrated with $\Delta t = 2 \times 10^{-3}$ s as demanded for numerical stability.  
+We compared the results obtained by BeamDyn with those obtained by ElastoDyn for the coupled analysis (as described above).  The BeamDyn blades were each modeled with a single fifth-order element, and the FAST-BeamDyn system was time-integrated with $\Delta t = 2 \times 10^{-3}$ s as demanded for numerical stability.  
 The FAST-ElastoDyn system was time integrated with $\Delta t = 1.25 \times 10^{-2}$ s.
-The tip displacements of blade 1 are shown in Figure~\ref{fig:5MWTip}.  Results for BeamDyn are shown with and without off-diagonal terms in the sectional mass matrices.
-Good agreement can be observed between the ElastoDyn and BeamDyn results. It is noted that because of the Trapeze effect and elastic stretching considered in BeamDyn, the mean value of the axial displacement in Figure~\ref{fig:5MWTipZ} by BeamDyn is different from ElastoDyn. It is pointed out that the off-diagonal terms in the mass matrix in BeamDyn have been removed for comparison with ElastoDyn. Figure~\ref{fig:5MWRootF} shows the root reaction forces calculated by BeamDyn and ElastoDyn. Again, good agreement can be found in these quantities. We note the spurious spikes in the $M_{pitch}$ histories, which will be addressed in a future release of BeamDyn.  While we see noticeable differences in the tip displacement histories, it is interesting to note the excellent agreement between ElastoDyn and BeamDyn results for root reaction forces and moments.  This is because the NREL 5-MW blade features are well accommodated by the approximations behind the ElastoDyn model.  In particular, 
+The tip displacements of blade 1 are shown in Figure~\ref{fig:5MWTip}.  Results for BeamDyn are shown with and without off-diagonal terms in the sectional mass matrices (the latter is for more direct comparison to ElastoDyn).
+Good agreement can be observed between the ElastoDyn and BeamDyn results. It is noted that because of the Trapeze effect and elastic stretching considered in BeamDyn, the mean value of the axial displacement in Figure~\ref{fig:5MWTipZ} by BeamDyn is different from ElastoDyn. Figure~\ref{fig:5MWRootF} and \ref{fig:5MWRootM} shows the root reaction forces and moments calculated by BeamDyn and ElastoDyn. Again, good agreement can be found in these quantities. We note the spurious spikes in the $M_{pitch}$ histories, which will be addressed in a future release of BeamDyn.  While we see noticeable differences in the tip displacement histories, it is interesting to note the excellent agreement between ElastoDyn and BeamDyn results for root reaction forces and moments.  This is because the NREL 5-MW blade features are well accommodated by the approximations behind the ElastoDyn model.  In particular, 
 ElastoDyn is well suited for modeling the NREL 5-MW blade because
 \begin{itemize}
 \item the blade is naturally straight,
 \item the lowest modes excited by wind are dominated by bending,
 \item there are no cross-sectional couplings induced by anisotropic composite laminate layups,
 \item torsion, extension, and shear effects are mostly negligible (the first torsional mode natural frequency is well above rated rotor speed; the blade aspect ratio is high, etc.),
-\item the deflections are moderate enough (not too large) that they can be accurate captured by the geometric nonlinear terms included in ED, and
+\item the deflections are moderate enough (not too large) that they can be accurately captured by the geometric nonlinear terms included in ElastoDyn, and
 \item the mass-center offsets are small and do not cause a large change in response.
 \end{itemize}
-The benefits of moving from an efficient model like ElastoDyn to a higher-fidelity model that is more computationally expensive like BeamDyn will be best seen for turbine blades that do not satisfy the simplifying features, e.g., aero-elatically tailored curved blades.
+The benefits of moving from an efficient model like ElastoDyn to a higher-fidelity model that is more computationally expensive like BeamDyn will be best seen for turbine blades that do not satisfy the simplifying features, e.g., aero-elatically tailored curved blades.\cite{Sri:SciTech2016}
 
 \begin{figure}
     \centering
@@ -450,7 +450,7 @@ The benefits of moving from an efficient model like ElastoDyn to a higher-fideli
 \subfloat[$M_{falp}$]{\label{fig:5MWRootMy}\includegraphics[clip,width=0.8\textwidth]{\directory  B1RootMyr.pdf}} \\
 \subfloat[$M_{pitch}$]{\label{fig:5MWRootMz}\includegraphics[clip,width=0.8\textwidth]{\directory  B1RootMzr.pdf}}
 \caption{Comparisons of root reaction moments between ElastoDyn and BeamDyn results}
-\label{fig:5MWRootF}
+\label{fig:5MWRootM}
 \end{figure} 
 
 
