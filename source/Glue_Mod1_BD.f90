@@ -367,7 +367,7 @@ REAL(R8Ki):: start, finish
    ! -- pc_max = 2 => dt_global <= 5e-5
    ! -- pc_max = 3 => dt_global <= 7e-4
    ! -- pc_max = 4 => dt_global <= 1e-3
-   dt_global = 2.0D-04!*0.5
+   dt_global = 1.0D-04!*0.5
 
    n_t_final = ((t_final - t_initial) / dt_global )
 

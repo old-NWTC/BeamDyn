@@ -265,7 +265,7 @@ a BeamDyn beam is ``clamped'' to the mass in a spring-damper-mass (SDM) system a
 We use this example to verify our numerical implementation and examine the accuracy and numerical behavior of the coupling algorithm. 
 Here, the relevant output from BeamDyn is translation reaction force, whereas its inputs are root motion (translational displacement, velocity, and acceleration).  
 The inputs and outputs are the same, but swapped, for the SDM system.
-The time integrator in BeamDyn is a second-order implicit generalized-$\alpha$ algorithm (see Wang et al.\cite{Wang:2014}), and the time integrator for the SDM system is fourth-order Adams-Bashforth-Moulton (ABM4), which is a predictor-corrector algorithm.
+The time integrator in BeamDyn is a second-order implicit generalized-$\alpha$ algorithm (see Wang et al.\cite{Wang:GEBT2014}), and the time integrator for the SDM system is fourth-order Adams-Bashforth-Moulton (ABM4), which is a predictor-corrector algorithm.
 The material properties, coordinate system, and geometric parameters can be found in Figure~\ref{fig:CoupledSystem}. 
 The cross-section dimensions of the beam is $0.1$ m $\times$ 0.1 m. 
 The natural frequency of the uncoupled mass-spring-damper system is $6.28$ rad/s and the first five distinct natural frequencies for the uncoupled beam (in a clamped/cantilevered configuration) are $0.26, 1.72, 5.78, 22.62$, and $24.21$ rad/s, respectively, as determined by a refined ANSYS$^{\circledR}$ Mechanical modal analysis. 

@@ -3,7 +3,7 @@ Beam for Coupling Validation
 ---------------------- SIMULATION CONTROL --------------------------------------
 TRUE         Echo        - Echo input data to "<RootName>.ech" (flag)
 2         analysis_type  - 0: Rigid Body analysis; 1: Static analysis; 2: Dynamic analysis
-0.9       rhoinf            - Parameter for GA2
+1.0       rhoinf            - Parameter for GA2
 1         quadrature     - 1: Gauss; 2: Trapezoidal
 DEFAULT   refine         - Refinement factor for quadrature 2. DEFAULT = 1
 DEFAULT   n_fact         - Factorization frequency: The Jacobian is computed every n_fact steps in N-R iteration. DEFAULT = 5
