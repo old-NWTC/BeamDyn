@@ -309,10 +309,10 @@ Again, excellent agreement is shown.
 
 For the BeamDyn-SDM system, we consider first stability of the coupling algorithm for which the beam is discretized by a single fifth-order LSFE. 
 Figure~\ref{fig:CoupledDTPC} shows the maximum stable time increments for the BeamDyn-SDM system, obtained by numerical experiments against the number of correction iterations in the FAST loose-coupling scheme.  Results are shown with and without numerical damping in the BeamDyn module.
-Increasing the number of correction iterations increases the allowable time increment for stability for up to three corrections.  In moving from three to four corrections, however, we we no increase in stability for the numerical-damping-free simulations, and we even see a small decrease in stability with BeamDyn numerical damping.  Overall, however, the inclusion of numerical damping in BeamDyn increase the allowable time increment for stable solutions.
-The computational savings offered by a larger stable time increment provide by additional correction steps must be considered against the additional computational cost of the correction steps.  
-For example, adding one correction step makes each time step about twice as expensive.
-We also note, that the maximum stable time increment for the uncoupled BeamDyn model (without numerical damping) is $5 \times 10^{-3}$ s.  Thus, the coupled-system is more stiff.
+Increasing the number of correction iterations increases the allowable time increment for stability for up to three corrections.  In moving from three to four corrections, however, we see no increase in stability for the numerical-damping-free simulations, and we even see a small decrease in stability with BeamDyn numerical damping.  Overall, however, the inclusion of numerical damping in BeamDyn increases the allowable time increment for stable solutions.
+The computational savings offered by a larger stable time increment provided by additional correction steps must be considered against the additional computational cost of the correction steps.  
+For example, adding a single correction step makes each time step about twice as expensive compared with no correction.
+We also note that the maximum stable time increment for the uncoupled BeamDyn model (without numerical damping) is $5 \times 10^{-3}$ s.  Thus, the coupled-system is more stiff.
 
 \begin{figure}[h!tp]
 \centering
@@ -328,14 +328,14 @@ Accuracy was quantified by root-mean-square (RMS) error, $\varepsilon_{RMS}$,  w
 \varepsilon_{RMS}=\sqrt{\frac{\sum_{k=0}^{n_{max}}[U_z^k-U_b(t^k)]^2}{\sum_{k=0}^{n_{max}}[U_b(t^k)]^2}}
 \label{RMSdefi}
 \end{equation} 
-and where $U_b(t)$ is the benchmark solution calculated with a BeamDyn-SDM solution calculated with a 9-node BeamDyn model and $\Delta t = 5 \times 10^{-6}$ s. Figure~\ref{fig:ConvDTNode} shows the RMS error of the horizontal tip displacements as a function of the total number of BeamDyn nodes for two different time increments ($2 \times 10^{-4}$ s and $10^{-4}$ s); BeamDyn had no numerical damping, and there were no correction steps in the loose-coupling algorithm.  The results indicate that, except for the 9-node model, the $\Delta t = 2 \times 10^{-4}$ s provides time-increment-independent solutions.
+and where $U_b(t)$ is the benchmark solution calculated with a BeamDyn-SDM solution calculated with a 9-node BeamDyn model and $\Delta t = 5 \times 10^{-6}$ s. Figure~\ref{fig:ConvDTNode} shows the RMS error of the horizontal tip displacements as a function of the total number of BeamDyn nodes for two different time increments ($1 \times 10^{-4}$ s and $2 \times 10^{-4}$ s); BeamDyn had no numerical damping, and there were no correction steps in the loose-coupling algorithm.  The results indicate that $\Delta t = 2 \times 10^{-4}$ s provides time-increment-independent solutions.
 We see approximately second-order convergence with spatial refinement (increase in the number of nodes), and results indicate that a fifth-order element (six nodes) provides results of sufficient accuracy.
-Table~\ref{tab:RMS_pc} shows RMS errors of tip-displacement histories for the BeamDyn-SDM system for several combinations of time-increment and number of corrections in the loose-coupling algorithm. We see that, for this system, increasing the number of corrections permit larger time increments while maintaining sufficient accuracy.  
+Table~\ref{tab:RMS_pc} shows RMS errors of tip-displacement histories for the BeamDyn-SDM system for several combinations of time increment and number of corrections in the loose-coupling algorithm. We see that, for this system, increasing the number of corrections permits larger time increments while maintaining sufficient accuracy.  
 
 \begin{figure}[h!tp]
 \centering
 \includegraphics[clip,width=0.5\textwidth]{\directory RMS_dt_node.pdf}
-\caption{Normalized RMS error of horizontal tip displacement  histories as a function of total number of nodes for three different time increments. The dashed line shows ideal second-order convergence. The benchmark solution was calculated with a 9-node LSFE and $\Delta t = 5 \times 10^{-6}$ s.} 
+\caption{Normalized RMS error of horizontal tip displacement histories as a function of total number of nodes for three different time increments. The dashed line shows ideal second-order convergence. The benchmark solution was calculated with a 9-node LSFE and $\Delta t = 5 \times 10^{-6}$ s.} 
 \label{fig:ConvDTNode}
 \end{figure}
 
@@ -351,19 +351,19 @@ Table~\ref{tab:RMS_pc} shows RMS errors of tip-displacement histories for the Be
     3 $\times 10^{-3}$ & 4 & 3.82 $\times 10^{-2}$ \\
     \hline
     \end{tabular}
+    \caption{RMS errors of tip-displacement histories for the BeamDyn-SDM system for several combinations of time increment and number of corrections in the loose-coupling algorithm.  Results are shown for a BeamDyn model with 6 nodes and no numerical damping.}
     \label{tab:RMS_pc}
-    \caption{RMS errors of tip-displacement histories for the BeamDyn-SDM system for several combinations of time-increment and number of corrections in the loose-coupling algorithm.  Results are shown for a BeamDyn model with 6 nodes and no numerical damping.}
 \end{table}
 
 
 \subsection{Example 2: NREL 5-MW Wind Turbine}
 
-The second example is an analysis of the NREL 5-MW reference wind turbine\cite{Jonkman-etal:2009}, which has straight 61.5-m blades.  
+The second example is an analysis of the NREL 5-MW reference wind turbine\cite{Jonkman-etal:2009}, which has straight 61.5 m blades.  
 We examine simulation results where the three blades are modeled by BeamDyn or ElastoDyn.
 The blade structural-dynamics model in the ElastoDyn module of FAST is applicable to straight isotropic blades dominated by bending.  The model includes two flapwise-bending modes and one edgewise-bending mode, coupled through a structural pre-twist, but neglects axial, shear, and torsional degrees of freedom and mass and elastic offsets from the pitch axis.  Several geometric and kinematic nonlinearities are accounted for, including radial shortening and centrifugal, Coriolis, and gyroscopic loading.
 
 We examine here the numerical performance of two different BeamDyn quadrature methods (c.f., Section~II.C), Gauss-Legendre and trapezoidal, for this realistic-blade analysis.  
-As described above, the sectional properties for the NREL 5-MW reference turbine blade are defined at 49 stations along its 61.5-m length.  
+As described above, the sectional properties for the NREL 5-MW reference turbine blade are defined at 49 stations along its 61.5 m length.  
 First, a cantilevered blade under a uniformly distributed static force of magnitude $10^4$ N/m along the flap direction is analyzed.
 Figure~\ref{fig:5MWStaticTip} shows the tip displacement in the flap direction as a function of the number of nodes.  
 Monotonic convergence of tip-displacement is shown for the trapezoidal-quadrature results with an increasing number of nodes.  
@@ -388,7 +388,7 @@ In all subsequent calculations with BeamDyn, trapezoidal quadrature is employed.
 \label{fig:5MWMass}
 \end{figure} 
 
-Next, we studied the time step sizes required for stable simulation of BeamDyn in stand-alone and couple-to-FAST modes. Figure~\ref{fig:5MWdt_node} shows the maximum time step size versus the number of nodes for a BeamDyn model composed of a single element. In the stand-alone mode, we used FAST as the driver but with all coupling options disabled so that the blade rotated at a fixed speed loaded only by gravity. For the coupled-to-FAST case, we conducted an aero-servo-elastic wind turbine analysis under a mean wind speed of $12$ m/s$^2$ with turbulence, which is  certification test case \#26 in the FAST archive.  BeamDyn numerical damping was disabled and there were no correction iterations in the coupling algorithm.
+Next, we studied the time step sizes required for stable simulation of BeamDyn in stand-alone and couple-to-FAST modes. Figure~\ref{fig:5MWdt_node} shows the maximum time step size versus the number of nodes for a BeamDyn model composed of a single element. In the stand-alone mode, we used FAST as the driver but with all coupling options disabled so that the blade rotated at a fixed speed loaded only by gravity. For the coupled-to-FAST case, we conducted an aero-servo-elastic wind turbine analysis under a mean wind speed of $12$ m/s$^2$ with turbulence, which is  certification test case \#26 in the FAST archive.  BeamDyn numerical damping was disabled and there were no correction iterations in the coupling algorithm.  We see that the two-way coupling between BeamDyn and FAST requires significantly smaller time increments for stable solutions.
 
 \begin{figure}
     \centering
@@ -397,7 +397,7 @@ Next, we studied the time step sizes required for stable simulation of BeamDyn i
 \label{fig:5MWdt_node}
 \end{figure} 
 
-Finally, we studied the performance of BeamDyn in the coupled FAST analysis. Figures~\ref{fig:5MW_Coupled_dt} and \ref{fig:5MW_Coupled_Mesh} show the tip flap displacement histories under different time and space discretizations. Note that all of the quantities studied here are resolved in the body-attached blade reference coordinate system following the IEC standard, where the $X$ direction is toward the suction side of the airfoil, the $Y$ direction is toward the trailing edge, and the $Z$ direction is toward the blade tip from root. It can be observed that for this case, results that are spatially and temporally grid independent can be obtained with $\Delta t = 2 \times 10^{-3}$ s  and a single fifth-order element for each blade.  
+Finally, we studied the performance of BeamDyn in the coupled FAST analysis. Figures~\ref{fig:5MW_Coupled_dt} and \ref{fig:5MW_Coupled_Mesh} show the tip flap displacement histories under different time and space discretizations. Note that all of the quantities studied here are defined in the body-attached blade reference coordinate system following the IEC standard, where the $X$ direction is toward the suction side of the airfoil, the $Y$ direction is toward the trailing edge, and the $Z$ direction is toward the blade tip from root. These results demostrated that, for this system, results that are grid independent (in space and time) can be obtained with $\Delta t = 2 \times 10^{-3}$ s  and a single fifth-order element for each blade.  
 
 \begin{figure}
     \centering
@@ -409,7 +409,7 @@ Finally, we studied the performance of BeamDyn in the coupled FAST analysis. Fig
 \begin{figure}
     \centering
 \includegraphics[clip,width=0.9\textwidth]{\directory  5MW_Coupled_Mesh.pdf}
-\caption{Blade tip deflection histories along flap direction obtained using different elements, where models were time integrated with $\Delta t = 2 \times 10^{-3}$ s.}
+\caption{Blade tip deflection histories along flap direction obtained using different BeamDyn refinements, where models were time integrated with $\Delta t = 2 \times 10^{-3}$ s.}
 \label{fig:5MW_Coupled_Mesh}
 \end{figure} 
 
@@ -426,7 +426,7 @@ ElastoDyn is well suited for modeling the NREL 5-MW blade because
 \item the deflections are moderate enough (not too large) that they can be accurately captured by the geometric nonlinear terms included in ElastoDyn, and
 \item the mass-center offsets are small and do not cause a large change in response.
 \end{itemize}
-The benefits of moving from an efficient model like ElastoDyn to a higher-fidelity model that is more computationally expensive like BeamDyn will be best seen for turbine blades that do not satisfy the simplifying features, e.g., aero-elatically tailored curved blades.\cite{Sri:SciTech2016}
+The benefits of moving from an efficient model like ElastoDyn to a higher-fidelity model that is more computationally expensive like BeamDyn will be best seen for turbine blades that do not satisfy the simplifying features, e.g., those with aero-elastically tailored curved blades.\cite{Sri:SciTech2016}
 
 \begin{figure}
     \centering
@@ -458,7 +458,7 @@ The benefits of moving from an efficient model like ElastoDyn to a higher-fideli
 
 \section{Conclusion}
 
-In this paper, we examined the beam theory and the coupling algorithm for partitioned mechanical system analysis. The governing equations for BeamDyn were reviewed and the coupling schemes between BeamDyn and other mechanical modules were explained. For wind turbine blade analysis, which features a large number of cross-sectional stations along the blade axis, we implemented a trapezoidal numerical integration so that all the cross-sectional data, including inertial and stiffness matrices, can be used in the analysis. The users do not need to pick certain stations from a large set of data nor numerically interpolate them, which usually introduces errors. This new spatial integration method and the coupling algorithm have been verified in the numerical examples. The results obtained by trapezoidal quadrature were monotonously converged while those obtained by conventional Gauss integration were randomly converged depending on the stations chosen and interpolation method. In the coupled analysis, exponential convergence rate can be seen in the BeamDyn results, which is a prominent feature of the LSFEs. In the full turbine analysis, reasonable agreement between BeamDyn and ElastoDyn results is found. More verification and validation results can be found in Guntar et al.\cite{Sri:SciTech2016}.
+In this paper, we examined the beam theory and the coupling algorithm for partitioned mechanical-system analysis. The governing equations for BeamDyn were reviewed and the coupling schemes between BeamDyn and other mechanical modules were explained. For wind turbine blade analysis, which features a large number of cross-sectional stations along the blade axis, we implemented a trapezoidal numerical integration so that all the cross-sectional data, including inertial and stiffness matrices, can be used in the analysis. The users do not need to pick certain stations from a large set of data nor numerically interpolate them, which usually introduces errors. This new spatial integration method and the coupling algorithm have been verified in the numerical examples. The results obtained by trapezoidal quadrature were monotonously converged while those obtained by conventional Gauss integration were randomly converged depending on the stations chosen and interpolation method. In the coupled analysis, exponential convergence rate can be seen in the BeamDyn results, which is a prominent feature of the LSFEs. In the full turbine analysis, reasonable agreement between BeamDyn and ElastoDyn results is found. More verification and validation results can be found in Guntar et al.\cite{Sri:SciTech2016}.
   
 \section*{Acknowledgments} 
 
