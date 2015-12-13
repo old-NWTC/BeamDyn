@@ -20,7 +20,7 @@ kp_xb kp_yb   kp_zb    initial_twist
    0.0000000000000000        0.0000000000000000        5.0000000000000000        0.000000000000000
    0.0000000000000000        0.0000000000000000        10.000000000000000        0.000000000000000          
 ---------------------- MESH PARAMETER ------------------------------------------
-8    order_elem    - Order of interpolation (basis) function (-)
+7    order_elem    - Order of interpolation (basis) function (-)
 ---------------------- MATERIAL PARAMETER --------------------------------------
 "GA2_Debug_Blade_New.inp"    BldFile - Name of file containing properties for blade
 ---------------------- PITCH ACTUATOR PARAMETERS -------------------------------
