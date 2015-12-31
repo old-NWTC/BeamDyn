@@ -1,0 +1,176 @@
+% compress:  compresses the navigation bar                                      
+% trans | handout:  restrict overlays
+%\documentclass[dvips,xcolor=cmyk]{beamer}
+\documentclass[xcolor=cmyk]{beamer}
+%\documentclass[pdftex,compress,xcolor=cmyk,trans]{beamer}
+
+% % force compression of graphic objects?  I need to research this more, JJS
+% 4/24/12
+% \pdfminorversion=5
+% \pdfcompresslevel=9
+% \pdfobjcompresslevel=2
+
+%% Packages
+\usepackage{amsmath,amssymb}
+\usepackage{enumerate}
+%\usepackage{graphics}
+\usepackage{array}
+\usepackage{psfrag}
+%\usepackage{subfigure}
+\usepackage{graphicx}
+\usepackage{subfig}
+%\usepackage{movie15} % separate package with good integration with Beamer
+\usepackage{sidecap}
+\usepackage{caption}
+
+%\usepackage[driverfallback=dvipdfm]{hyperref}
+
+%\usepackage{easymovie}             
+\usepackage[normalem]{ulem}
+
+\usepackage{natbib,natbibspacing}
+%\newcommand{\newblock}{}
+
+%\usepackage{enumitem}
+
+\usepackage{pstricks}
+%\usepackage{tikz}
+%\usetikzlibrary{positioning}
+%\usetikzlibrary{calc}
+\usepackage{nameref}
+\usepackage{url}
+
+\usepackage[T1]{fontenc}
+\usepackage{arev}
+\usepackage{type1cm}  
+
+\usepackage{setspace}  
+
+\captionsetup{font=scriptsize,labelfont=scriptsize}
+%\setlength{\parindent}{0.3in}
+%\setlength{\parskip}{0.1in}
+
+% commands not needed for math
+
+%% Set formatting to conform to NREL standards
+% NREL "signature" colors
+\definecolor{nrelblue}{cmyk}{1,0.44,0,0}
+\definecolor{nrelyellow}{cmyk}{0,0.42,1,0.01}
+\definecolor{nrelgreen}{cmyk}{0.56,0,1,0.27}
+\definecolor{nrelred}{cmyk}{0,0.74,1,0.47}
+\definecolor{nrelgray}{cmyk}{0.11,0.01,0,0.64}
+% NREL "secondary" colors -- double check these !! JJS 4/21/12
+\definecolor{nrellightblue}{cmyk}{0.9,0.11,0,0}
+\definecolor{nrellightyellow}{cmyk}{0,0.24,94,0}
+\definecolor{nrellightgreen}{cmyk}{0.50,0,1,0}
+\definecolor{nrellightred}{cmyk}{0,0.79,1,0.11}
+\definecolor{nrellightgray}{cmyk}{0.02,0,0,0.18}
+
+\input basic.ltx
+\def\directory{EPSF/}
+
+% custom defined colors
+\definecolor{foottextcolor}{named}{white}
+
+% set beamer theme(s)
+\usecolortheme[named=nrelblue]{structure}
+% \usefonttheme[onlymath]{serif}  % use sans serif for text, but serif for
+% math
+
+\newlength{\lrmargin} % left and right margin width
+\setlength{\lrmargin}{1em}
+\setbeamersize{text margin left=\lrmargin}
+\setbeamersize{text margin right=\lrmargin}
+
+\setbeamertemplate{navigation symbols}{}  % gets rid of navigation symbols
+
+% change the default footnote font size
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd{\@makefntext}{\insertfootnotetext{#1}}{\insertfootnotetext{\tiny#1}}{}{}
+\makeatother
+
+% define frame-title template
+\setbeamertemplate{frametitle}
+{
+  \textbf{\Large \insertframetitle}
+  \par
+  \vspace{-0.5ex}
+  \mbox{\hspace{-\lrmargin}\rule{\paperwidth}{0.2ex}}
+}
+\setbeamertemplate{footline}
+{
+  \colorbox{nrelblue}{\parbox{0.99\paperwidth}{
+      \color{foottextcolor} \Tiny
+      \hspace{\stretch{0.05}} NATIONAL RENEWABLE ENERGY LABORATORY \hfill
+\textbf{\insertframenumber}\hspace{\stretch{0.1}} }}
+}
+
+% specify subitem to be a circle
+\setbeamertemplate{itemize subitem}[circle]
+
+%% define a ``listheader'' format
+\newcommand{\listhead}[1]{{\color{nrelblue}\textbf{#1}}}
+%\newcommand{\listhead}[1]{\textbf{#1}}
+
+%% define a custom itemize environment with adjusted spacing
+\newenvironment{myitemize}[1][]{\begin{itemize}[#1]\addtolength{\itemsep}{1ex}}{\end{itemize}}
+
+\newcommand{\uvec}[1]{\bar{#1}}
+\newcommand{\tens}[1]{\underline{\underline{#1}}}
+\renewcommand{\vec}[1]{\underline{#1}}
+\renewcommand{\skew}[1]{\widetilde{#1}}
+
+
+\begin{document}
+
+%
+{\setbeamercolor{normal text}{fg=white,bg=nrelblue}
+  \usebeamercolor[fg]{normal text}
+\begin{frame}[plain]{test}
+
+\rput[tl](-0.2,2.2){
+\includegraphics[width=0.2\textwidth,clip]{nrel_logo_white.eps}}
+
+\rput[tl](3.4,2.1){\parbox{\textwidth}{
+\textbf{Partitioned Nonlinear Structural Analysis of \\
+Wind Turbines using BeamDyn } } }
+
+\rput[tl](-0.5,1.0){
+\includegraphics[width=1.1\textwidth,clip]{nrel_photo_bar.eps}
+}
+
+\rput[tl](2.0,-0.5){\parbox{\textwidth}{  \normalsize
+Qi Wang,  Michael A. Sprague\\
+ Jason Jonkman, Bonnie Jonkman
+}}
+
+\rput[tl](2.0,-1.2){\parbox{0.8\textwidth}{\footnotesize
+National Renewable Energy Laboratory\\
+}}
+
+\rput[tl](2.0,-1.8){\parbox{\textwidth}
+{AIAA SciTech 2016\\San Diego, CA\\
+4--8 January 2016}}
+
+\rput[tl](0.0,-3.5){\parbox{\textwidth}{
+{
+\begin{spacing}{0.6}
+\tiny NREL is a national laboratory of the U.S.\ Department of Energy,
+Office of
+Energy Efficiency and Renewable Energy, 
+operated by the Alliance for Sustainable Energy, LLC.
+\end{spacing}
+}}} 
+
+\psline[linewidth=1pt,linecolor=white](-1,-4.9)(8,20)
+
+\psline[linewidth=1pt,linecolor=white](-1,-2.0)(11,20) 
+   
+
+ \end{frame}
+}
+
+\end{document}
+
+

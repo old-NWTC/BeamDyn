@@ -38,7 +38,7 @@ ifeq ($(OS),Windows_NT)
    LAPACK_LINK  = -llapack -lblas -LC:/LAPACK/win32
 else
 
-   FAST_dir=/Users/qwang2/Desktop/BeamDyn/SVN/BJonkman/
+   FAST_dir=/Users/qwang2/Documents/SVN/BJonkman/
 #   FAST_dir=/Users/mspragu2/SVN/BJonkman/
 #   FAST_dir=/Users/qwang2/Desktop/BeamDyn/SVN/BJonkman/
 #   FAST_dir=/Users/mspragu2/SVN/BJonkman/
