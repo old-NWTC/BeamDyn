@@ -172,17 +172,17 @@ operated by the Alliance for Sustainable Energy, LLC.
 }
 
 %------------------------------------------------------------------------------
-\begin{frame}{Motivation}
+\begin{frame}{Background}
   \begin{itemize}
     \item
-    Beam model currently used in FAST
+    Previous beam model used in FAST (v7.0 and ElastoDyn module of v8.0)
     \begin{itemize}
       \item
       Euler-Bernoulli beam model with shortening effect
       \item
-      Two degree-of-freedoms
+      Two degree-of-freedoms (No torsion, shear, and axial DoFs)
       \item
-      Assumed-mode method
+      Assumed-mode method (Two bending modes in one direction)
     \end{itemize}
     \item
     Beam models used in other wind turbine tools
@@ -212,12 +212,12 @@ operated by the Alliance for Sustainable Energy, LLC.
     \normalsize
     \begin{itemize}
     \item
-    Objective: create efficient high-fidelity beam models for wind turbine blade analysis that 
+    Objective: create efficient high-fidelity beam models for wind turbine blade analysis 
       \begin{itemize}
           \item
           Based on Geometrically Exact Beam Theory (GEBT) 
           \item
-          Advanced numerical technique for implementation
+          Advanced numerical techniques for implementation
           \item
           Achieve the speed of computational design without significant loss of accuracy comparing to the ultimate accuracy obtained by 3D nonlinear FEA
           \item
@@ -271,14 +271,14 @@ blade tests showing typical large, elastic deflections.}}
           Limited usage in structural dynamics
       \end{itemize}
       \item
-      FAST Modularization Framework \citep{Jonkman:2013}
+      FAST Modularization Framework \citep{Jonkman:2013,Sprague:2015}
       \begin{itemize}
           \item Loose coupling
           \item Predictor-correction          
       \end{itemize}
     \end{itemize}
     \item
-    BeamDyn, an alternative of ElastoDyn in FAST
+    BeamDyn, an alternative of ElastoDyn in FAST for blades
   \end{itemize}
 \end{frame}
 %------------------------------------------------------------------------------
@@ -311,7 +311,7 @@ blade tests showing typical large, elastic deflections.}}
         \scriptsize
         \pause
         \item
-        $\tens{\mathcal{M}}$ and $\tens{\mathcal{C}}$ are $6 \times 6$ sectional mass and stiffness matrices, respcetively \pause
+        $\tens{\mathcal{M}}$ and $\tens{\mathcal{C}}$ are $6 \times 6$ sectional mass and stiffness matrices, respectively \pause
         \item
         Elastic couplings are captured \pause
         \item
@@ -382,12 +382,6 @@ smooth solutions
 %elements}, or \textit{modal spectral elements},
 %in the structural analysis community (\eg, Doyle 1997)
 
-\item Numerical Integration
-    \begin{itemize}
-        \item Gauss Integration
-        \item Trapezoidal-Rule Integration
-    \end{itemize}
-
 \end{itemize}
 
 \begin{figure}[h!tp]
@@ -403,30 +397,49 @@ smooth solutions
 %------------------------------------------------------------------------------
 
 %------------------------------------------------------------------------------
+\begin{frame}{Numerical Integration}
+    \begin{itemize}
+        \item FE Node, Integration Point, and Data Point
+        \begin{center}
+            \includegraphics[width=4.0in]{EPSF/Quadrature.eps}
+        \end{center}
+        \item Gauss Integration
+        \item Trapezoidal-Rule Integration
+        \begin{equation*}
+            \label{eqn:Trapezoidal}
+            \int_a^b f(x) dx \approx \displaystyle \frac{1}{2} \sum_{k=1}^{N}(x_{k+1}-x_k)\left[f(x_{k+1}) + f(x_k)\right] 
+        \end{equation*}  
+    \end{itemize}
+\end{frame}
+%------------------------------------------------------------------------------
+
+%------------------------------------------------------------------------------
 \begin{frame}{Partitioned Analysis}
+\begin{columns}[c]
+   \column{2.3in}
    \begin{itemize}
        \item
-       System Decomposition
-       \item
-       Coupled System
-       \item
-       Loose coupling
-       \item
-       Module Coupling Algorithm \pause
+       Module Coupling Algorithm
        \begin{enumerate}
 
-\item Using linear or quadratic extrapolation of known inputs, approximate the inputs at $t+\Delta t$.  \pause
+\item Prediction by extrapolating based on known values. 
 
-\item Update the states of all modules to $t + \Delta t$.  \pause
+\item Update states. 
 
-\item Solve the global system of input-output equations at $t + \Delta t$.  Depending on the relationship between modules and the module output equations, this system solve can range from a simple transfer of information to a full nonlinear-system solve. \pause
+\item Global input-output solve. Range from a simple transfer of information to a full nonlinear-system solve. 
 
-\item Either accept the states, inputs, and outputs, or apply a correction by repeating step (2) with the inputs calculated in Step (3), and then repeating Step (3).
+\item Correction. Either accept the current solutions or repeat 2 and 3.
 
 \end{enumerate}
 
        
    \end{itemize}
+   
+   \column{2.3in}
+   \begin{center}
+    \includegraphics[width=2.0in]{EPSF/CouplingImage1.eps}
+    \end{center}
+    \end{columns}
 \end{frame}
 %------------------------------------------------------------------------------
 
@@ -444,6 +457,8 @@ smooth solutions
         Time integrator for SDM: Adams-Bashforth-Moulton (ABM4)
         \item
         Time integrator for beam: Generalized-$\alpha$
+        \item
+        Initial condition solution from  $U_Z = 0.1$ m.
         \item
         Benchmark: ANSYS 60 BEAM188 elements; $10^{-5}$s time increment
     \end{itemize}
@@ -511,7 +526,8 @@ smooth solutions
          \item NREL 5-MW Wind Turbine
              \begin{itemize}
                  \item 61.5m long with initial twist
-                 \item 49 cross-sectinoal stations
+                 \item 49 cross-sectional stations
+                 \item Blade modeled with a SINGLE element
              \end{itemize}
         \begin{columns}[c]
             \column{2.5in}
@@ -622,7 +638,7 @@ smooth solutions
 \begin{frame}{Example 2: NREL 5-MW Wind Turbine}
     \begin{itemize}
         \item
-        Root Reaction Moment $M_{falp}$
+        Root Reaction Moment $M_{flap}$
          \begin{center}
          \includegraphics[width=2.8in]{EPSF/B1RootMyr.eps}
          \end{center}
@@ -646,13 +662,19 @@ smooth solutions
         \item Spectral Finite Elements and new Trapezoidal-Rule quadrature have been adopted in the implementation of BeamDyn. These new techniques further improved the efficiency and accuracy.
 
   \item BeamDyn is implemented following the programming requirements (data structures and interfaces) of the \alert{FAST modularization framework}. The module coupling algorithm has been implemented and verified through numerical examples.
+  
+  \item
+  BeamDyn optionally replaces previous blade model of FAST when high-fidelity modeling of aero-elastically tailored blades is required.
+  
+  \item 
+  More verification and validation results in "FAST v8 Verification and Validation for a MW-Scale Wind Turbine with Aeroelastically Tailored Blades", Guntur, S. etal.
   }
         \end{itemize}
-        \item Future Work
-        \begin{itemize}
-            \item Introducing numerical damping to the coupling algorithm
-            \item Implement modal-based method
-        \end{itemize}
+%        \item Future Work
+%        \begin{itemize}
+%            \item Introducing numerical damping to the coupling algorithm
+%            \item Implement modal-based method
+%        \end{itemize}
     \end{itemize}
 \end{frame}
 %------------------------------------------------------------------------------
@@ -678,7 +700,7 @@ DE-AC36-08-GO28308 with the National Renewable Energy Laboratory.
 \end{itemize}
 
 \textbf{References}
-\scriptsize
+\tiny
 \bibliographystyle{elsarticle-harv}
 
 \bibliography{references}
