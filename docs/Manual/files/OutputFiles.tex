@@ -22,7 +22,7 @@ This file summarizes key information about the simulation, including:
   \item Initial global position vector in BD coordinate system.
   \item Initial global rotation tensor in BD coordinate system.
   \item Analysis type.
-  \item Numerical damping coefficient.
+  \item Numerical damping coefficients.
   \item Time step size.
   \item Maximum number of iterations in the Newton-Raphson solution.
   \item Convergence parameter in the stopping criterion.
@@ -42,18 +42,7 @@ This file summarizes key information about the simulation, including:
   \item Requested output information.
 \end{itemize}
 All of these quantities are output in this file in the BD coordinate system, the one being used internally in BeamDyn calculations. 
-The initial blade reference coordinate system, denoted by a subscript $r0$ that follows the IEC standard, is related to the internal BD coordinate system by Table \ref{tab:IECBD}. 
-\begin{table}
-\centering
-\caption{Transformation between blade coordinate system and BD coordinate system.}
- \label{tab:IECBD}
- \begin{tabular}{| c | c | c | c |}
-     \hline
-    Blade Frame & $X_{r0}$ & $Y_{r0}$ & $Z_{r0}$ \\ \hline
-    BD Frame     & $x_2$ & $x_3$ & $x_1$ \\
-    \hline
-\end{tabular}
-\end{table}
+The initial blade reference coordinate system, denoted by a subscript $r0$ that follows the IEC standard, is related to the internal BD coordinate system by Table \ref{tab:IECBD} in Chapter \ref{sec:Theory}. 
 
 \section{Results File}
 

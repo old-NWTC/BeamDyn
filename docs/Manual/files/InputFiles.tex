@@ -46,15 +46,15 @@ This section specifies the parameters that defines the blade floating reference 
 Based on the driver input file, the floating blade reference fame is assumed to be in a constant rigid-body rotation mode about the origin of the global coordinate system, that is,
 \begin{equation}
    \label{RootVelocity}
-   v_r = \omega_r \times r_t
+   v_{rt} = \omega_r \times r_t
 \end{equation}
-where $v_r$ is the root (origin of the floating blade reference frame) translational velocity vector; $\omega_r$ is the constant root (origin of the floating blade reference frame) angular velocity vector; and $r_t$ is the global position vector introduced in the previous section at instant $t$, see Figure~\ref{fig:Frame}.  
+where $v_{rt}$ is the root (origin of the floating blade reference frame) translational velocity vector; $\omega_r$ is the constant root (origin of the floating blade reference frame) angular velocity vector; and $r_t$ is the global position vector introduced in the previous section at instant $t$, see Figure~\ref{fig:Frame}.  
 %\mas{The figure implies more general motion, no???}
 The floating blade reference frame coincides with the initial floating blade reference frame at the beginning $t=0$. 
 \param{RootVel(4)}, \param{RootVel(5)}, and \param{RootVel(6)} specify the three components of the constant root angular velocity vector about  $X$, $Y$, and $Z$ axises in global coordinate system, respectively.  
 \param{RootVel(1)}, \param{RootVel(2)}, and \param{RootVel(3)}, which are the three components of the root translational velocity vector along  $X$, $Y$, and $Z$ directions in global coordinate system, respectively, are calculated based on Eq.~\ref{RootVelocity}. 
 
-BeamDyn can handle more complicate root motions by changing, for example, in $BD\_InputSolve$ subroutine in the Driver\_Beam.f90  (requiring a recompile of stand-alone BeamDyn):
+BeamDyn can handle more complicated root motions by changing, for example, the $BD\_InputSolve$ subroutine in the Driver\_Beam.f90  (requiring a recompile of stand-alone BeamDyn):
 \begin{lstlisting}[frame=single,language=Fortran]
    u%RootMotion%RotationVel(:,:) = 0.0D0
    u%RootMotion%RotationVel(1,1) = IniVelo(5)
@@ -64,7 +64,7 @@ BeamDyn can handle more complicate root motions by changing, for example, in $BD
    u%RootMotion%TranslationVel(:,1) = &
    MATMUL(BD_Tilde(real(u%RootMotion%RotationVel(:,1),BDKi)),temp_rr)
 \end{lstlisting}
-where $IniVelo(5)$, $IniVelo(6)$, and $IniVelo(4)$ are the three components of the root angular velocity vector about  $X$, $Y$, and $Z$ axising in the global coordinate system, respectively; $temp$\_$rr$ is the global position vector at instant $t$. The first index in the u\%RootMotion\%RotationVel(:,:) and the u\%RootMotion\%TranslationVel(:,:) arrays range from 1 to 3 for load vector components along three directions and the second index of each array are set to 1, denoting the root FE node. 
+where $IniVelo(5)$, $IniVelo(6)$, and $IniVelo(4)$ are the three components of the root angular velocity vector about  $X$, $Y$, and $Z$ axising in the global coordinate system, respectively; $temp$\_$rr$ is the global position vector at instant $t$. The first index in the u\%RootMotion\%RotationVel(:,:) and the u\%RootMotion\%TranslationVel(:,:) arrays range from 1 to 3 for load vector components along three directions and the second index of each array are set to 1, denoting the root FE node. Note that the internal BeamDyn variables (here $IniVelo$) are based on the internal BD coordinate system described in section 5.1.
 
 
 The blade is initialized in the rigid-body motion mode, i.e., based on the root velocity information defined in this section and the position information defined in the previous section, the motion of other points along the blade are initialized as
@@ -76,7 +76,7 @@ The blade is initialized in the rigid-body motion mode, i.e., based on the root 
     \label{IniAngVel}
     \omega_0 &= \omega_r
 \end{align}
-where $a_{0}$ is the initial translational acceleration vector; $v_0$ and $\omega_0$ the initial translational and angular velocity vectors along blade other than the root, respectively; and $P$ is the position vector along the blade relative to the root. 
+where $a_{0}$ is the initial translational acceleration vector along the blade; $v_0$ and $\omega_0$ the initial translational and angular velocity vectors along the blade, respectively; and $P$ is the position vector along the blade relative to the root. 
 
 \subsection{Applied Load}
 This section defines the applied loads, including distributed and tip-concentrated loads, for the stand-alone analysis. 
@@ -183,7 +183,9 @@ The keyword ``DEFAULT'' sets $\textbf{\textit{Stop\_Tol}} = 1.0E-05$. Please ref
 
 \subsection{Geometry Parameter}
 
-The blade geometry is defined by a curvilinear local blade reference axis. The blade beam model is composed of several {\it members} in contiguous series and each member is defined by at least three key points in BeamDyn. 
+The blade geometry is defined by a curvilinear local blade reference axis. The blade reference axis locates the origin and orientation of each a local coordinate system where the cross-sectional 6x6 stiffness and mass matrices are defined in the BeamDyn blade input file.  It should not really matter where in the cross section the 6x6 stiffness and mass matrices are defined relative to, as long as the reference axis is consistently defined and closely follows the natural geometry of the blade. 
+
+The blade beam model is composed of several {\it members} in contiguous series and each member is defined by at least three key points in BeamDyn. 
 A cubic-spline-fit pre-processor implemented in BeamDyn automatically generates the member based on the key points and then interconnects the members into a blade. 
 There is always a shared key point at adjacent members; therefore the total number of key points is related to number of members and key points in each member.
 
@@ -192,7 +194,7 @@ With the LSFE discretization, a single member and a sufficiently high element or
 
 \param{kp\_total} specifies the total number of key points used to define the beam members.   
 
-The following section contains two header lines and \param{member\_total} lines. 
+The following section contains \param{member\_total} lines. 
 Each line has two integers providing the member number (must be 1, 2, 3, etc., sequentially) and the number of key points in this member, respectively. 
 It is noted that the number of key points in each member is not independent of the total number of key points and they should satisfy the following equality:
 \begin{equation}
@@ -211,13 +213,14 @@ Figure \ref{fig:Geometry1} shows two cases for member and key-point definition.
 \end{figure}
 
 The next section defines the key-point information, preceded by two header lines. 
-Each key point is defined by three physical coordinates (kp\_xr, kp\_yr, kp\_zr) in the IEC standard blade coordinate system (the blade reference coordinate system) along with a structural twist angle (initial\_twist) in the unit of degrees. 
+Each key point is defined by three physical coordinates (\param{kp\_xr},\param{ kp\_yr}, \param{kp\_zr}) in the IEC standard blade coordinate system (the blade reference coordinate system) along with a structural twist angle (\param{initial\_twist}) in the unit of degrees. 
 The structural twist angle is also following the IEC standard which is defined as the twist about the negative $Z_l$ axis. 
 The key points are entered sequentially (from the root to tip) and there should be a total of \param{kp\_total} lines for BeamDyn to read in the information, after two header lines. Please refer to Figure~\ref{fig:BladeGeometry} for more details on the blade geometry definition.
 \begin{figure}[h!tp]
     \centering
     \includegraphics[width = 8.0in,angle=-90,origin=c]{\directory BladeGeometry.jpg}
-    \caption{BeamDyn Blade Geometry - Left: Side View; Middle: Front View (Looking Downwind); Right: Cross Section View (Looking Toward the Tip, from the Root)}
+    \caption{BeamDyn Blade Geometry - Top: Side View; Middle: Front View (Looking Downwind); Bottom: Cross Section View (Looking Toward the Tip, from the Root)
+}
     \label{fig:BladeGeometry}
 \end{figure}
 
@@ -315,7 +318,7 @@ The first and last station parameters must be set to $0.0$ (for the blade root) 
 
 Following the station location parameter $\eta$, there are two $6 \times 6$ matrices providing the structural and inertial properties for this cross-section. 
 First is the stiffness matrix and then the mass matrix. 
-We note that these matrices are defined in a local coordinate system along the blade axis with $Z_{l}$ directing toward the unit tangent vector of the axis. 
+We note that these matrices are defined in a local coordinate system along the blade axis with $Z_{l}$ directing toward the unit tangent vector of the blade reference axis. 
 For a cross-section without coupling effects, for example, the stiffness matrix is given as follows:
 \begin{equation}
     \label{Stiffness}

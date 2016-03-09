@@ -11,7 +11,7 @@ For example, an underline denotes a vector $\underline{u}$, an over bar denotes 
 Note that sometimes the underlines only denote the dimension of the corresponding matrix.
 
 \section{Coordinate Systems}
-Figure~\ref{fig:BDFrame}  shows the coordinate system used in BeamDyn.
+Figures~\ref{fig:BladeGeometry} (in Chapter \ref{sec:InputFiles}) and \ref{fig:BDFrame}  show the coordinate system used in BeamDyn.
 \begin{figure}[h!tp]
     \centering
     \includegraphics[width = 3.5 in]{\directory BDFrame.pdf}
@@ -25,17 +25,29 @@ This is an inertial frame and in FAST its origin is usually placed at the bottom
 
 \subsection{BD Coordinate System}
 The BD coordinate system is denoted as $x_1$, $x_2$, and $x_3$ respectively in Figure~\ref{fig:BDFrame}. 
-This is an inertial frame used internally in BeamDyn and its origin is placed at the initial position of the blade root point.
+This is an inertial frame used internally in BeamDyn (i.e., doesn't rotate with the rotor) and its origin is placed at the initial position of the blade root point.
 
 \subsection{Blade Reference Coordinate System}
-The blade reference coordinate system is denoted as \textbf{ {\it X$_r$}}, \textbf{ {\it Y$_r$}}, and \textbf{ {\it Z$_r$}} in Figure~\ref{fig:BDFrame} at instant $t$. 
-This is a floating frame that attaches at the blade root and is rotating with the blade. 
-Its origin is at the blade root and the directions of axes following the IEC standard, i.e., \textbf{ {\it Z$_r$}} is pointing along the blade axis from root to tip; \textbf{ {\it Y$_r$}} pointing normally towards the trailing edge of the blade and parallel with the chord line at the zero-twist blade station; and \textbf{ {\it X$_r$}} is orthogonal with the \textbf{ {\it Y$_r$}} and \textbf{ {\it Z$_r$}} axes, such that they form a right-handed coordinate system (pointing nominally downwind). 
+The blade reference coordinate system is denoted as \textbf{ {\it X$_{rt}$}}, \textbf{ {\it Y$_{rt}$}}, and \textbf{ {\it Z$_{rt}$}} in Figure~\ref{fig:BDFrame} at initialization ($t = 0$). 
+The blade reference coordinate system is a floating frame that attaches at the blade root and is rotating with the blade. 
+Its origin is at the blade root and the directions of axes following the IEC standard, i.e., \textbf{ {\it Z$_r$}} is pointing along the blade axis from root to tip; \textbf{ {\it Y$_r$}} pointing nominally towards the trailing edge of the blade and parallel with the chord line at the zero-twist blade station; and \textbf{ {\it X$_r$}} is orthogonal with the \textbf{ {\it Y$_r$}} and \textbf{ {\it Z$_r$}} axes, such that they form a right-handed coordinate system (pointing nominally downwind). 
 We note that the initial blade reference coordinate system, denoted by subscript $r0$, coincides with the BD coordinate system, which is used internally in BeamDyn and introduced in the previous section. 
 The axis convention relations between the initial blade reference coordinate system and the BD coordinate system can be found in Table~\ref{tab:IECBD}. 
 
+\begin{table}
+\centering
+\caption{Transformation between blade coordinate system and BD coordinate system.}
+ \label{tab:IECBD}
+ \begin{tabular}{| c | c | c | c |}
+     \hline
+    Blade Frame & $X_{r0}$ & $Y_{r0}$ & $Z_{r0}$ \\ \hline
+    BD Frame     & $x_2$ & $x_3$ & $x_1$ \\
+    \hline
+\end{tabular}
+\end{table}
+
 \subsection{Local blade coordinate system}
-The local blade coordinate system is used for some output quantities, for example, the sectional force and moment resultants. This coordinate system is different from the blade reference coordinate system in that its $Z_l$ axis is always tangent to the blade axis. Note that a subscript $l$ denotes the local blade coordinate system.
+The local blade coordinate system is used for some input and output quantities, for example, the cross-sectional mass and stiffness matrices and the the sectional force and moment resultants. This coordinate system is different from the blade reference coordinate system in that its $Z_l$ axis is always tangent to the blade axis as the blade deflects. Note that a subscript $l$ denotes the local blade coordinate system.
 
 \section{Geometrically Exact Beam Theory}
 The theoretical foundation of BeamDyn is the geometrically exact beam theory. 

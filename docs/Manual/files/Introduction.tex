@@ -7,8 +7,8 @@ BeamDyn can also be driven as a stand-alone code to compute the static and dynam
 The model underlying BeamDyn is the geometrically exact beam theory (GEBT) \cite{HodgesBeamBook}.   
 GEBT supports full geometric nonlinearity and large deflection, with bending, torsion, shear, and extensional degree-of-freedom (DOFs); anisotropic composite material couplings (using full $6 \times 6$ mass and stiffness matrices, including bend-twist coupling); and a reference axis that permits blades that are not straight (supporting built-in curve, sweep, and sectional offsets). 
 The GEBT beam equations are discretized in space with Legendre spectral finite elements (LSFEs).  
-LFSEs are {\it p}-type elements that combine the accuracy of global spectral methods with the geometric modeling flexibility of the {\it h}-type finite elements (FEs). \cite{Patera:1984} 
-For smooth solutions, LSFEs have exponential convergence rates compared to low-order elements that have algebraic convergence. \cite{Sprague:2003,Wang:SFE2013} 
+LFSEs are {\it p}-type elements that combine the accuracy of global spectral methods with the geometric modeling flexibility of the {\it h}-type finite elements (FEs) \cite{Patera:1984}. 
+For smooth solutions, LSFEs have exponential convergence rates compared to low-order elements that have algebraic convergence \cite{Sprague:2003,Wang:SFE2013} .
 Two spatial numerical integration schemes are implemented for the finite element inner products: reduced Gauss quadrature and trapezoidal-rule integration.  
 Trapezoidal-rule integration is appropriate when a large number of sectional properties are specified along the beam axis, for example, in a long wind turbine blade with material properties that vary dramatically over the length.  
 Time integration of the BeamDyn equations of motion is achieved through the implicit generalized-$\alpha$ solver, with user-specified numerical damping.
