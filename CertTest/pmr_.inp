@@ -1,0 +1,98 @@
+------- BEAMDYN V1.00.00 Driver INPUT FILE -------------------------------------
+Analysis of CT106 blade stiffness testsEdgedirection
+---------------------- SIMULATION CONTROL --------------------------------------
+False			Echo			- Echo input data to "<RootName>.ech" (flag)
+2				analysis_type	- 1: Static analysis; 2: Dynamic analysis (switch)
+0.0000E+00		rhoinf			- Numerical Damping Parameter for Generalized-alpha integrator
+1				quadrature		- 1: Gauss; 2: Trapezoidal (switch)
+DEFAULT			refine			- Refinement factor for quadrature 2 (-). DEFAULT = 1
+DEFAULT			n_fact			- Factorization frequency (-). DEFAULT = 5
+1e-3			DTBeam			- Time step size (s).
+DEFAULT			NRMax			- Max number of iterations in Newton-Ralphson algorithm (-). DEFAULT = 10
+DEFAULT			stop_tol		- Tolerance for stopping criterion (-)
+---------------------- GEOMETRY PARAMETER --------------------------------------
+1 				member_total	- Total number of members (-)
+57				kp_total		- Total number of key points (-)
+1      57 						- Member number; Number of key points in this member
+kp_xb kp_yb   kp_zb    initial_twist
+(m)    (m)    (m)     (deg)
+            0	0.000	  0.000000   	  0.000000
+    1.0180e-04	0.000	     0.2621	  0.000000
+    2.8278e-04	0.000	     0.4369	  0.000000
+    5.5425e-04	0.000	     0.6117	  0.000000
+    1.1311e-03	0.000	     0.8738	  0.000000
+    2.5450e-03	0.000	     1.3107	  0.000000
+    4.5245e-03	0.000	     1.7476	  0.000000
+    1.0180e-02	0.000	     2.6214	  0.000000
+    1.8098e-02	0.000	     3.4951	  0.000000
+    2.8278e-02	0.000	     4.3689	  0.000000
+    4.0720e-02	0.000	     5.2427	  0.000000
+    5.5425e-02	0.000	     6.1165	  0.000000
+    7.2391e-02	0.000	     6.9903	  0.000000
+    9.1620e-02	0.000	     7.8641	  0.000000
+    1.1311e-01	0.000	     8.7379	  0.000000
+    1.3686e-01	0.000	     9.6117	  0.000000
+    1.6288e-01	0.000	    10.4854	  0.000000
+    1.9116e-01	0.000	    11.3592	  0.000000
+    2.2170e-01	0.000	    12.2330	  0.000000
+    2.5450e-01	0.000	    13.1068	  0.000000
+    2.8957e-01	0.000	    13.9806	  0.000000
+    3.2689e-01	0.000	    14.8544	  0.000000
+    3.6648e-01	0.000	    15.7282	  0.000000
+    4.0833e-01	0.000	    16.6019	  0.000000
+    4.5245e-01	0.000	    17.4757	  0.000000
+    4.9882e-01	0.000	    18.3495	  0.000000
+    5.4746e-01	0.000	    19.2233	  0.000000
+    5.9836e-01	0.000	    20.0971	  0.000000
+    6.5152e-01	0.000	    20.9709	  0.000000
+    7.0695e-01	0.000	    21.8447	  0.000000
+    7.6463e-01	0.000	    22.7184	  0.000000
+    8.2458e-01	0.000	    23.5922	  0.000000
+    8.8679e-01	0.000	    24.4660	  0.000000
+    9.5127e-01	0.000	    25.3398	  0.000000
+    1.0180e+00	0.000	    26.2136	  0.000000
+    1.0870e+00	0.000	    27.0874	  0.000000
+    1.1583e+00	0.000	    27.9612	  0.000000
+    1.2318e+00	0.000	    28.8350	  0.000000
+    1.3076e+00	0.000	    29.7087	  0.000000
+    1.3856e+00	0.000	    30.5825	  0.000000
+    1.4659e+00	0.000	    31.4563	  0.000000
+    1.5485e+00	0.000	    32.3301	  0.000000
+    1.6333e+00	0.000	    33.2039	  0.000000
+    1.7204e+00	0.000	    34.0777	  0.000000
+    1.8098e+00	0.000	    34.9515	  0.000000
+    1.9014e+00	0.000	    35.8252	  0.000000
+    1.9953e+00	0.000	    36.6990	  0.000000
+    2.0914e+00	0.000	    37.5728	  0.000000
+    2.1898e+00	0.000	    38.4466	  0.000000
+    2.2905e+00	0.000	    39.3204	  0.000000
+    2.3934e+00	0.000	    40.1942	  0.000000
+    2.4986e+00	0.000	    41.0680	  0.000000
+    2.6061e+00	0.000	    41.9417	  0.000000
+    2.7158e+00	0.000	    42.8155	  0.000000
+    2.8278e+00	0.000	    43.6893	  0.000000
+    2.9420e+00	0.000	    44.5631	  0.000000
+    3.0000e+00	0.000	    45.0000	  0.000000
+---------------------- MESH PARAMETER ------------------------------------------
+8  		order_elem		- Order of interpolation (basis) function (-)
+---------------------- MATERIAL PARAMETER --------------------------------------
+"bld_.inp"		BldFile			- Name of file containing properties for blade (quoted string)
+---------------------- PITCH ACTUATOR PARAMETERS -------------------------------
+False			UsePitchAct		- Whether a pitch actuator should be used (flag)
+0.0000E+00		PitchJ			- Pitch actuator inertia (kg-m^2) [used only when UsePitchAct is true]
+0.0000E+00		PitchK			- Pitch actuator stiffness (kg-m^2/s^2) [used only when UsePitchAct is true]
+0.0000E+00		PitchC			- Pitch actuator damping (kg-m^2/s) [used only when UsePitchAct is true])
+---------------------- OUTPUTS -------------------------------------------------
+True			SumPrint		- Print summary data to "<RootName>.sum" (flag)
+"ES10.3E2"		OutFmt			- Format used for text tabular output, excluding the time channel.
+1			NNodeOuts		- Number of nodes to output to file [0 - 9] (-)
+9 			OutNd			- Nodes whose values will be output  (-)
+				OutList			- The next line(s) contains a list of output parameters.  See OutListParameters.xlsx.
+"RootFxr, RootFyr, RootFzr"
+"RootMxr, RootMyr, RootMzr"
+"N1Fxl,N1Fyl,N1Fzl"
+"N1Mxl,N1Myl,N1Mzl"
+"TipTDxr, TipTDyr, TipTDzr"
+"TipRDxr, TipRDyr, TipRDzr"
+END of input file (the word "END" must appear in the first 3 columns of this last OutList line)
+--------------------------------------------------------------------------------
