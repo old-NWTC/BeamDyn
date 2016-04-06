@@ -1,6 +1,6 @@
 @echo off
 @SET Compare=FC /T
-@SET BeamDyn=..\bin\BeamDyn_Driver.exe
+@SET BeamDyn=..\bin\BeamDyn_Driver_Win32.exe
 @set CompareFile=CertTest.out
 @SET Editor=NotePad.EXE
 
