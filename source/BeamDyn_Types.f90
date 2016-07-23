@@ -204,6 +204,7 @@ IMPLICIT NONE
     TYPE(MeshType)  :: y_BldMotion_at_u      ! output motions at input node locations (displacements necessary for mapping loads) [-]
     TYPE(MeshMapType)  :: Map_u_DistrLoad_to_y      ! mapping of input loads to output node locations [-]
     TYPE(MeshMapType)  :: Map_y_BldMotion_to_u      ! mapping of output motions to input node locations (for load transfer) [-]
+    INTEGER(IntKi)  :: Un_Sum      ! unit number of summary file [-]
     REAL(R8Ki) , DIMENSION(:), ALLOCATABLE  :: Nuuu      !  [-]
     REAL(R8Ki) , DIMENSION(:), ALLOCATABLE  :: Nrrr      !  [-]
     REAL(R8Ki) , DIMENSION(:), ALLOCATABLE  :: Nvvv      !  [-]
@@ -5069,6 +5070,7 @@ ENDIF
       CALL NWTC_Library_Copymeshmaptype( SrcMiscData%Map_y_BldMotion_to_u, DstMiscData%Map_y_BldMotion_to_u, CtrlCode, ErrStat2, ErrMsg2 )
          CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg,RoutineName)
          IF (ErrStat>=AbortErrLev) RETURN
+    DstMiscData%Un_Sum = SrcMiscData%Un_Sum
 IF (ALLOCATED(SrcMiscData%Nuuu)) THEN
   i1_l = LBOUND(SrcMiscData%Nuuu,1)
   i1_u = UBOUND(SrcMiscData%Nuuu,1)
@@ -5490,6 +5492,7 @@ ENDIF
          Int_BufSz = Int_BufSz + SIZE( Int_Buf )
          DEALLOCATE(Int_Buf)
       END IF
+      Int_BufSz  = Int_BufSz  + 1  ! Un_Sum
   Int_BufSz   = Int_BufSz   + 1     ! Nuuu allocated yes/no
   IF ( ALLOCATED(InData%Nuuu) ) THEN
     Int_BufSz   = Int_BufSz   + 2*1  ! Nuuu upper/lower bounds for each dimension
@@ -5753,6 +5756,8 @@ ENDIF
       ELSE
         IntKiBuf( Int_Xferred ) = 0; Int_Xferred = Int_Xferred + 1
       ENDIF
+      IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%Un_Sum
+      Int_Xferred   = Int_Xferred   + 1
   IF ( .NOT. ALLOCATED(InData%Nuuu) ) THEN
     IntKiBuf( Int_Xferred ) = 0
     Int_Xferred = Int_Xferred + 1
@@ -6273,6 +6278,8 @@ ENDIF
       IF(ALLOCATED(Re_Buf )) DEALLOCATE(Re_Buf )
       IF(ALLOCATED(Db_Buf )) DEALLOCATE(Db_Buf )
       IF(ALLOCATED(Int_Buf)) DEALLOCATE(Int_Buf)
+      OutData%Un_Sum = IntKiBuf( Int_Xferred ) 
+      Int_Xferred   = Int_Xferred + 1
   IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! Nuuu not allocated
     Int_Xferred = Int_Xferred + 1
   ELSE
