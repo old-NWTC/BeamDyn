@@ -101,8 +101,8 @@ IMPLICIT NONE
 ! =======================
 ! =========  BD_ContinuousStateType  =======
   TYPE, PUBLIC :: BD_ContinuousStateType
-    REAL(R8Ki) , DIMENSION(:), ALLOCATABLE  :: q      !< q - displacement [m]
-    REAL(R8Ki) , DIMENSION(:), ALLOCATABLE  :: dqdt      !< dqdt - velocity [m/s]
+    REAL(R8Ki) , DIMENSION(:,:), ALLOCATABLE  :: q      !< q - displacement [m]
+    REAL(R8Ki) , DIMENSION(:,:), ALLOCATABLE  :: dqdt      !< dqdt - velocity [m/s]
   END TYPE BD_ContinuousStateType
 ! =======================
 ! =========  BD_DiscreteStateType  =======
@@ -118,8 +118,8 @@ IMPLICIT NONE
 ! =======================
 ! =========  BD_OtherStateType  =======
   TYPE, PUBLIC :: BD_OtherStateType
-    REAL(R8Ki) , DIMENSION(:), ALLOCATABLE  :: acc      !< Accerleration in GA2 [-]
-    REAL(R8Ki) , DIMENSION(:), ALLOCATABLE  :: xcc      !< Algorithm accerleration in GA2 [-]
+    REAL(R8Ki) , DIMENSION(:,:), ALLOCATABLE  :: acc      !< Accerleration in GA2 [-]
+    REAL(R8Ki) , DIMENSION(:,:), ALLOCATABLE  :: xcc      !< Algorithm acceleration in GA2 [-]
     LOGICAL  :: InitAcc      !< flag to determine if accerlerations have been initialized in updateStates [-]
   END TYPE BD_OtherStateType
 ! =======================
@@ -128,7 +128,7 @@ IMPLICIT NONE
     REAL(DbKi)  :: dt      !< module dt [s]
     REAL(DbKi) , DIMENSION(1:9)  :: coef      !< GA2 Coefficient [-]
     REAL(DbKi)  :: rhoinf      !< Numerical Damping Coefficient for GA2 [-]
-    REAL(R8Ki) , DIMENSION(:,:), ALLOCATABLE  :: uuN0      !< Initial Postion Vector [-]
+    REAL(R8Ki) , DIMENSION(:,:,:), ALLOCATABLE  :: uuN0      !< Initial Postion Vector [-]
     REAL(R8Ki) , DIMENSION(:,:), ALLOCATABLE  :: Gauss      !< Gauss point postion vector [-]
     REAL(R8Ki) , DIMENSION(:,:,:), ALLOCATABLE  :: Stif0_GL      !< Sectional Stiffness Properties at Gauss point [-]
     REAL(R8Ki) , DIMENSION(:,:,:), ALLOCATABLE  :: Mass0_GL      !< Sectional Mass Properties at Gauss point [-]
@@ -149,10 +149,11 @@ IMPLICIT NONE
     REAL(R8Ki) , DIMENSION(:,:), ALLOCATABLE  :: Shp      !< Shape function matrix [-]
     REAL(R8Ki) , DIMENSION(:,:), ALLOCATABLE  :: Der      !< Derivative of shape function matrix [-]
     REAL(R8Ki) , DIMENSION(:,:), ALLOCATABLE  :: Jacobian      !< Jacobian value at each quadrature point [-]
-    REAL(R8Ki) , DIMENSION(:,:), ALLOCATABLE  :: rrN0      !< Initial relative rotation array [-]
-    REAL(R8Ki) , DIMENSION(:,:), ALLOCATABLE  :: uu0      !< Initial Disp/Rot value at quadrature point  [-]
-    REAL(R8Ki) , DIMENSION(:,:), ALLOCATABLE  :: E10      !< Initial E10 at quadrature point [-]
+    REAL(R8Ki) , DIMENSION(:,:,:), ALLOCATABLE  :: rrN0      !< Initial relative rotation array [-]
+    REAL(R8Ki) , DIMENSION(:,:,:), ALLOCATABLE  :: uu0      !< Initial Disp/Rot value at quadrature point  [-]
+    REAL(R8Ki) , DIMENSION(:,:,:), ALLOCATABLE  :: E10      !< Initial E10 at quadrature point [-]
     INTEGER(IntKi)  :: node_elem      !< Node per element [-]
+    INTEGER(IntKi) , DIMENSION(:,:), ALLOCATABLE  :: node_elem_idx      !< Index to first and last nodes of element in p%node_total sized arrays [-]
     INTEGER(IntKi)  :: refine      !< FE mesh refinement factor for trapezoidal quadrature [-]
     INTEGER(IntKi)  :: dof_node      !< dof per node [-]
     INTEGER(IntKi)  :: dof_elem      !< dof per element [-]
@@ -205,24 +206,35 @@ IMPLICIT NONE
     TYPE(MeshMapType)  :: Map_u_DistrLoad_to_y      !< mapping of input loads to output node locations [-]
     TYPE(MeshMapType)  :: Map_y_BldMotion_to_u      !< mapping of output motions to input node locations (for load transfer) [-]
     INTEGER(IntKi)  :: Un_Sum      !< unit number of summary file [-]
-    REAL(R8Ki) , DIMENSION(:), ALLOCATABLE  :: Nuuu      !<  [-]
-    REAL(R8Ki) , DIMENSION(:), ALLOCATABLE  :: Nrrr      !<  [-]
-    REAL(R8Ki) , DIMENSION(:), ALLOCATABLE  :: Nvvv      !<  [-]
-    REAL(R8Ki) , DIMENSION(:), ALLOCATABLE  :: Naaa      !<  [-]
-    REAL(R8Ki) , DIMENSION(:), ALLOCATABLE  :: elf      !<  [-]
-    REAL(R8Ki) , DIMENSION(:,:), ALLOCATABLE  :: elk      !<  [-]
-    REAL(R8Ki) , DIMENSION(:,:), ALLOCATABLE  :: elg      !<  [-]
-    REAL(R8Ki) , DIMENSION(:,:), ALLOCATABLE  :: elm      !<  [-]
+    REAL(R8Ki) , DIMENSION(:,:), ALLOCATABLE  :: Nuuu      !<  [-]
+    REAL(R8Ki) , DIMENSION(:,:), ALLOCATABLE  :: Nrrr      !<  [-]
+    REAL(R8Ki) , DIMENSION(:,:), ALLOCATABLE  :: Nvvv      !<  [-]
+    REAL(R8Ki) , DIMENSION(:,:), ALLOCATABLE  :: Naaa      !<  [-]
+    REAL(R8Ki) , DIMENSION(:,:), ALLOCATABLE  :: temp_Naaa      !<  [-]
+    REAL(R8Ki) , DIMENSION(:,:), ALLOCATABLE  :: temp_Nvvv      !<  [-]
+    REAL(R8Ki) , DIMENSION(:,:), ALLOCATABLE  :: elf      !<  [-]
+    REAL(R8Ki) , DIMENSION(:,:,:,:), ALLOCATABLE  :: elk      !<  [-]
+    REAL(R8Ki) , DIMENSION(:,:,:,:), ALLOCATABLE  :: elg      !<  [-]
+    REAL(R8Ki) , DIMENSION(:,:,:,:), ALLOCATABLE  :: elm      !<  [-]
     REAL(R8Ki) , DIMENSION(:,:,:), ALLOCATABLE  :: EStif0_GL      !<  [-]
     REAL(R8Ki) , DIMENSION(:,:,:), ALLOCATABLE  :: EMass0_GL      !<  [-]
     REAL(R8Ki) , DIMENSION(:,:), ALLOCATABLE  :: DistrLoad_GL      !<  [-]
-    REAL(R8Ki) , DIMENSION(:,:), ALLOCATABLE  :: StifK      !< Stiffness Matrix [-]
-    REAL(R8Ki) , DIMENSION(:,:), ALLOCATABLE  :: StifK_LU      !< Stiffness Matrix for LU [-]
-    REAL(R8Ki) , DIMENSION(:,:), ALLOCATABLE  :: MassM      !< Mass Matrix [-]
-    REAL(R8Ki) , DIMENSION(:), ALLOCATABLE  :: RHS      !< Right-hand-side vector [-]
-    REAL(R8Ki) , DIMENSION(:), ALLOCATABLE  :: RHS_LU      !< Right-hand-side vector for LU [-]
-    REAL(R8Ki) , DIMENSION(:), ALLOCATABLE  :: F_PointLoad      !< F_PointLoad vector [-]
-    INTEGER(IntKi) , DIMENSION(:), ALLOCATABLE  :: indx      !< Index vector for LU [-]
+    REAL(R8Ki) , DIMENSION(:,:,:,:), ALLOCATABLE  :: StifK_LU      !< Stiffness Matrix for LU [-]
+    REAL(R8Ki) , DIMENSION(:,:,:,:), ALLOCATABLE  :: StifK      !< Stiffness Matrix [-]
+    REAL(R8Ki) , DIMENSION(:,:,:,:), ALLOCATABLE  :: MassM      !< Mass Matrix [-]
+    REAL(R8Ki) , DIMENSION(:,:,:,:), ALLOCATABLE  :: DampG      !< Damping Matrix [-]
+    REAL(R8Ki) , DIMENSION(:,:), ALLOCATABLE  :: RHS      !< Right-hand-side vector [-]
+    REAL(R8Ki) , DIMENSION(:,:), ALLOCATABLE  :: RHS_LU      !< Right-hand-side vector for LU [-]
+    REAL(R8Ki) , DIMENSION(:,:), ALLOCATABLE  :: F_PointLoad      !< F_PointLoad vector [-]
+    REAL(R8Ki) , DIMENSION(:,:), ALLOCATABLE  :: temp_Force      !< temporary force array used in dynamic calculations [-]
+    REAL(R8Ki) , DIMENSION(:,:), ALLOCATABLE  :: Solution      !< Result from LAPACK solve (X from A*X = B solve) [-]
+    REAL(R8Ki) , DIMENSION(:,:), ALLOCATABLE  :: LP_StifK      !< Stiffness Matrix [-]
+    REAL(R8Ki) , DIMENSION(:,:), ALLOCATABLE  :: LP_MassM      !< Mass Matrix [-]
+    REAL(R8Ki) , DIMENSION(:,:), ALLOCATABLE  :: LP_DampG      !< Damping Matrix [-]
+    REAL(R8Ki) , DIMENSION(:), ALLOCATABLE  :: LP_RHS      !< Right-hand-side vector [-]
+    REAL(R8Ki) , DIMENSION(:,:), ALLOCATABLE  :: LP_StifK_LU      !< Stiffness Matrix for LU [-]
+    REAL(R8Ki) , DIMENSION(:), ALLOCATABLE  :: LP_RHS_LU      !< Right-hand-side vector for LU [-]
+    INTEGER(IntKi) , DIMENSION(:), ALLOCATABLE  :: LP_indx      !< Index vector for LU [-]
     TYPE(BD_InputType)  :: u      !< Inputs converted to the internal BD coordinate system [-]
     TYPE(BD_InputType)  :: u2      !< Inputs in the FAST coordinate system, possibly modified by pitch actuator [-]
   END TYPE BD_MiscVarType
@@ -239,6 +251,7 @@ CONTAINS
    INTEGER(IntKi)                 :: i1, i1_l, i1_u  !  bounds (upper/lower) for an array dimension 1
    INTEGER(IntKi)                 :: i2, i2_l, i2_u  !  bounds (upper/lower) for an array dimension 2
    INTEGER(IntKi)                 :: i3, i3_l, i3_u  !  bounds (upper/lower) for an array dimension 3
+   INTEGER(IntKi)                 :: i4, i4_l, i4_u  !  bounds (upper/lower) for an array dimension 4
    INTEGER(IntKi)                 :: ErrStat2
    CHARACTER(ErrMsgLen)           :: ErrMsg2
    CHARACTER(*), PARAMETER        :: RoutineName = 'BD_CopyInitInput'
@@ -396,6 +409,7 @@ CONTAINS
   INTEGER(IntKi)                 :: i1, i1_l, i1_u  !  bounds (upper/lower) for an array dimension 1
   INTEGER(IntKi)                 :: i2, i2_l, i2_u  !  bounds (upper/lower) for an array dimension 2
   INTEGER(IntKi)                 :: i3, i3_l, i3_u  !  bounds (upper/lower) for an array dimension 3
+  INTEGER(IntKi)                 :: i4, i4_l, i4_u  !  bounds (upper/lower) for an array dimension 4
   INTEGER(IntKi)                 :: ErrStat2
   CHARACTER(ErrMsgLen)           :: ErrMsg2
   CHARACTER(*), PARAMETER        :: RoutineName = 'BD_UnPackInitInput'
@@ -1805,6 +1819,7 @@ ENDIF
 ! Local 
    INTEGER(IntKi)                 :: i,j,k
    INTEGER(IntKi)                 :: i1, i1_l, i1_u  !  bounds (upper/lower) for an array dimension 1
+   INTEGER(IntKi)                 :: i2, i2_l, i2_u  !  bounds (upper/lower) for an array dimension 2
    INTEGER(IntKi)                 :: ErrStat2
    CHARACTER(ErrMsgLen)           :: ErrMsg2
    CHARACTER(*), PARAMETER        :: RoutineName = 'BD_CopyContState'
@@ -1814,8 +1829,10 @@ ENDIF
 IF (ALLOCATED(SrcContStateData%q)) THEN
   i1_l = LBOUND(SrcContStateData%q,1)
   i1_u = UBOUND(SrcContStateData%q,1)
+  i2_l = LBOUND(SrcContStateData%q,2)
+  i2_u = UBOUND(SrcContStateData%q,2)
   IF (.NOT. ALLOCATED(DstContStateData%q)) THEN 
-    ALLOCATE(DstContStateData%q(i1_l:i1_u),STAT=ErrStat2)
+    ALLOCATE(DstContStateData%q(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
       CALL SetErrStat(ErrID_Fatal, 'Error allocating DstContStateData%q.', ErrStat, ErrMsg,RoutineName)
       RETURN
@@ -1826,8 +1843,10 @@ ENDIF
 IF (ALLOCATED(SrcContStateData%dqdt)) THEN
   i1_l = LBOUND(SrcContStateData%dqdt,1)
   i1_u = UBOUND(SrcContStateData%dqdt,1)
+  i2_l = LBOUND(SrcContStateData%dqdt,2)
+  i2_u = UBOUND(SrcContStateData%dqdt,2)
   IF (.NOT. ALLOCATED(DstContStateData%dqdt)) THEN 
-    ALLOCATE(DstContStateData%dqdt(i1_l:i1_u),STAT=ErrStat2)
+    ALLOCATE(DstContStateData%dqdt(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
       CALL SetErrStat(ErrID_Fatal, 'Error allocating DstContStateData%dqdt.', ErrStat, ErrMsg,RoutineName)
       RETURN
@@ -1891,12 +1910,12 @@ ENDIF
   Int_BufSz  = 0
   Int_BufSz   = Int_BufSz   + 1     ! q allocated yes/no
   IF ( ALLOCATED(InData%q) ) THEN
-    Int_BufSz   = Int_BufSz   + 2*1  ! q upper/lower bounds for each dimension
+    Int_BufSz   = Int_BufSz   + 2*2  ! q upper/lower bounds for each dimension
       Db_BufSz   = Db_BufSz   + SIZE(InData%q)  ! q
   END IF
   Int_BufSz   = Int_BufSz   + 1     ! dqdt allocated yes/no
   IF ( ALLOCATED(InData%dqdt) ) THEN
-    Int_BufSz   = Int_BufSz   + 2*1  ! dqdt upper/lower bounds for each dimension
+    Int_BufSz   = Int_BufSz   + 2*2  ! dqdt upper/lower bounds for each dimension
       Db_BufSz   = Db_BufSz   + SIZE(InData%dqdt)  ! dqdt
   END IF
   IF ( Re_BufSz  .GT. 0 ) THEN 
@@ -1935,6 +1954,9 @@ ENDIF
     IntKiBuf( Int_Xferred    ) = LBOUND(InData%q,1)
     IntKiBuf( Int_Xferred + 1) = UBOUND(InData%q,1)
     Int_Xferred = Int_Xferred + 2
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%q,2)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%q,2)
+    Int_Xferred = Int_Xferred + 2
 
       IF (SIZE(InData%q)>0) DbKiBuf ( Db_Xferred:Db_Xferred+(SIZE(InData%q))-1 ) = PACK(InData%q,.TRUE.)
       Db_Xferred   = Db_Xferred   + SIZE(InData%q)
@@ -1947,6 +1969,9 @@ ENDIF
     Int_Xferred = Int_Xferred + 1
     IntKiBuf( Int_Xferred    ) = LBOUND(InData%dqdt,1)
     IntKiBuf( Int_Xferred + 1) = UBOUND(InData%dqdt,1)
+    Int_Xferred = Int_Xferred + 2
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%dqdt,2)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%dqdt,2)
     Int_Xferred = Int_Xferred + 2
 
       IF (SIZE(InData%dqdt)>0) DbKiBuf ( Db_Xferred:Db_Xferred+(SIZE(InData%dqdt))-1 ) = PACK(InData%dqdt,.TRUE.)
@@ -1974,6 +1999,7 @@ ENDIF
   LOGICAL, ALLOCATABLE           :: mask4(:,:,:,:)
   LOGICAL, ALLOCATABLE           :: mask5(:,:,:,:,:)
   INTEGER(IntKi)                 :: i1, i1_l, i1_u  !  bounds (upper/lower) for an array dimension 1
+  INTEGER(IntKi)                 :: i2, i2_l, i2_u  !  bounds (upper/lower) for an array dimension 2
   INTEGER(IntKi)                 :: ErrStat2
   CHARACTER(ErrMsgLen)           :: ErrMsg2
   CHARACTER(*), PARAMETER        :: RoutineName = 'BD_UnPackContState'
@@ -1994,21 +2020,24 @@ ENDIF
     i1_l = IntKiBuf( Int_Xferred    )
     i1_u = IntKiBuf( Int_Xferred + 1)
     Int_Xferred = Int_Xferred + 2
+    i2_l = IntKiBuf( Int_Xferred    )
+    i2_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
     IF (ALLOCATED(OutData%q)) DEALLOCATE(OutData%q)
-    ALLOCATE(OutData%q(i1_l:i1_u),STAT=ErrStat2)
+    ALLOCATE(OutData%q(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
        CALL SetErrStat(ErrID_Fatal, 'Error allocating OutData%q.', ErrStat, ErrMsg,RoutineName)
        RETURN
     END IF
-    ALLOCATE(mask1(i1_l:i1_u),STAT=ErrStat2)
+    ALLOCATE(mask2(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
-       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask1.', ErrStat, ErrMsg,RoutineName)
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask2.', ErrStat, ErrMsg,RoutineName)
        RETURN
     END IF
-    mask1 = .TRUE. 
-      IF (SIZE(OutData%q)>0) OutData%q = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%q))-1 ), mask1, 0.0_DbKi ), R8Ki)
+    mask2 = .TRUE. 
+      IF (SIZE(OutData%q)>0) OutData%q = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%q))-1 ), mask2, 0.0_DbKi ), R8Ki)
       Db_Xferred   = Db_Xferred   + SIZE(OutData%q)
-    DEALLOCATE(mask1)
+    DEALLOCATE(mask2)
   END IF
   IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! dqdt not allocated
     Int_Xferred = Int_Xferred + 1
@@ -2017,21 +2046,24 @@ ENDIF
     i1_l = IntKiBuf( Int_Xferred    )
     i1_u = IntKiBuf( Int_Xferred + 1)
     Int_Xferred = Int_Xferred + 2
+    i2_l = IntKiBuf( Int_Xferred    )
+    i2_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
     IF (ALLOCATED(OutData%dqdt)) DEALLOCATE(OutData%dqdt)
-    ALLOCATE(OutData%dqdt(i1_l:i1_u),STAT=ErrStat2)
+    ALLOCATE(OutData%dqdt(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
        CALL SetErrStat(ErrID_Fatal, 'Error allocating OutData%dqdt.', ErrStat, ErrMsg,RoutineName)
        RETURN
     END IF
-    ALLOCATE(mask1(i1_l:i1_u),STAT=ErrStat2)
+    ALLOCATE(mask2(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
-       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask1.', ErrStat, ErrMsg,RoutineName)
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask2.', ErrStat, ErrMsg,RoutineName)
        RETURN
     END IF
-    mask1 = .TRUE. 
-      IF (SIZE(OutData%dqdt)>0) OutData%dqdt = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%dqdt))-1 ), mask1, 0.0_DbKi ), R8Ki)
+    mask2 = .TRUE. 
+      IF (SIZE(OutData%dqdt)>0) OutData%dqdt = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%dqdt))-1 ), mask2, 0.0_DbKi ), R8Ki)
       Db_Xferred   = Db_Xferred   + SIZE(OutData%dqdt)
-    DEALLOCATE(mask1)
+    DEALLOCATE(mask2)
   END IF
  END SUBROUTINE BD_UnPackContState
 
@@ -2312,6 +2344,7 @@ ENDIF
 ! Local 
    INTEGER(IntKi)                 :: i,j,k
    INTEGER(IntKi)                 :: i1, i1_l, i1_u  !  bounds (upper/lower) for an array dimension 1
+   INTEGER(IntKi)                 :: i2, i2_l, i2_u  !  bounds (upper/lower) for an array dimension 2
    INTEGER(IntKi)                 :: ErrStat2
    CHARACTER(ErrMsgLen)           :: ErrMsg2
    CHARACTER(*), PARAMETER        :: RoutineName = 'BD_CopyOtherState'
@@ -2321,8 +2354,10 @@ ENDIF
 IF (ALLOCATED(SrcOtherStateData%acc)) THEN
   i1_l = LBOUND(SrcOtherStateData%acc,1)
   i1_u = UBOUND(SrcOtherStateData%acc,1)
+  i2_l = LBOUND(SrcOtherStateData%acc,2)
+  i2_u = UBOUND(SrcOtherStateData%acc,2)
   IF (.NOT. ALLOCATED(DstOtherStateData%acc)) THEN 
-    ALLOCATE(DstOtherStateData%acc(i1_l:i1_u),STAT=ErrStat2)
+    ALLOCATE(DstOtherStateData%acc(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
       CALL SetErrStat(ErrID_Fatal, 'Error allocating DstOtherStateData%acc.', ErrStat, ErrMsg,RoutineName)
       RETURN
@@ -2333,8 +2368,10 @@ ENDIF
 IF (ALLOCATED(SrcOtherStateData%xcc)) THEN
   i1_l = LBOUND(SrcOtherStateData%xcc,1)
   i1_u = UBOUND(SrcOtherStateData%xcc,1)
+  i2_l = LBOUND(SrcOtherStateData%xcc,2)
+  i2_u = UBOUND(SrcOtherStateData%xcc,2)
   IF (.NOT. ALLOCATED(DstOtherStateData%xcc)) THEN 
-    ALLOCATE(DstOtherStateData%xcc(i1_l:i1_u),STAT=ErrStat2)
+    ALLOCATE(DstOtherStateData%xcc(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
       CALL SetErrStat(ErrID_Fatal, 'Error allocating DstOtherStateData%xcc.', ErrStat, ErrMsg,RoutineName)
       RETURN
@@ -2399,12 +2436,12 @@ ENDIF
   Int_BufSz  = 0
   Int_BufSz   = Int_BufSz   + 1     ! acc allocated yes/no
   IF ( ALLOCATED(InData%acc) ) THEN
-    Int_BufSz   = Int_BufSz   + 2*1  ! acc upper/lower bounds for each dimension
+    Int_BufSz   = Int_BufSz   + 2*2  ! acc upper/lower bounds for each dimension
       Db_BufSz   = Db_BufSz   + SIZE(InData%acc)  ! acc
   END IF
   Int_BufSz   = Int_BufSz   + 1     ! xcc allocated yes/no
   IF ( ALLOCATED(InData%xcc) ) THEN
-    Int_BufSz   = Int_BufSz   + 2*1  ! xcc upper/lower bounds for each dimension
+    Int_BufSz   = Int_BufSz   + 2*2  ! xcc upper/lower bounds for each dimension
       Db_BufSz   = Db_BufSz   + SIZE(InData%xcc)  ! xcc
   END IF
       Int_BufSz  = Int_BufSz  + 1  ! InitAcc
@@ -2444,6 +2481,9 @@ ENDIF
     IntKiBuf( Int_Xferred    ) = LBOUND(InData%acc,1)
     IntKiBuf( Int_Xferred + 1) = UBOUND(InData%acc,1)
     Int_Xferred = Int_Xferred + 2
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%acc,2)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%acc,2)
+    Int_Xferred = Int_Xferred + 2
 
       IF (SIZE(InData%acc)>0) DbKiBuf ( Db_Xferred:Db_Xferred+(SIZE(InData%acc))-1 ) = PACK(InData%acc,.TRUE.)
       Db_Xferred   = Db_Xferred   + SIZE(InData%acc)
@@ -2456,6 +2496,9 @@ ENDIF
     Int_Xferred = Int_Xferred + 1
     IntKiBuf( Int_Xferred    ) = LBOUND(InData%xcc,1)
     IntKiBuf( Int_Xferred + 1) = UBOUND(InData%xcc,1)
+    Int_Xferred = Int_Xferred + 2
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%xcc,2)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%xcc,2)
     Int_Xferred = Int_Xferred + 2
 
       IF (SIZE(InData%xcc)>0) DbKiBuf ( Db_Xferred:Db_Xferred+(SIZE(InData%xcc))-1 ) = PACK(InData%xcc,.TRUE.)
@@ -2485,6 +2528,7 @@ ENDIF
   LOGICAL, ALLOCATABLE           :: mask4(:,:,:,:)
   LOGICAL, ALLOCATABLE           :: mask5(:,:,:,:,:)
   INTEGER(IntKi)                 :: i1, i1_l, i1_u  !  bounds (upper/lower) for an array dimension 1
+  INTEGER(IntKi)                 :: i2, i2_l, i2_u  !  bounds (upper/lower) for an array dimension 2
   INTEGER(IntKi)                 :: ErrStat2
   CHARACTER(ErrMsgLen)           :: ErrMsg2
   CHARACTER(*), PARAMETER        :: RoutineName = 'BD_UnPackOtherState'
@@ -2505,21 +2549,24 @@ ENDIF
     i1_l = IntKiBuf( Int_Xferred    )
     i1_u = IntKiBuf( Int_Xferred + 1)
     Int_Xferred = Int_Xferred + 2
+    i2_l = IntKiBuf( Int_Xferred    )
+    i2_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
     IF (ALLOCATED(OutData%acc)) DEALLOCATE(OutData%acc)
-    ALLOCATE(OutData%acc(i1_l:i1_u),STAT=ErrStat2)
+    ALLOCATE(OutData%acc(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
        CALL SetErrStat(ErrID_Fatal, 'Error allocating OutData%acc.', ErrStat, ErrMsg,RoutineName)
        RETURN
     END IF
-    ALLOCATE(mask1(i1_l:i1_u),STAT=ErrStat2)
+    ALLOCATE(mask2(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
-       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask1.', ErrStat, ErrMsg,RoutineName)
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask2.', ErrStat, ErrMsg,RoutineName)
        RETURN
     END IF
-    mask1 = .TRUE. 
-      IF (SIZE(OutData%acc)>0) OutData%acc = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%acc))-1 ), mask1, 0.0_DbKi ), R8Ki)
+    mask2 = .TRUE. 
+      IF (SIZE(OutData%acc)>0) OutData%acc = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%acc))-1 ), mask2, 0.0_DbKi ), R8Ki)
       Db_Xferred   = Db_Xferred   + SIZE(OutData%acc)
-    DEALLOCATE(mask1)
+    DEALLOCATE(mask2)
   END IF
   IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! xcc not allocated
     Int_Xferred = Int_Xferred + 1
@@ -2528,21 +2575,24 @@ ENDIF
     i1_l = IntKiBuf( Int_Xferred    )
     i1_u = IntKiBuf( Int_Xferred + 1)
     Int_Xferred = Int_Xferred + 2
+    i2_l = IntKiBuf( Int_Xferred    )
+    i2_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
     IF (ALLOCATED(OutData%xcc)) DEALLOCATE(OutData%xcc)
-    ALLOCATE(OutData%xcc(i1_l:i1_u),STAT=ErrStat2)
+    ALLOCATE(OutData%xcc(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
        CALL SetErrStat(ErrID_Fatal, 'Error allocating OutData%xcc.', ErrStat, ErrMsg,RoutineName)
        RETURN
     END IF
-    ALLOCATE(mask1(i1_l:i1_u),STAT=ErrStat2)
+    ALLOCATE(mask2(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
-       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask1.', ErrStat, ErrMsg,RoutineName)
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask2.', ErrStat, ErrMsg,RoutineName)
        RETURN
     END IF
-    mask1 = .TRUE. 
-      IF (SIZE(OutData%xcc)>0) OutData%xcc = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%xcc))-1 ), mask1, 0.0_DbKi ), R8Ki)
+    mask2 = .TRUE. 
+      IF (SIZE(OutData%xcc)>0) OutData%xcc = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%xcc))-1 ), mask2, 0.0_DbKi ), R8Ki)
       Db_Xferred   = Db_Xferred   + SIZE(OutData%xcc)
-    DEALLOCATE(mask1)
+    DEALLOCATE(mask2)
   END IF
       OutData%InitAcc = TRANSFER( IntKiBuf( Int_Xferred ), mask0 )
       Int_Xferred   = Int_Xferred + 1
@@ -2573,8 +2623,10 @@ IF (ALLOCATED(SrcParamData%uuN0)) THEN
   i1_u = UBOUND(SrcParamData%uuN0,1)
   i2_l = LBOUND(SrcParamData%uuN0,2)
   i2_u = UBOUND(SrcParamData%uuN0,2)
+  i3_l = LBOUND(SrcParamData%uuN0,3)
+  i3_u = UBOUND(SrcParamData%uuN0,3)
   IF (.NOT. ALLOCATED(DstParamData%uuN0)) THEN 
-    ALLOCATE(DstParamData%uuN0(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    ALLOCATE(DstParamData%uuN0(i1_l:i1_u,i2_l:i2_u,i3_l:i3_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
       CALL SetErrStat(ErrID_Fatal, 'Error allocating DstParamData%uuN0.', ErrStat, ErrMsg,RoutineName)
       RETURN
@@ -2737,8 +2789,10 @@ IF (ALLOCATED(SrcParamData%rrN0)) THEN
   i1_u = UBOUND(SrcParamData%rrN0,1)
   i2_l = LBOUND(SrcParamData%rrN0,2)
   i2_u = UBOUND(SrcParamData%rrN0,2)
+  i3_l = LBOUND(SrcParamData%rrN0,3)
+  i3_u = UBOUND(SrcParamData%rrN0,3)
   IF (.NOT. ALLOCATED(DstParamData%rrN0)) THEN 
-    ALLOCATE(DstParamData%rrN0(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    ALLOCATE(DstParamData%rrN0(i1_l:i1_u,i2_l:i2_u,i3_l:i3_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
       CALL SetErrStat(ErrID_Fatal, 'Error allocating DstParamData%rrN0.', ErrStat, ErrMsg,RoutineName)
       RETURN
@@ -2751,8 +2805,10 @@ IF (ALLOCATED(SrcParamData%uu0)) THEN
   i1_u = UBOUND(SrcParamData%uu0,1)
   i2_l = LBOUND(SrcParamData%uu0,2)
   i2_u = UBOUND(SrcParamData%uu0,2)
+  i3_l = LBOUND(SrcParamData%uu0,3)
+  i3_u = UBOUND(SrcParamData%uu0,3)
   IF (.NOT. ALLOCATED(DstParamData%uu0)) THEN 
-    ALLOCATE(DstParamData%uu0(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    ALLOCATE(DstParamData%uu0(i1_l:i1_u,i2_l:i2_u,i3_l:i3_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
       CALL SetErrStat(ErrID_Fatal, 'Error allocating DstParamData%uu0.', ErrStat, ErrMsg,RoutineName)
       RETURN
@@ -2765,8 +2821,10 @@ IF (ALLOCATED(SrcParamData%E10)) THEN
   i1_u = UBOUND(SrcParamData%E10,1)
   i2_l = LBOUND(SrcParamData%E10,2)
   i2_u = UBOUND(SrcParamData%E10,2)
+  i3_l = LBOUND(SrcParamData%E10,3)
+  i3_u = UBOUND(SrcParamData%E10,3)
   IF (.NOT. ALLOCATED(DstParamData%E10)) THEN 
-    ALLOCATE(DstParamData%E10(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    ALLOCATE(DstParamData%E10(i1_l:i1_u,i2_l:i2_u,i3_l:i3_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
       CALL SetErrStat(ErrID_Fatal, 'Error allocating DstParamData%E10.', ErrStat, ErrMsg,RoutineName)
       RETURN
@@ -2775,6 +2833,20 @@ IF (ALLOCATED(SrcParamData%E10)) THEN
     DstParamData%E10 = SrcParamData%E10
 ENDIF
     DstParamData%node_elem = SrcParamData%node_elem
+IF (ALLOCATED(SrcParamData%node_elem_idx)) THEN
+  i1_l = LBOUND(SrcParamData%node_elem_idx,1)
+  i1_u = UBOUND(SrcParamData%node_elem_idx,1)
+  i2_l = LBOUND(SrcParamData%node_elem_idx,2)
+  i2_u = UBOUND(SrcParamData%node_elem_idx,2)
+  IF (.NOT. ALLOCATED(DstParamData%node_elem_idx)) THEN 
+    ALLOCATE(DstParamData%node_elem_idx(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+      CALL SetErrStat(ErrID_Fatal, 'Error allocating DstParamData%node_elem_idx.', ErrStat, ErrMsg,RoutineName)
+      RETURN
+    END IF
+  END IF
+    DstParamData%node_elem_idx = SrcParamData%node_elem_idx
+ENDIF
     DstParamData%refine = SrcParamData%refine
     DstParamData%dof_node = SrcParamData%dof_node
     DstParamData%dof_elem = SrcParamData%dof_elem
@@ -2879,6 +2951,9 @@ ENDIF
 IF (ALLOCATED(ParamData%E10)) THEN
   DEALLOCATE(ParamData%E10)
 ENDIF
+IF (ALLOCATED(ParamData%node_elem_idx)) THEN
+  DEALLOCATE(ParamData%node_elem_idx)
+ENDIF
 IF (ALLOCATED(ParamData%OutParam)) THEN
 DO i1 = LBOUND(ParamData%OutParam,1), UBOUND(ParamData%OutParam,1)
   CALL NWTC_Library_Destroyoutparmtype( ParamData%OutParam(i1), ErrStat, ErrMsg )
@@ -2930,7 +3005,7 @@ ENDIF
       Db_BufSz   = Db_BufSz   + 1  ! rhoinf
   Int_BufSz   = Int_BufSz   + 1     ! uuN0 allocated yes/no
   IF ( ALLOCATED(InData%uuN0) ) THEN
-    Int_BufSz   = Int_BufSz   + 2*2  ! uuN0 upper/lower bounds for each dimension
+    Int_BufSz   = Int_BufSz   + 2*3  ! uuN0 upper/lower bounds for each dimension
       Db_BufSz   = Db_BufSz   + SIZE(InData%uuN0)  ! uuN0
   END IF
   Int_BufSz   = Int_BufSz   + 1     ! Gauss allocated yes/no
@@ -2995,20 +3070,25 @@ ENDIF
   END IF
   Int_BufSz   = Int_BufSz   + 1     ! rrN0 allocated yes/no
   IF ( ALLOCATED(InData%rrN0) ) THEN
-    Int_BufSz   = Int_BufSz   + 2*2  ! rrN0 upper/lower bounds for each dimension
+    Int_BufSz   = Int_BufSz   + 2*3  ! rrN0 upper/lower bounds for each dimension
       Db_BufSz   = Db_BufSz   + SIZE(InData%rrN0)  ! rrN0
   END IF
   Int_BufSz   = Int_BufSz   + 1     ! uu0 allocated yes/no
   IF ( ALLOCATED(InData%uu0) ) THEN
-    Int_BufSz   = Int_BufSz   + 2*2  ! uu0 upper/lower bounds for each dimension
+    Int_BufSz   = Int_BufSz   + 2*3  ! uu0 upper/lower bounds for each dimension
       Db_BufSz   = Db_BufSz   + SIZE(InData%uu0)  ! uu0
   END IF
   Int_BufSz   = Int_BufSz   + 1     ! E10 allocated yes/no
   IF ( ALLOCATED(InData%E10) ) THEN
-    Int_BufSz   = Int_BufSz   + 2*2  ! E10 upper/lower bounds for each dimension
+    Int_BufSz   = Int_BufSz   + 2*3  ! E10 upper/lower bounds for each dimension
       Db_BufSz   = Db_BufSz   + SIZE(InData%E10)  ! E10
   END IF
       Int_BufSz  = Int_BufSz  + 1  ! node_elem
+  Int_BufSz   = Int_BufSz   + 1     ! node_elem_idx allocated yes/no
+  IF ( ALLOCATED(InData%node_elem_idx) ) THEN
+    Int_BufSz   = Int_BufSz   + 2*2  ! node_elem_idx upper/lower bounds for each dimension
+      Int_BufSz  = Int_BufSz  + SIZE(InData%node_elem_idx)  ! node_elem_idx
+  END IF
       Int_BufSz  = Int_BufSz  + 1  ! refine
       Int_BufSz  = Int_BufSz  + 1  ! dof_node
       Int_BufSz  = Int_BufSz  + 1  ! dof_elem
@@ -3105,6 +3185,9 @@ ENDIF
     Int_Xferred = Int_Xferred + 2
     IntKiBuf( Int_Xferred    ) = LBOUND(InData%uuN0,2)
     IntKiBuf( Int_Xferred + 1) = UBOUND(InData%uuN0,2)
+    Int_Xferred = Int_Xferred + 2
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%uuN0,3)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%uuN0,3)
     Int_Xferred = Int_Xferred + 2
 
       IF (SIZE(InData%uuN0)>0) DbKiBuf ( Db_Xferred:Db_Xferred+(SIZE(InData%uuN0))-1 ) = PACK(InData%uuN0,.TRUE.)
@@ -3302,6 +3385,9 @@ ENDIF
     IntKiBuf( Int_Xferred    ) = LBOUND(InData%rrN0,2)
     IntKiBuf( Int_Xferred + 1) = UBOUND(InData%rrN0,2)
     Int_Xferred = Int_Xferred + 2
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%rrN0,3)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%rrN0,3)
+    Int_Xferred = Int_Xferred + 2
 
       IF (SIZE(InData%rrN0)>0) DbKiBuf ( Db_Xferred:Db_Xferred+(SIZE(InData%rrN0))-1 ) = PACK(InData%rrN0,.TRUE.)
       Db_Xferred   = Db_Xferred   + SIZE(InData%rrN0)
@@ -3317,6 +3403,9 @@ ENDIF
     Int_Xferred = Int_Xferred + 2
     IntKiBuf( Int_Xferred    ) = LBOUND(InData%uu0,2)
     IntKiBuf( Int_Xferred + 1) = UBOUND(InData%uu0,2)
+    Int_Xferred = Int_Xferred + 2
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%uu0,3)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%uu0,3)
     Int_Xferred = Int_Xferred + 2
 
       IF (SIZE(InData%uu0)>0) DbKiBuf ( Db_Xferred:Db_Xferred+(SIZE(InData%uu0))-1 ) = PACK(InData%uu0,.TRUE.)
@@ -3334,12 +3423,31 @@ ENDIF
     IntKiBuf( Int_Xferred    ) = LBOUND(InData%E10,2)
     IntKiBuf( Int_Xferred + 1) = UBOUND(InData%E10,2)
     Int_Xferred = Int_Xferred + 2
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%E10,3)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%E10,3)
+    Int_Xferred = Int_Xferred + 2
 
       IF (SIZE(InData%E10)>0) DbKiBuf ( Db_Xferred:Db_Xferred+(SIZE(InData%E10))-1 ) = PACK(InData%E10,.TRUE.)
       Db_Xferred   = Db_Xferred   + SIZE(InData%E10)
   END IF
       IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%node_elem
       Int_Xferred   = Int_Xferred   + 1
+  IF ( .NOT. ALLOCATED(InData%node_elem_idx) ) THEN
+    IntKiBuf( Int_Xferred ) = 0
+    Int_Xferred = Int_Xferred + 1
+  ELSE
+    IntKiBuf( Int_Xferred ) = 1
+    Int_Xferred = Int_Xferred + 1
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%node_elem_idx,1)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%node_elem_idx,1)
+    Int_Xferred = Int_Xferred + 2
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%node_elem_idx,2)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%node_elem_idx,2)
+    Int_Xferred = Int_Xferred + 2
+
+      IF (SIZE(InData%node_elem_idx)>0) IntKiBuf ( Int_Xferred:Int_Xferred+(SIZE(InData%node_elem_idx))-1 ) = PACK(InData%node_elem_idx,.TRUE.)
+      Int_Xferred   = Int_Xferred   + SIZE(InData%node_elem_idx)
+  END IF
       IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%refine
       Int_Xferred   = Int_Xferred   + 1
       IntKiBuf ( Int_Xferred:Int_Xferred+(1)-1 ) = InData%dof_node
@@ -3504,21 +3612,24 @@ ENDIF
     i2_l = IntKiBuf( Int_Xferred    )
     i2_u = IntKiBuf( Int_Xferred + 1)
     Int_Xferred = Int_Xferred + 2
+    i3_l = IntKiBuf( Int_Xferred    )
+    i3_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
     IF (ALLOCATED(OutData%uuN0)) DEALLOCATE(OutData%uuN0)
-    ALLOCATE(OutData%uuN0(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    ALLOCATE(OutData%uuN0(i1_l:i1_u,i2_l:i2_u,i3_l:i3_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
        CALL SetErrStat(ErrID_Fatal, 'Error allocating OutData%uuN0.', ErrStat, ErrMsg,RoutineName)
        RETURN
     END IF
-    ALLOCATE(mask2(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    ALLOCATE(mask3(i1_l:i1_u,i2_l:i2_u,i3_l:i3_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
-       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask2.', ErrStat, ErrMsg,RoutineName)
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask3.', ErrStat, ErrMsg,RoutineName)
        RETURN
     END IF
-    mask2 = .TRUE. 
-      IF (SIZE(OutData%uuN0)>0) OutData%uuN0 = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%uuN0))-1 ), mask2, 0.0_DbKi ), R8Ki)
+    mask3 = .TRUE. 
+      IF (SIZE(OutData%uuN0)>0) OutData%uuN0 = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%uuN0))-1 ), mask3, 0.0_DbKi ), R8Ki)
       Db_Xferred   = Db_Xferred   + SIZE(OutData%uuN0)
-    DEALLOCATE(mask2)
+    DEALLOCATE(mask3)
   END IF
   IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! Gauss not allocated
     Int_Xferred = Int_Xferred + 1
@@ -3877,21 +3988,24 @@ ENDIF
     i2_l = IntKiBuf( Int_Xferred    )
     i2_u = IntKiBuf( Int_Xferred + 1)
     Int_Xferred = Int_Xferred + 2
+    i3_l = IntKiBuf( Int_Xferred    )
+    i3_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
     IF (ALLOCATED(OutData%rrN0)) DEALLOCATE(OutData%rrN0)
-    ALLOCATE(OutData%rrN0(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    ALLOCATE(OutData%rrN0(i1_l:i1_u,i2_l:i2_u,i3_l:i3_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
        CALL SetErrStat(ErrID_Fatal, 'Error allocating OutData%rrN0.', ErrStat, ErrMsg,RoutineName)
        RETURN
     END IF
-    ALLOCATE(mask2(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    ALLOCATE(mask3(i1_l:i1_u,i2_l:i2_u,i3_l:i3_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
-       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask2.', ErrStat, ErrMsg,RoutineName)
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask3.', ErrStat, ErrMsg,RoutineName)
        RETURN
     END IF
-    mask2 = .TRUE. 
-      IF (SIZE(OutData%rrN0)>0) OutData%rrN0 = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%rrN0))-1 ), mask2, 0.0_DbKi ), R8Ki)
+    mask3 = .TRUE. 
+      IF (SIZE(OutData%rrN0)>0) OutData%rrN0 = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%rrN0))-1 ), mask3, 0.0_DbKi ), R8Ki)
       Db_Xferred   = Db_Xferred   + SIZE(OutData%rrN0)
-    DEALLOCATE(mask2)
+    DEALLOCATE(mask3)
   END IF
   IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! uu0 not allocated
     Int_Xferred = Int_Xferred + 1
@@ -3903,21 +4017,24 @@ ENDIF
     i2_l = IntKiBuf( Int_Xferred    )
     i2_u = IntKiBuf( Int_Xferred + 1)
     Int_Xferred = Int_Xferred + 2
+    i3_l = IntKiBuf( Int_Xferred    )
+    i3_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
     IF (ALLOCATED(OutData%uu0)) DEALLOCATE(OutData%uu0)
-    ALLOCATE(OutData%uu0(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    ALLOCATE(OutData%uu0(i1_l:i1_u,i2_l:i2_u,i3_l:i3_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
        CALL SetErrStat(ErrID_Fatal, 'Error allocating OutData%uu0.', ErrStat, ErrMsg,RoutineName)
        RETURN
     END IF
-    ALLOCATE(mask2(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    ALLOCATE(mask3(i1_l:i1_u,i2_l:i2_u,i3_l:i3_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
-       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask2.', ErrStat, ErrMsg,RoutineName)
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask3.', ErrStat, ErrMsg,RoutineName)
        RETURN
     END IF
-    mask2 = .TRUE. 
-      IF (SIZE(OutData%uu0)>0) OutData%uu0 = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%uu0))-1 ), mask2, 0.0_DbKi ), R8Ki)
+    mask3 = .TRUE. 
+      IF (SIZE(OutData%uu0)>0) OutData%uu0 = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%uu0))-1 ), mask3, 0.0_DbKi ), R8Ki)
       Db_Xferred   = Db_Xferred   + SIZE(OutData%uu0)
-    DEALLOCATE(mask2)
+    DEALLOCATE(mask3)
   END IF
   IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! E10 not allocated
     Int_Xferred = Int_Xferred + 1
@@ -3929,10 +4046,41 @@ ENDIF
     i2_l = IntKiBuf( Int_Xferred    )
     i2_u = IntKiBuf( Int_Xferred + 1)
     Int_Xferred = Int_Xferred + 2
+    i3_l = IntKiBuf( Int_Xferred    )
+    i3_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
     IF (ALLOCATED(OutData%E10)) DEALLOCATE(OutData%E10)
-    ALLOCATE(OutData%E10(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    ALLOCATE(OutData%E10(i1_l:i1_u,i2_l:i2_u,i3_l:i3_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
        CALL SetErrStat(ErrID_Fatal, 'Error allocating OutData%E10.', ErrStat, ErrMsg,RoutineName)
+       RETURN
+    END IF
+    ALLOCATE(mask3(i1_l:i1_u,i2_l:i2_u,i3_l:i3_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask3.', ErrStat, ErrMsg,RoutineName)
+       RETURN
+    END IF
+    mask3 = .TRUE. 
+      IF (SIZE(OutData%E10)>0) OutData%E10 = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%E10))-1 ), mask3, 0.0_DbKi ), R8Ki)
+      Db_Xferred   = Db_Xferred   + SIZE(OutData%E10)
+    DEALLOCATE(mask3)
+  END IF
+      OutData%node_elem = IntKiBuf( Int_Xferred ) 
+      Int_Xferred   = Int_Xferred + 1
+  IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! node_elem_idx not allocated
+    Int_Xferred = Int_Xferred + 1
+  ELSE
+    Int_Xferred = Int_Xferred + 1
+    i1_l = IntKiBuf( Int_Xferred    )
+    i1_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
+    i2_l = IntKiBuf( Int_Xferred    )
+    i2_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
+    IF (ALLOCATED(OutData%node_elem_idx)) DEALLOCATE(OutData%node_elem_idx)
+    ALLOCATE(OutData%node_elem_idx(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating OutData%node_elem_idx.', ErrStat, ErrMsg,RoutineName)
        RETURN
     END IF
     ALLOCATE(mask2(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
@@ -3941,12 +4089,10 @@ ENDIF
        RETURN
     END IF
     mask2 = .TRUE. 
-      IF (SIZE(OutData%E10)>0) OutData%E10 = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%E10))-1 ), mask2, 0.0_DbKi ), R8Ki)
-      Db_Xferred   = Db_Xferred   + SIZE(OutData%E10)
+      IF (SIZE(OutData%node_elem_idx)>0) OutData%node_elem_idx = UNPACK( IntKiBuf ( Int_Xferred:Int_Xferred+(SIZE(OutData%node_elem_idx))-1 ), mask2, 0_IntKi )
+      Int_Xferred   = Int_Xferred   + SIZE(OutData%node_elem_idx)
     DEALLOCATE(mask2)
   END IF
-      OutData%node_elem = IntKiBuf( Int_Xferred ) 
-      Int_Xferred   = Int_Xferred + 1
       OutData%refine = IntKiBuf( Int_Xferred ) 
       Int_Xferred   = Int_Xferred + 1
       OutData%dof_node = IntKiBuf( Int_Xferred ) 
@@ -5052,6 +5198,7 @@ ENDIF
    INTEGER(IntKi)                 :: i1, i1_l, i1_u  !  bounds (upper/lower) for an array dimension 1
    INTEGER(IntKi)                 :: i2, i2_l, i2_u  !  bounds (upper/lower) for an array dimension 2
    INTEGER(IntKi)                 :: i3, i3_l, i3_u  !  bounds (upper/lower) for an array dimension 3
+   INTEGER(IntKi)                 :: i4, i4_l, i4_u  !  bounds (upper/lower) for an array dimension 4
    INTEGER(IntKi)                 :: ErrStat2
    CHARACTER(ErrMsgLen)           :: ErrMsg2
    CHARACTER(*), PARAMETER        :: RoutineName = 'BD_CopyMisc'
@@ -5074,8 +5221,10 @@ ENDIF
 IF (ALLOCATED(SrcMiscData%Nuuu)) THEN
   i1_l = LBOUND(SrcMiscData%Nuuu,1)
   i1_u = UBOUND(SrcMiscData%Nuuu,1)
+  i2_l = LBOUND(SrcMiscData%Nuuu,2)
+  i2_u = UBOUND(SrcMiscData%Nuuu,2)
   IF (.NOT. ALLOCATED(DstMiscData%Nuuu)) THEN 
-    ALLOCATE(DstMiscData%Nuuu(i1_l:i1_u),STAT=ErrStat2)
+    ALLOCATE(DstMiscData%Nuuu(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
       CALL SetErrStat(ErrID_Fatal, 'Error allocating DstMiscData%Nuuu.', ErrStat, ErrMsg,RoutineName)
       RETURN
@@ -5086,8 +5235,10 @@ ENDIF
 IF (ALLOCATED(SrcMiscData%Nrrr)) THEN
   i1_l = LBOUND(SrcMiscData%Nrrr,1)
   i1_u = UBOUND(SrcMiscData%Nrrr,1)
+  i2_l = LBOUND(SrcMiscData%Nrrr,2)
+  i2_u = UBOUND(SrcMiscData%Nrrr,2)
   IF (.NOT. ALLOCATED(DstMiscData%Nrrr)) THEN 
-    ALLOCATE(DstMiscData%Nrrr(i1_l:i1_u),STAT=ErrStat2)
+    ALLOCATE(DstMiscData%Nrrr(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
       CALL SetErrStat(ErrID_Fatal, 'Error allocating DstMiscData%Nrrr.', ErrStat, ErrMsg,RoutineName)
       RETURN
@@ -5098,8 +5249,10 @@ ENDIF
 IF (ALLOCATED(SrcMiscData%Nvvv)) THEN
   i1_l = LBOUND(SrcMiscData%Nvvv,1)
   i1_u = UBOUND(SrcMiscData%Nvvv,1)
+  i2_l = LBOUND(SrcMiscData%Nvvv,2)
+  i2_u = UBOUND(SrcMiscData%Nvvv,2)
   IF (.NOT. ALLOCATED(DstMiscData%Nvvv)) THEN 
-    ALLOCATE(DstMiscData%Nvvv(i1_l:i1_u),STAT=ErrStat2)
+    ALLOCATE(DstMiscData%Nvvv(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
       CALL SetErrStat(ErrID_Fatal, 'Error allocating DstMiscData%Nvvv.', ErrStat, ErrMsg,RoutineName)
       RETURN
@@ -5110,8 +5263,10 @@ ENDIF
 IF (ALLOCATED(SrcMiscData%Naaa)) THEN
   i1_l = LBOUND(SrcMiscData%Naaa,1)
   i1_u = UBOUND(SrcMiscData%Naaa,1)
+  i2_l = LBOUND(SrcMiscData%Naaa,2)
+  i2_u = UBOUND(SrcMiscData%Naaa,2)
   IF (.NOT. ALLOCATED(DstMiscData%Naaa)) THEN 
-    ALLOCATE(DstMiscData%Naaa(i1_l:i1_u),STAT=ErrStat2)
+    ALLOCATE(DstMiscData%Naaa(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
       CALL SetErrStat(ErrID_Fatal, 'Error allocating DstMiscData%Naaa.', ErrStat, ErrMsg,RoutineName)
       RETURN
@@ -5119,11 +5274,41 @@ IF (ALLOCATED(SrcMiscData%Naaa)) THEN
   END IF
     DstMiscData%Naaa = SrcMiscData%Naaa
 ENDIF
+IF (ALLOCATED(SrcMiscData%temp_Naaa)) THEN
+  i1_l = LBOUND(SrcMiscData%temp_Naaa,1)
+  i1_u = UBOUND(SrcMiscData%temp_Naaa,1)
+  i2_l = LBOUND(SrcMiscData%temp_Naaa,2)
+  i2_u = UBOUND(SrcMiscData%temp_Naaa,2)
+  IF (.NOT. ALLOCATED(DstMiscData%temp_Naaa)) THEN 
+    ALLOCATE(DstMiscData%temp_Naaa(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+      CALL SetErrStat(ErrID_Fatal, 'Error allocating DstMiscData%temp_Naaa.', ErrStat, ErrMsg,RoutineName)
+      RETURN
+    END IF
+  END IF
+    DstMiscData%temp_Naaa = SrcMiscData%temp_Naaa
+ENDIF
+IF (ALLOCATED(SrcMiscData%temp_Nvvv)) THEN
+  i1_l = LBOUND(SrcMiscData%temp_Nvvv,1)
+  i1_u = UBOUND(SrcMiscData%temp_Nvvv,1)
+  i2_l = LBOUND(SrcMiscData%temp_Nvvv,2)
+  i2_u = UBOUND(SrcMiscData%temp_Nvvv,2)
+  IF (.NOT. ALLOCATED(DstMiscData%temp_Nvvv)) THEN 
+    ALLOCATE(DstMiscData%temp_Nvvv(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+      CALL SetErrStat(ErrID_Fatal, 'Error allocating DstMiscData%temp_Nvvv.', ErrStat, ErrMsg,RoutineName)
+      RETURN
+    END IF
+  END IF
+    DstMiscData%temp_Nvvv = SrcMiscData%temp_Nvvv
+ENDIF
 IF (ALLOCATED(SrcMiscData%elf)) THEN
   i1_l = LBOUND(SrcMiscData%elf,1)
   i1_u = UBOUND(SrcMiscData%elf,1)
+  i2_l = LBOUND(SrcMiscData%elf,2)
+  i2_u = UBOUND(SrcMiscData%elf,2)
   IF (.NOT. ALLOCATED(DstMiscData%elf)) THEN 
-    ALLOCATE(DstMiscData%elf(i1_l:i1_u),STAT=ErrStat2)
+    ALLOCATE(DstMiscData%elf(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
       CALL SetErrStat(ErrID_Fatal, 'Error allocating DstMiscData%elf.', ErrStat, ErrMsg,RoutineName)
       RETURN
@@ -5136,8 +5321,12 @@ IF (ALLOCATED(SrcMiscData%elk)) THEN
   i1_u = UBOUND(SrcMiscData%elk,1)
   i2_l = LBOUND(SrcMiscData%elk,2)
   i2_u = UBOUND(SrcMiscData%elk,2)
+  i3_l = LBOUND(SrcMiscData%elk,3)
+  i3_u = UBOUND(SrcMiscData%elk,3)
+  i4_l = LBOUND(SrcMiscData%elk,4)
+  i4_u = UBOUND(SrcMiscData%elk,4)
   IF (.NOT. ALLOCATED(DstMiscData%elk)) THEN 
-    ALLOCATE(DstMiscData%elk(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    ALLOCATE(DstMiscData%elk(i1_l:i1_u,i2_l:i2_u,i3_l:i3_u,i4_l:i4_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
       CALL SetErrStat(ErrID_Fatal, 'Error allocating DstMiscData%elk.', ErrStat, ErrMsg,RoutineName)
       RETURN
@@ -5150,8 +5339,12 @@ IF (ALLOCATED(SrcMiscData%elg)) THEN
   i1_u = UBOUND(SrcMiscData%elg,1)
   i2_l = LBOUND(SrcMiscData%elg,2)
   i2_u = UBOUND(SrcMiscData%elg,2)
+  i3_l = LBOUND(SrcMiscData%elg,3)
+  i3_u = UBOUND(SrcMiscData%elg,3)
+  i4_l = LBOUND(SrcMiscData%elg,4)
+  i4_u = UBOUND(SrcMiscData%elg,4)
   IF (.NOT. ALLOCATED(DstMiscData%elg)) THEN 
-    ALLOCATE(DstMiscData%elg(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    ALLOCATE(DstMiscData%elg(i1_l:i1_u,i2_l:i2_u,i3_l:i3_u,i4_l:i4_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
       CALL SetErrStat(ErrID_Fatal, 'Error allocating DstMiscData%elg.', ErrStat, ErrMsg,RoutineName)
       RETURN
@@ -5164,8 +5357,12 @@ IF (ALLOCATED(SrcMiscData%elm)) THEN
   i1_u = UBOUND(SrcMiscData%elm,1)
   i2_l = LBOUND(SrcMiscData%elm,2)
   i2_u = UBOUND(SrcMiscData%elm,2)
+  i3_l = LBOUND(SrcMiscData%elm,3)
+  i3_u = UBOUND(SrcMiscData%elm,3)
+  i4_l = LBOUND(SrcMiscData%elm,4)
+  i4_u = UBOUND(SrcMiscData%elm,4)
   IF (.NOT. ALLOCATED(DstMiscData%elm)) THEN 
-    ALLOCATE(DstMiscData%elm(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    ALLOCATE(DstMiscData%elm(i1_l:i1_u,i2_l:i2_u,i3_l:i3_u,i4_l:i4_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
       CALL SetErrStat(ErrID_Fatal, 'Error allocating DstMiscData%elm.', ErrStat, ErrMsg,RoutineName)
       RETURN
@@ -5219,27 +5416,17 @@ IF (ALLOCATED(SrcMiscData%DistrLoad_GL)) THEN
   END IF
     DstMiscData%DistrLoad_GL = SrcMiscData%DistrLoad_GL
 ENDIF
-IF (ALLOCATED(SrcMiscData%StifK)) THEN
-  i1_l = LBOUND(SrcMiscData%StifK,1)
-  i1_u = UBOUND(SrcMiscData%StifK,1)
-  i2_l = LBOUND(SrcMiscData%StifK,2)
-  i2_u = UBOUND(SrcMiscData%StifK,2)
-  IF (.NOT. ALLOCATED(DstMiscData%StifK)) THEN 
-    ALLOCATE(DstMiscData%StifK(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
-    IF (ErrStat2 /= 0) THEN 
-      CALL SetErrStat(ErrID_Fatal, 'Error allocating DstMiscData%StifK.', ErrStat, ErrMsg,RoutineName)
-      RETURN
-    END IF
-  END IF
-    DstMiscData%StifK = SrcMiscData%StifK
-ENDIF
 IF (ALLOCATED(SrcMiscData%StifK_LU)) THEN
   i1_l = LBOUND(SrcMiscData%StifK_LU,1)
   i1_u = UBOUND(SrcMiscData%StifK_LU,1)
   i2_l = LBOUND(SrcMiscData%StifK_LU,2)
   i2_u = UBOUND(SrcMiscData%StifK_LU,2)
+  i3_l = LBOUND(SrcMiscData%StifK_LU,3)
+  i3_u = UBOUND(SrcMiscData%StifK_LU,3)
+  i4_l = LBOUND(SrcMiscData%StifK_LU,4)
+  i4_u = UBOUND(SrcMiscData%StifK_LU,4)
   IF (.NOT. ALLOCATED(DstMiscData%StifK_LU)) THEN 
-    ALLOCATE(DstMiscData%StifK_LU(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    ALLOCATE(DstMiscData%StifK_LU(i1_l:i1_u,i2_l:i2_u,i3_l:i3_u,i4_l:i4_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
       CALL SetErrStat(ErrID_Fatal, 'Error allocating DstMiscData%StifK_LU.', ErrStat, ErrMsg,RoutineName)
       RETURN
@@ -5247,13 +5434,35 @@ IF (ALLOCATED(SrcMiscData%StifK_LU)) THEN
   END IF
     DstMiscData%StifK_LU = SrcMiscData%StifK_LU
 ENDIF
+IF (ALLOCATED(SrcMiscData%StifK)) THEN
+  i1_l = LBOUND(SrcMiscData%StifK,1)
+  i1_u = UBOUND(SrcMiscData%StifK,1)
+  i2_l = LBOUND(SrcMiscData%StifK,2)
+  i2_u = UBOUND(SrcMiscData%StifK,2)
+  i3_l = LBOUND(SrcMiscData%StifK,3)
+  i3_u = UBOUND(SrcMiscData%StifK,3)
+  i4_l = LBOUND(SrcMiscData%StifK,4)
+  i4_u = UBOUND(SrcMiscData%StifK,4)
+  IF (.NOT. ALLOCATED(DstMiscData%StifK)) THEN 
+    ALLOCATE(DstMiscData%StifK(i1_l:i1_u,i2_l:i2_u,i3_l:i3_u,i4_l:i4_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+      CALL SetErrStat(ErrID_Fatal, 'Error allocating DstMiscData%StifK.', ErrStat, ErrMsg,RoutineName)
+      RETURN
+    END IF
+  END IF
+    DstMiscData%StifK = SrcMiscData%StifK
+ENDIF
 IF (ALLOCATED(SrcMiscData%MassM)) THEN
   i1_l = LBOUND(SrcMiscData%MassM,1)
   i1_u = UBOUND(SrcMiscData%MassM,1)
   i2_l = LBOUND(SrcMiscData%MassM,2)
   i2_u = UBOUND(SrcMiscData%MassM,2)
+  i3_l = LBOUND(SrcMiscData%MassM,3)
+  i3_u = UBOUND(SrcMiscData%MassM,3)
+  i4_l = LBOUND(SrcMiscData%MassM,4)
+  i4_u = UBOUND(SrcMiscData%MassM,4)
   IF (.NOT. ALLOCATED(DstMiscData%MassM)) THEN 
-    ALLOCATE(DstMiscData%MassM(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    ALLOCATE(DstMiscData%MassM(i1_l:i1_u,i2_l:i2_u,i3_l:i3_u,i4_l:i4_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
       CALL SetErrStat(ErrID_Fatal, 'Error allocating DstMiscData%MassM.', ErrStat, ErrMsg,RoutineName)
       RETURN
@@ -5261,11 +5470,31 @@ IF (ALLOCATED(SrcMiscData%MassM)) THEN
   END IF
     DstMiscData%MassM = SrcMiscData%MassM
 ENDIF
+IF (ALLOCATED(SrcMiscData%DampG)) THEN
+  i1_l = LBOUND(SrcMiscData%DampG,1)
+  i1_u = UBOUND(SrcMiscData%DampG,1)
+  i2_l = LBOUND(SrcMiscData%DampG,2)
+  i2_u = UBOUND(SrcMiscData%DampG,2)
+  i3_l = LBOUND(SrcMiscData%DampG,3)
+  i3_u = UBOUND(SrcMiscData%DampG,3)
+  i4_l = LBOUND(SrcMiscData%DampG,4)
+  i4_u = UBOUND(SrcMiscData%DampG,4)
+  IF (.NOT. ALLOCATED(DstMiscData%DampG)) THEN 
+    ALLOCATE(DstMiscData%DampG(i1_l:i1_u,i2_l:i2_u,i3_l:i3_u,i4_l:i4_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+      CALL SetErrStat(ErrID_Fatal, 'Error allocating DstMiscData%DampG.', ErrStat, ErrMsg,RoutineName)
+      RETURN
+    END IF
+  END IF
+    DstMiscData%DampG = SrcMiscData%DampG
+ENDIF
 IF (ALLOCATED(SrcMiscData%RHS)) THEN
   i1_l = LBOUND(SrcMiscData%RHS,1)
   i1_u = UBOUND(SrcMiscData%RHS,1)
+  i2_l = LBOUND(SrcMiscData%RHS,2)
+  i2_u = UBOUND(SrcMiscData%RHS,2)
   IF (.NOT. ALLOCATED(DstMiscData%RHS)) THEN 
-    ALLOCATE(DstMiscData%RHS(i1_l:i1_u),STAT=ErrStat2)
+    ALLOCATE(DstMiscData%RHS(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
       CALL SetErrStat(ErrID_Fatal, 'Error allocating DstMiscData%RHS.', ErrStat, ErrMsg,RoutineName)
       RETURN
@@ -5276,8 +5505,10 @@ ENDIF
 IF (ALLOCATED(SrcMiscData%RHS_LU)) THEN
   i1_l = LBOUND(SrcMiscData%RHS_LU,1)
   i1_u = UBOUND(SrcMiscData%RHS_LU,1)
+  i2_l = LBOUND(SrcMiscData%RHS_LU,2)
+  i2_u = UBOUND(SrcMiscData%RHS_LU,2)
   IF (.NOT. ALLOCATED(DstMiscData%RHS_LU)) THEN 
-    ALLOCATE(DstMiscData%RHS_LU(i1_l:i1_u),STAT=ErrStat2)
+    ALLOCATE(DstMiscData%RHS_LU(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
       CALL SetErrStat(ErrID_Fatal, 'Error allocating DstMiscData%RHS_LU.', ErrStat, ErrMsg,RoutineName)
       RETURN
@@ -5288,8 +5519,10 @@ ENDIF
 IF (ALLOCATED(SrcMiscData%F_PointLoad)) THEN
   i1_l = LBOUND(SrcMiscData%F_PointLoad,1)
   i1_u = UBOUND(SrcMiscData%F_PointLoad,1)
+  i2_l = LBOUND(SrcMiscData%F_PointLoad,2)
+  i2_u = UBOUND(SrcMiscData%F_PointLoad,2)
   IF (.NOT. ALLOCATED(DstMiscData%F_PointLoad)) THEN 
-    ALLOCATE(DstMiscData%F_PointLoad(i1_l:i1_u),STAT=ErrStat2)
+    ALLOCATE(DstMiscData%F_PointLoad(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
       CALL SetErrStat(ErrID_Fatal, 'Error allocating DstMiscData%F_PointLoad.', ErrStat, ErrMsg,RoutineName)
       RETURN
@@ -5297,17 +5530,125 @@ IF (ALLOCATED(SrcMiscData%F_PointLoad)) THEN
   END IF
     DstMiscData%F_PointLoad = SrcMiscData%F_PointLoad
 ENDIF
-IF (ALLOCATED(SrcMiscData%indx)) THEN
-  i1_l = LBOUND(SrcMiscData%indx,1)
-  i1_u = UBOUND(SrcMiscData%indx,1)
-  IF (.NOT. ALLOCATED(DstMiscData%indx)) THEN 
-    ALLOCATE(DstMiscData%indx(i1_l:i1_u),STAT=ErrStat2)
+IF (ALLOCATED(SrcMiscData%temp_Force)) THEN
+  i1_l = LBOUND(SrcMiscData%temp_Force,1)
+  i1_u = UBOUND(SrcMiscData%temp_Force,1)
+  i2_l = LBOUND(SrcMiscData%temp_Force,2)
+  i2_u = UBOUND(SrcMiscData%temp_Force,2)
+  IF (.NOT. ALLOCATED(DstMiscData%temp_Force)) THEN 
+    ALLOCATE(DstMiscData%temp_Force(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
-      CALL SetErrStat(ErrID_Fatal, 'Error allocating DstMiscData%indx.', ErrStat, ErrMsg,RoutineName)
+      CALL SetErrStat(ErrID_Fatal, 'Error allocating DstMiscData%temp_Force.', ErrStat, ErrMsg,RoutineName)
       RETURN
     END IF
   END IF
-    DstMiscData%indx = SrcMiscData%indx
+    DstMiscData%temp_Force = SrcMiscData%temp_Force
+ENDIF
+IF (ALLOCATED(SrcMiscData%Solution)) THEN
+  i1_l = LBOUND(SrcMiscData%Solution,1)
+  i1_u = UBOUND(SrcMiscData%Solution,1)
+  i2_l = LBOUND(SrcMiscData%Solution,2)
+  i2_u = UBOUND(SrcMiscData%Solution,2)
+  IF (.NOT. ALLOCATED(DstMiscData%Solution)) THEN 
+    ALLOCATE(DstMiscData%Solution(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+      CALL SetErrStat(ErrID_Fatal, 'Error allocating DstMiscData%Solution.', ErrStat, ErrMsg,RoutineName)
+      RETURN
+    END IF
+  END IF
+    DstMiscData%Solution = SrcMiscData%Solution
+ENDIF
+IF (ALLOCATED(SrcMiscData%LP_StifK)) THEN
+  i1_l = LBOUND(SrcMiscData%LP_StifK,1)
+  i1_u = UBOUND(SrcMiscData%LP_StifK,1)
+  i2_l = LBOUND(SrcMiscData%LP_StifK,2)
+  i2_u = UBOUND(SrcMiscData%LP_StifK,2)
+  IF (.NOT. ALLOCATED(DstMiscData%LP_StifK)) THEN 
+    ALLOCATE(DstMiscData%LP_StifK(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+      CALL SetErrStat(ErrID_Fatal, 'Error allocating DstMiscData%LP_StifK.', ErrStat, ErrMsg,RoutineName)
+      RETURN
+    END IF
+  END IF
+    DstMiscData%LP_StifK = SrcMiscData%LP_StifK
+ENDIF
+IF (ALLOCATED(SrcMiscData%LP_MassM)) THEN
+  i1_l = LBOUND(SrcMiscData%LP_MassM,1)
+  i1_u = UBOUND(SrcMiscData%LP_MassM,1)
+  i2_l = LBOUND(SrcMiscData%LP_MassM,2)
+  i2_u = UBOUND(SrcMiscData%LP_MassM,2)
+  IF (.NOT. ALLOCATED(DstMiscData%LP_MassM)) THEN 
+    ALLOCATE(DstMiscData%LP_MassM(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+      CALL SetErrStat(ErrID_Fatal, 'Error allocating DstMiscData%LP_MassM.', ErrStat, ErrMsg,RoutineName)
+      RETURN
+    END IF
+  END IF
+    DstMiscData%LP_MassM = SrcMiscData%LP_MassM
+ENDIF
+IF (ALLOCATED(SrcMiscData%LP_DampG)) THEN
+  i1_l = LBOUND(SrcMiscData%LP_DampG,1)
+  i1_u = UBOUND(SrcMiscData%LP_DampG,1)
+  i2_l = LBOUND(SrcMiscData%LP_DampG,2)
+  i2_u = UBOUND(SrcMiscData%LP_DampG,2)
+  IF (.NOT. ALLOCATED(DstMiscData%LP_DampG)) THEN 
+    ALLOCATE(DstMiscData%LP_DampG(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+      CALL SetErrStat(ErrID_Fatal, 'Error allocating DstMiscData%LP_DampG.', ErrStat, ErrMsg,RoutineName)
+      RETURN
+    END IF
+  END IF
+    DstMiscData%LP_DampG = SrcMiscData%LP_DampG
+ENDIF
+IF (ALLOCATED(SrcMiscData%LP_RHS)) THEN
+  i1_l = LBOUND(SrcMiscData%LP_RHS,1)
+  i1_u = UBOUND(SrcMiscData%LP_RHS,1)
+  IF (.NOT. ALLOCATED(DstMiscData%LP_RHS)) THEN 
+    ALLOCATE(DstMiscData%LP_RHS(i1_l:i1_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+      CALL SetErrStat(ErrID_Fatal, 'Error allocating DstMiscData%LP_RHS.', ErrStat, ErrMsg,RoutineName)
+      RETURN
+    END IF
+  END IF
+    DstMiscData%LP_RHS = SrcMiscData%LP_RHS
+ENDIF
+IF (ALLOCATED(SrcMiscData%LP_StifK_LU)) THEN
+  i1_l = LBOUND(SrcMiscData%LP_StifK_LU,1)
+  i1_u = UBOUND(SrcMiscData%LP_StifK_LU,1)
+  i2_l = LBOUND(SrcMiscData%LP_StifK_LU,2)
+  i2_u = UBOUND(SrcMiscData%LP_StifK_LU,2)
+  IF (.NOT. ALLOCATED(DstMiscData%LP_StifK_LU)) THEN 
+    ALLOCATE(DstMiscData%LP_StifK_LU(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+      CALL SetErrStat(ErrID_Fatal, 'Error allocating DstMiscData%LP_StifK_LU.', ErrStat, ErrMsg,RoutineName)
+      RETURN
+    END IF
+  END IF
+    DstMiscData%LP_StifK_LU = SrcMiscData%LP_StifK_LU
+ENDIF
+IF (ALLOCATED(SrcMiscData%LP_RHS_LU)) THEN
+  i1_l = LBOUND(SrcMiscData%LP_RHS_LU,1)
+  i1_u = UBOUND(SrcMiscData%LP_RHS_LU,1)
+  IF (.NOT. ALLOCATED(DstMiscData%LP_RHS_LU)) THEN 
+    ALLOCATE(DstMiscData%LP_RHS_LU(i1_l:i1_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+      CALL SetErrStat(ErrID_Fatal, 'Error allocating DstMiscData%LP_RHS_LU.', ErrStat, ErrMsg,RoutineName)
+      RETURN
+    END IF
+  END IF
+    DstMiscData%LP_RHS_LU = SrcMiscData%LP_RHS_LU
+ENDIF
+IF (ALLOCATED(SrcMiscData%LP_indx)) THEN
+  i1_l = LBOUND(SrcMiscData%LP_indx,1)
+  i1_u = UBOUND(SrcMiscData%LP_indx,1)
+  IF (.NOT. ALLOCATED(DstMiscData%LP_indx)) THEN 
+    ALLOCATE(DstMiscData%LP_indx(i1_l:i1_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+      CALL SetErrStat(ErrID_Fatal, 'Error allocating DstMiscData%LP_indx.', ErrStat, ErrMsg,RoutineName)
+      RETURN
+    END IF
+  END IF
+    DstMiscData%LP_indx = SrcMiscData%LP_indx
 ENDIF
       CALL BD_CopyInput( SrcMiscData%u, DstMiscData%u, CtrlCode, ErrStat2, ErrMsg2 )
          CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg,RoutineName)
@@ -5342,6 +5683,12 @@ ENDIF
 IF (ALLOCATED(MiscData%Naaa)) THEN
   DEALLOCATE(MiscData%Naaa)
 ENDIF
+IF (ALLOCATED(MiscData%temp_Naaa)) THEN
+  DEALLOCATE(MiscData%temp_Naaa)
+ENDIF
+IF (ALLOCATED(MiscData%temp_Nvvv)) THEN
+  DEALLOCATE(MiscData%temp_Nvvv)
+ENDIF
 IF (ALLOCATED(MiscData%elf)) THEN
   DEALLOCATE(MiscData%elf)
 ENDIF
@@ -5363,14 +5710,17 @@ ENDIF
 IF (ALLOCATED(MiscData%DistrLoad_GL)) THEN
   DEALLOCATE(MiscData%DistrLoad_GL)
 ENDIF
-IF (ALLOCATED(MiscData%StifK)) THEN
-  DEALLOCATE(MiscData%StifK)
-ENDIF
 IF (ALLOCATED(MiscData%StifK_LU)) THEN
   DEALLOCATE(MiscData%StifK_LU)
 ENDIF
+IF (ALLOCATED(MiscData%StifK)) THEN
+  DEALLOCATE(MiscData%StifK)
+ENDIF
 IF (ALLOCATED(MiscData%MassM)) THEN
   DEALLOCATE(MiscData%MassM)
+ENDIF
+IF (ALLOCATED(MiscData%DampG)) THEN
+  DEALLOCATE(MiscData%DampG)
 ENDIF
 IF (ALLOCATED(MiscData%RHS)) THEN
   DEALLOCATE(MiscData%RHS)
@@ -5381,8 +5731,32 @@ ENDIF
 IF (ALLOCATED(MiscData%F_PointLoad)) THEN
   DEALLOCATE(MiscData%F_PointLoad)
 ENDIF
-IF (ALLOCATED(MiscData%indx)) THEN
-  DEALLOCATE(MiscData%indx)
+IF (ALLOCATED(MiscData%temp_Force)) THEN
+  DEALLOCATE(MiscData%temp_Force)
+ENDIF
+IF (ALLOCATED(MiscData%Solution)) THEN
+  DEALLOCATE(MiscData%Solution)
+ENDIF
+IF (ALLOCATED(MiscData%LP_StifK)) THEN
+  DEALLOCATE(MiscData%LP_StifK)
+ENDIF
+IF (ALLOCATED(MiscData%LP_MassM)) THEN
+  DEALLOCATE(MiscData%LP_MassM)
+ENDIF
+IF (ALLOCATED(MiscData%LP_DampG)) THEN
+  DEALLOCATE(MiscData%LP_DampG)
+ENDIF
+IF (ALLOCATED(MiscData%LP_RHS)) THEN
+  DEALLOCATE(MiscData%LP_RHS)
+ENDIF
+IF (ALLOCATED(MiscData%LP_StifK_LU)) THEN
+  DEALLOCATE(MiscData%LP_StifK_LU)
+ENDIF
+IF (ALLOCATED(MiscData%LP_RHS_LU)) THEN
+  DEALLOCATE(MiscData%LP_RHS_LU)
+ENDIF
+IF (ALLOCATED(MiscData%LP_indx)) THEN
+  DEALLOCATE(MiscData%LP_indx)
 ENDIF
   CALL BD_DestroyInput( MiscData%u, ErrStat, ErrMsg )
   CALL BD_DestroyInput( MiscData%u2, ErrStat, ErrMsg )
@@ -5495,42 +5869,52 @@ ENDIF
       Int_BufSz  = Int_BufSz  + 1  ! Un_Sum
   Int_BufSz   = Int_BufSz   + 1     ! Nuuu allocated yes/no
   IF ( ALLOCATED(InData%Nuuu) ) THEN
-    Int_BufSz   = Int_BufSz   + 2*1  ! Nuuu upper/lower bounds for each dimension
+    Int_BufSz   = Int_BufSz   + 2*2  ! Nuuu upper/lower bounds for each dimension
       Db_BufSz   = Db_BufSz   + SIZE(InData%Nuuu)  ! Nuuu
   END IF
   Int_BufSz   = Int_BufSz   + 1     ! Nrrr allocated yes/no
   IF ( ALLOCATED(InData%Nrrr) ) THEN
-    Int_BufSz   = Int_BufSz   + 2*1  ! Nrrr upper/lower bounds for each dimension
+    Int_BufSz   = Int_BufSz   + 2*2  ! Nrrr upper/lower bounds for each dimension
       Db_BufSz   = Db_BufSz   + SIZE(InData%Nrrr)  ! Nrrr
   END IF
   Int_BufSz   = Int_BufSz   + 1     ! Nvvv allocated yes/no
   IF ( ALLOCATED(InData%Nvvv) ) THEN
-    Int_BufSz   = Int_BufSz   + 2*1  ! Nvvv upper/lower bounds for each dimension
+    Int_BufSz   = Int_BufSz   + 2*2  ! Nvvv upper/lower bounds for each dimension
       Db_BufSz   = Db_BufSz   + SIZE(InData%Nvvv)  ! Nvvv
   END IF
   Int_BufSz   = Int_BufSz   + 1     ! Naaa allocated yes/no
   IF ( ALLOCATED(InData%Naaa) ) THEN
-    Int_BufSz   = Int_BufSz   + 2*1  ! Naaa upper/lower bounds for each dimension
+    Int_BufSz   = Int_BufSz   + 2*2  ! Naaa upper/lower bounds for each dimension
       Db_BufSz   = Db_BufSz   + SIZE(InData%Naaa)  ! Naaa
+  END IF
+  Int_BufSz   = Int_BufSz   + 1     ! temp_Naaa allocated yes/no
+  IF ( ALLOCATED(InData%temp_Naaa) ) THEN
+    Int_BufSz   = Int_BufSz   + 2*2  ! temp_Naaa upper/lower bounds for each dimension
+      Db_BufSz   = Db_BufSz   + SIZE(InData%temp_Naaa)  ! temp_Naaa
+  END IF
+  Int_BufSz   = Int_BufSz   + 1     ! temp_Nvvv allocated yes/no
+  IF ( ALLOCATED(InData%temp_Nvvv) ) THEN
+    Int_BufSz   = Int_BufSz   + 2*2  ! temp_Nvvv upper/lower bounds for each dimension
+      Db_BufSz   = Db_BufSz   + SIZE(InData%temp_Nvvv)  ! temp_Nvvv
   END IF
   Int_BufSz   = Int_BufSz   + 1     ! elf allocated yes/no
   IF ( ALLOCATED(InData%elf) ) THEN
-    Int_BufSz   = Int_BufSz   + 2*1  ! elf upper/lower bounds for each dimension
+    Int_BufSz   = Int_BufSz   + 2*2  ! elf upper/lower bounds for each dimension
       Db_BufSz   = Db_BufSz   + SIZE(InData%elf)  ! elf
   END IF
   Int_BufSz   = Int_BufSz   + 1     ! elk allocated yes/no
   IF ( ALLOCATED(InData%elk) ) THEN
-    Int_BufSz   = Int_BufSz   + 2*2  ! elk upper/lower bounds for each dimension
+    Int_BufSz   = Int_BufSz   + 2*4  ! elk upper/lower bounds for each dimension
       Db_BufSz   = Db_BufSz   + SIZE(InData%elk)  ! elk
   END IF
   Int_BufSz   = Int_BufSz   + 1     ! elg allocated yes/no
   IF ( ALLOCATED(InData%elg) ) THEN
-    Int_BufSz   = Int_BufSz   + 2*2  ! elg upper/lower bounds for each dimension
+    Int_BufSz   = Int_BufSz   + 2*4  ! elg upper/lower bounds for each dimension
       Db_BufSz   = Db_BufSz   + SIZE(InData%elg)  ! elg
   END IF
   Int_BufSz   = Int_BufSz   + 1     ! elm allocated yes/no
   IF ( ALLOCATED(InData%elm) ) THEN
-    Int_BufSz   = Int_BufSz   + 2*2  ! elm upper/lower bounds for each dimension
+    Int_BufSz   = Int_BufSz   + 2*4  ! elm upper/lower bounds for each dimension
       Db_BufSz   = Db_BufSz   + SIZE(InData%elm)  ! elm
   END IF
   Int_BufSz   = Int_BufSz   + 1     ! EStif0_GL allocated yes/no
@@ -5548,40 +5932,85 @@ ENDIF
     Int_BufSz   = Int_BufSz   + 2*2  ! DistrLoad_GL upper/lower bounds for each dimension
       Db_BufSz   = Db_BufSz   + SIZE(InData%DistrLoad_GL)  ! DistrLoad_GL
   END IF
-  Int_BufSz   = Int_BufSz   + 1     ! StifK allocated yes/no
-  IF ( ALLOCATED(InData%StifK) ) THEN
-    Int_BufSz   = Int_BufSz   + 2*2  ! StifK upper/lower bounds for each dimension
-      Db_BufSz   = Db_BufSz   + SIZE(InData%StifK)  ! StifK
-  END IF
   Int_BufSz   = Int_BufSz   + 1     ! StifK_LU allocated yes/no
   IF ( ALLOCATED(InData%StifK_LU) ) THEN
-    Int_BufSz   = Int_BufSz   + 2*2  ! StifK_LU upper/lower bounds for each dimension
+    Int_BufSz   = Int_BufSz   + 2*4  ! StifK_LU upper/lower bounds for each dimension
       Db_BufSz   = Db_BufSz   + SIZE(InData%StifK_LU)  ! StifK_LU
+  END IF
+  Int_BufSz   = Int_BufSz   + 1     ! StifK allocated yes/no
+  IF ( ALLOCATED(InData%StifK) ) THEN
+    Int_BufSz   = Int_BufSz   + 2*4  ! StifK upper/lower bounds for each dimension
+      Db_BufSz   = Db_BufSz   + SIZE(InData%StifK)  ! StifK
   END IF
   Int_BufSz   = Int_BufSz   + 1     ! MassM allocated yes/no
   IF ( ALLOCATED(InData%MassM) ) THEN
-    Int_BufSz   = Int_BufSz   + 2*2  ! MassM upper/lower bounds for each dimension
+    Int_BufSz   = Int_BufSz   + 2*4  ! MassM upper/lower bounds for each dimension
       Db_BufSz   = Db_BufSz   + SIZE(InData%MassM)  ! MassM
+  END IF
+  Int_BufSz   = Int_BufSz   + 1     ! DampG allocated yes/no
+  IF ( ALLOCATED(InData%DampG) ) THEN
+    Int_BufSz   = Int_BufSz   + 2*4  ! DampG upper/lower bounds for each dimension
+      Db_BufSz   = Db_BufSz   + SIZE(InData%DampG)  ! DampG
   END IF
   Int_BufSz   = Int_BufSz   + 1     ! RHS allocated yes/no
   IF ( ALLOCATED(InData%RHS) ) THEN
-    Int_BufSz   = Int_BufSz   + 2*1  ! RHS upper/lower bounds for each dimension
+    Int_BufSz   = Int_BufSz   + 2*2  ! RHS upper/lower bounds for each dimension
       Db_BufSz   = Db_BufSz   + SIZE(InData%RHS)  ! RHS
   END IF
   Int_BufSz   = Int_BufSz   + 1     ! RHS_LU allocated yes/no
   IF ( ALLOCATED(InData%RHS_LU) ) THEN
-    Int_BufSz   = Int_BufSz   + 2*1  ! RHS_LU upper/lower bounds for each dimension
+    Int_BufSz   = Int_BufSz   + 2*2  ! RHS_LU upper/lower bounds for each dimension
       Db_BufSz   = Db_BufSz   + SIZE(InData%RHS_LU)  ! RHS_LU
   END IF
   Int_BufSz   = Int_BufSz   + 1     ! F_PointLoad allocated yes/no
   IF ( ALLOCATED(InData%F_PointLoad) ) THEN
-    Int_BufSz   = Int_BufSz   + 2*1  ! F_PointLoad upper/lower bounds for each dimension
+    Int_BufSz   = Int_BufSz   + 2*2  ! F_PointLoad upper/lower bounds for each dimension
       Db_BufSz   = Db_BufSz   + SIZE(InData%F_PointLoad)  ! F_PointLoad
   END IF
-  Int_BufSz   = Int_BufSz   + 1     ! indx allocated yes/no
-  IF ( ALLOCATED(InData%indx) ) THEN
-    Int_BufSz   = Int_BufSz   + 2*1  ! indx upper/lower bounds for each dimension
-      Int_BufSz  = Int_BufSz  + SIZE(InData%indx)  ! indx
+  Int_BufSz   = Int_BufSz   + 1     ! temp_Force allocated yes/no
+  IF ( ALLOCATED(InData%temp_Force) ) THEN
+    Int_BufSz   = Int_BufSz   + 2*2  ! temp_Force upper/lower bounds for each dimension
+      Db_BufSz   = Db_BufSz   + SIZE(InData%temp_Force)  ! temp_Force
+  END IF
+  Int_BufSz   = Int_BufSz   + 1     ! Solution allocated yes/no
+  IF ( ALLOCATED(InData%Solution) ) THEN
+    Int_BufSz   = Int_BufSz   + 2*2  ! Solution upper/lower bounds for each dimension
+      Db_BufSz   = Db_BufSz   + SIZE(InData%Solution)  ! Solution
+  END IF
+  Int_BufSz   = Int_BufSz   + 1     ! LP_StifK allocated yes/no
+  IF ( ALLOCATED(InData%LP_StifK) ) THEN
+    Int_BufSz   = Int_BufSz   + 2*2  ! LP_StifK upper/lower bounds for each dimension
+      Db_BufSz   = Db_BufSz   + SIZE(InData%LP_StifK)  ! LP_StifK
+  END IF
+  Int_BufSz   = Int_BufSz   + 1     ! LP_MassM allocated yes/no
+  IF ( ALLOCATED(InData%LP_MassM) ) THEN
+    Int_BufSz   = Int_BufSz   + 2*2  ! LP_MassM upper/lower bounds for each dimension
+      Db_BufSz   = Db_BufSz   + SIZE(InData%LP_MassM)  ! LP_MassM
+  END IF
+  Int_BufSz   = Int_BufSz   + 1     ! LP_DampG allocated yes/no
+  IF ( ALLOCATED(InData%LP_DampG) ) THEN
+    Int_BufSz   = Int_BufSz   + 2*2  ! LP_DampG upper/lower bounds for each dimension
+      Db_BufSz   = Db_BufSz   + SIZE(InData%LP_DampG)  ! LP_DampG
+  END IF
+  Int_BufSz   = Int_BufSz   + 1     ! LP_RHS allocated yes/no
+  IF ( ALLOCATED(InData%LP_RHS) ) THEN
+    Int_BufSz   = Int_BufSz   + 2*1  ! LP_RHS upper/lower bounds for each dimension
+      Db_BufSz   = Db_BufSz   + SIZE(InData%LP_RHS)  ! LP_RHS
+  END IF
+  Int_BufSz   = Int_BufSz   + 1     ! LP_StifK_LU allocated yes/no
+  IF ( ALLOCATED(InData%LP_StifK_LU) ) THEN
+    Int_BufSz   = Int_BufSz   + 2*2  ! LP_StifK_LU upper/lower bounds for each dimension
+      Db_BufSz   = Db_BufSz   + SIZE(InData%LP_StifK_LU)  ! LP_StifK_LU
+  END IF
+  Int_BufSz   = Int_BufSz   + 1     ! LP_RHS_LU allocated yes/no
+  IF ( ALLOCATED(InData%LP_RHS_LU) ) THEN
+    Int_BufSz   = Int_BufSz   + 2*1  ! LP_RHS_LU upper/lower bounds for each dimension
+      Db_BufSz   = Db_BufSz   + SIZE(InData%LP_RHS_LU)  ! LP_RHS_LU
+  END IF
+  Int_BufSz   = Int_BufSz   + 1     ! LP_indx allocated yes/no
+  IF ( ALLOCATED(InData%LP_indx) ) THEN
+    Int_BufSz   = Int_BufSz   + 2*1  ! LP_indx upper/lower bounds for each dimension
+      Int_BufSz  = Int_BufSz  + SIZE(InData%LP_indx)  ! LP_indx
   END IF
       Int_BufSz   = Int_BufSz + 3  ! u: size of buffers for each call to pack subtype
       CALL BD_PackInput( Re_Buf, Db_Buf, Int_Buf, InData%u, ErrStat2, ErrMsg2, .TRUE. ) ! u 
@@ -5767,6 +6196,9 @@ ENDIF
     IntKiBuf( Int_Xferred    ) = LBOUND(InData%Nuuu,1)
     IntKiBuf( Int_Xferred + 1) = UBOUND(InData%Nuuu,1)
     Int_Xferred = Int_Xferred + 2
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%Nuuu,2)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%Nuuu,2)
+    Int_Xferred = Int_Xferred + 2
 
       IF (SIZE(InData%Nuuu)>0) DbKiBuf ( Db_Xferred:Db_Xferred+(SIZE(InData%Nuuu))-1 ) = PACK(InData%Nuuu,.TRUE.)
       Db_Xferred   = Db_Xferred   + SIZE(InData%Nuuu)
@@ -5779,6 +6211,9 @@ ENDIF
     Int_Xferred = Int_Xferred + 1
     IntKiBuf( Int_Xferred    ) = LBOUND(InData%Nrrr,1)
     IntKiBuf( Int_Xferred + 1) = UBOUND(InData%Nrrr,1)
+    Int_Xferred = Int_Xferred + 2
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%Nrrr,2)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%Nrrr,2)
     Int_Xferred = Int_Xferred + 2
 
       IF (SIZE(InData%Nrrr)>0) DbKiBuf ( Db_Xferred:Db_Xferred+(SIZE(InData%Nrrr))-1 ) = PACK(InData%Nrrr,.TRUE.)
@@ -5793,6 +6228,9 @@ ENDIF
     IntKiBuf( Int_Xferred    ) = LBOUND(InData%Nvvv,1)
     IntKiBuf( Int_Xferred + 1) = UBOUND(InData%Nvvv,1)
     Int_Xferred = Int_Xferred + 2
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%Nvvv,2)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%Nvvv,2)
+    Int_Xferred = Int_Xferred + 2
 
       IF (SIZE(InData%Nvvv)>0) DbKiBuf ( Db_Xferred:Db_Xferred+(SIZE(InData%Nvvv))-1 ) = PACK(InData%Nvvv,.TRUE.)
       Db_Xferred   = Db_Xferred   + SIZE(InData%Nvvv)
@@ -5806,9 +6244,44 @@ ENDIF
     IntKiBuf( Int_Xferred    ) = LBOUND(InData%Naaa,1)
     IntKiBuf( Int_Xferred + 1) = UBOUND(InData%Naaa,1)
     Int_Xferred = Int_Xferred + 2
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%Naaa,2)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%Naaa,2)
+    Int_Xferred = Int_Xferred + 2
 
       IF (SIZE(InData%Naaa)>0) DbKiBuf ( Db_Xferred:Db_Xferred+(SIZE(InData%Naaa))-1 ) = PACK(InData%Naaa,.TRUE.)
       Db_Xferred   = Db_Xferred   + SIZE(InData%Naaa)
+  END IF
+  IF ( .NOT. ALLOCATED(InData%temp_Naaa) ) THEN
+    IntKiBuf( Int_Xferred ) = 0
+    Int_Xferred = Int_Xferred + 1
+  ELSE
+    IntKiBuf( Int_Xferred ) = 1
+    Int_Xferred = Int_Xferred + 1
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%temp_Naaa,1)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%temp_Naaa,1)
+    Int_Xferred = Int_Xferred + 2
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%temp_Naaa,2)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%temp_Naaa,2)
+    Int_Xferred = Int_Xferred + 2
+
+      IF (SIZE(InData%temp_Naaa)>0) DbKiBuf ( Db_Xferred:Db_Xferred+(SIZE(InData%temp_Naaa))-1 ) = PACK(InData%temp_Naaa,.TRUE.)
+      Db_Xferred   = Db_Xferred   + SIZE(InData%temp_Naaa)
+  END IF
+  IF ( .NOT. ALLOCATED(InData%temp_Nvvv) ) THEN
+    IntKiBuf( Int_Xferred ) = 0
+    Int_Xferred = Int_Xferred + 1
+  ELSE
+    IntKiBuf( Int_Xferred ) = 1
+    Int_Xferred = Int_Xferred + 1
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%temp_Nvvv,1)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%temp_Nvvv,1)
+    Int_Xferred = Int_Xferred + 2
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%temp_Nvvv,2)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%temp_Nvvv,2)
+    Int_Xferred = Int_Xferred + 2
+
+      IF (SIZE(InData%temp_Nvvv)>0) DbKiBuf ( Db_Xferred:Db_Xferred+(SIZE(InData%temp_Nvvv))-1 ) = PACK(InData%temp_Nvvv,.TRUE.)
+      Db_Xferred   = Db_Xferred   + SIZE(InData%temp_Nvvv)
   END IF
   IF ( .NOT. ALLOCATED(InData%elf) ) THEN
     IntKiBuf( Int_Xferred ) = 0
@@ -5818,6 +6291,9 @@ ENDIF
     Int_Xferred = Int_Xferred + 1
     IntKiBuf( Int_Xferred    ) = LBOUND(InData%elf,1)
     IntKiBuf( Int_Xferred + 1) = UBOUND(InData%elf,1)
+    Int_Xferred = Int_Xferred + 2
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%elf,2)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%elf,2)
     Int_Xferred = Int_Xferred + 2
 
       IF (SIZE(InData%elf)>0) DbKiBuf ( Db_Xferred:Db_Xferred+(SIZE(InData%elf))-1 ) = PACK(InData%elf,.TRUE.)
@@ -5835,6 +6311,12 @@ ENDIF
     IntKiBuf( Int_Xferred    ) = LBOUND(InData%elk,2)
     IntKiBuf( Int_Xferred + 1) = UBOUND(InData%elk,2)
     Int_Xferred = Int_Xferred + 2
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%elk,3)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%elk,3)
+    Int_Xferred = Int_Xferred + 2
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%elk,4)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%elk,4)
+    Int_Xferred = Int_Xferred + 2
 
       IF (SIZE(InData%elk)>0) DbKiBuf ( Db_Xferred:Db_Xferred+(SIZE(InData%elk))-1 ) = PACK(InData%elk,.TRUE.)
       Db_Xferred   = Db_Xferred   + SIZE(InData%elk)
@@ -5851,6 +6333,12 @@ ENDIF
     IntKiBuf( Int_Xferred    ) = LBOUND(InData%elg,2)
     IntKiBuf( Int_Xferred + 1) = UBOUND(InData%elg,2)
     Int_Xferred = Int_Xferred + 2
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%elg,3)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%elg,3)
+    Int_Xferred = Int_Xferred + 2
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%elg,4)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%elg,4)
+    Int_Xferred = Int_Xferred + 2
 
       IF (SIZE(InData%elg)>0) DbKiBuf ( Db_Xferred:Db_Xferred+(SIZE(InData%elg))-1 ) = PACK(InData%elg,.TRUE.)
       Db_Xferred   = Db_Xferred   + SIZE(InData%elg)
@@ -5866,6 +6354,12 @@ ENDIF
     Int_Xferred = Int_Xferred + 2
     IntKiBuf( Int_Xferred    ) = LBOUND(InData%elm,2)
     IntKiBuf( Int_Xferred + 1) = UBOUND(InData%elm,2)
+    Int_Xferred = Int_Xferred + 2
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%elm,3)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%elm,3)
+    Int_Xferred = Int_Xferred + 2
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%elm,4)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%elm,4)
     Int_Xferred = Int_Xferred + 2
 
       IF (SIZE(InData%elm)>0) DbKiBuf ( Db_Xferred:Db_Xferred+(SIZE(InData%elm))-1 ) = PACK(InData%elm,.TRUE.)
@@ -5925,22 +6419,6 @@ ENDIF
       IF (SIZE(InData%DistrLoad_GL)>0) DbKiBuf ( Db_Xferred:Db_Xferred+(SIZE(InData%DistrLoad_GL))-1 ) = PACK(InData%DistrLoad_GL,.TRUE.)
       Db_Xferred   = Db_Xferred   + SIZE(InData%DistrLoad_GL)
   END IF
-  IF ( .NOT. ALLOCATED(InData%StifK) ) THEN
-    IntKiBuf( Int_Xferred ) = 0
-    Int_Xferred = Int_Xferred + 1
-  ELSE
-    IntKiBuf( Int_Xferred ) = 1
-    Int_Xferred = Int_Xferred + 1
-    IntKiBuf( Int_Xferred    ) = LBOUND(InData%StifK,1)
-    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%StifK,1)
-    Int_Xferred = Int_Xferred + 2
-    IntKiBuf( Int_Xferred    ) = LBOUND(InData%StifK,2)
-    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%StifK,2)
-    Int_Xferred = Int_Xferred + 2
-
-      IF (SIZE(InData%StifK)>0) DbKiBuf ( Db_Xferred:Db_Xferred+(SIZE(InData%StifK))-1 ) = PACK(InData%StifK,.TRUE.)
-      Db_Xferred   = Db_Xferred   + SIZE(InData%StifK)
-  END IF
   IF ( .NOT. ALLOCATED(InData%StifK_LU) ) THEN
     IntKiBuf( Int_Xferred ) = 0
     Int_Xferred = Int_Xferred + 1
@@ -5953,9 +6431,37 @@ ENDIF
     IntKiBuf( Int_Xferred    ) = LBOUND(InData%StifK_LU,2)
     IntKiBuf( Int_Xferred + 1) = UBOUND(InData%StifK_LU,2)
     Int_Xferred = Int_Xferred + 2
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%StifK_LU,3)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%StifK_LU,3)
+    Int_Xferred = Int_Xferred + 2
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%StifK_LU,4)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%StifK_LU,4)
+    Int_Xferred = Int_Xferred + 2
 
       IF (SIZE(InData%StifK_LU)>0) DbKiBuf ( Db_Xferred:Db_Xferred+(SIZE(InData%StifK_LU))-1 ) = PACK(InData%StifK_LU,.TRUE.)
       Db_Xferred   = Db_Xferred   + SIZE(InData%StifK_LU)
+  END IF
+  IF ( .NOT. ALLOCATED(InData%StifK) ) THEN
+    IntKiBuf( Int_Xferred ) = 0
+    Int_Xferred = Int_Xferred + 1
+  ELSE
+    IntKiBuf( Int_Xferred ) = 1
+    Int_Xferred = Int_Xferred + 1
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%StifK,1)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%StifK,1)
+    Int_Xferred = Int_Xferred + 2
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%StifK,2)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%StifK,2)
+    Int_Xferred = Int_Xferred + 2
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%StifK,3)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%StifK,3)
+    Int_Xferred = Int_Xferred + 2
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%StifK,4)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%StifK,4)
+    Int_Xferred = Int_Xferred + 2
+
+      IF (SIZE(InData%StifK)>0) DbKiBuf ( Db_Xferred:Db_Xferred+(SIZE(InData%StifK))-1 ) = PACK(InData%StifK,.TRUE.)
+      Db_Xferred   = Db_Xferred   + SIZE(InData%StifK)
   END IF
   IF ( .NOT. ALLOCATED(InData%MassM) ) THEN
     IntKiBuf( Int_Xferred ) = 0
@@ -5969,9 +6475,37 @@ ENDIF
     IntKiBuf( Int_Xferred    ) = LBOUND(InData%MassM,2)
     IntKiBuf( Int_Xferred + 1) = UBOUND(InData%MassM,2)
     Int_Xferred = Int_Xferred + 2
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%MassM,3)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%MassM,3)
+    Int_Xferred = Int_Xferred + 2
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%MassM,4)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%MassM,4)
+    Int_Xferred = Int_Xferred + 2
 
       IF (SIZE(InData%MassM)>0) DbKiBuf ( Db_Xferred:Db_Xferred+(SIZE(InData%MassM))-1 ) = PACK(InData%MassM,.TRUE.)
       Db_Xferred   = Db_Xferred   + SIZE(InData%MassM)
+  END IF
+  IF ( .NOT. ALLOCATED(InData%DampG) ) THEN
+    IntKiBuf( Int_Xferred ) = 0
+    Int_Xferred = Int_Xferred + 1
+  ELSE
+    IntKiBuf( Int_Xferred ) = 1
+    Int_Xferred = Int_Xferred + 1
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%DampG,1)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%DampG,1)
+    Int_Xferred = Int_Xferred + 2
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%DampG,2)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%DampG,2)
+    Int_Xferred = Int_Xferred + 2
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%DampG,3)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%DampG,3)
+    Int_Xferred = Int_Xferred + 2
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%DampG,4)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%DampG,4)
+    Int_Xferred = Int_Xferred + 2
+
+      IF (SIZE(InData%DampG)>0) DbKiBuf ( Db_Xferred:Db_Xferred+(SIZE(InData%DampG))-1 ) = PACK(InData%DampG,.TRUE.)
+      Db_Xferred   = Db_Xferred   + SIZE(InData%DampG)
   END IF
   IF ( .NOT. ALLOCATED(InData%RHS) ) THEN
     IntKiBuf( Int_Xferred ) = 0
@@ -5981,6 +6515,9 @@ ENDIF
     Int_Xferred = Int_Xferred + 1
     IntKiBuf( Int_Xferred    ) = LBOUND(InData%RHS,1)
     IntKiBuf( Int_Xferred + 1) = UBOUND(InData%RHS,1)
+    Int_Xferred = Int_Xferred + 2
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%RHS,2)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%RHS,2)
     Int_Xferred = Int_Xferred + 2
 
       IF (SIZE(InData%RHS)>0) DbKiBuf ( Db_Xferred:Db_Xferred+(SIZE(InData%RHS))-1 ) = PACK(InData%RHS,.TRUE.)
@@ -5995,6 +6532,9 @@ ENDIF
     IntKiBuf( Int_Xferred    ) = LBOUND(InData%RHS_LU,1)
     IntKiBuf( Int_Xferred + 1) = UBOUND(InData%RHS_LU,1)
     Int_Xferred = Int_Xferred + 2
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%RHS_LU,2)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%RHS_LU,2)
+    Int_Xferred = Int_Xferred + 2
 
       IF (SIZE(InData%RHS_LU)>0) DbKiBuf ( Db_Xferred:Db_Xferred+(SIZE(InData%RHS_LU))-1 ) = PACK(InData%RHS_LU,.TRUE.)
       Db_Xferred   = Db_Xferred   + SIZE(InData%RHS_LU)
@@ -6008,22 +6548,147 @@ ENDIF
     IntKiBuf( Int_Xferred    ) = LBOUND(InData%F_PointLoad,1)
     IntKiBuf( Int_Xferred + 1) = UBOUND(InData%F_PointLoad,1)
     Int_Xferred = Int_Xferred + 2
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%F_PointLoad,2)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%F_PointLoad,2)
+    Int_Xferred = Int_Xferred + 2
 
       IF (SIZE(InData%F_PointLoad)>0) DbKiBuf ( Db_Xferred:Db_Xferred+(SIZE(InData%F_PointLoad))-1 ) = PACK(InData%F_PointLoad,.TRUE.)
       Db_Xferred   = Db_Xferred   + SIZE(InData%F_PointLoad)
   END IF
-  IF ( .NOT. ALLOCATED(InData%indx) ) THEN
+  IF ( .NOT. ALLOCATED(InData%temp_Force) ) THEN
     IntKiBuf( Int_Xferred ) = 0
     Int_Xferred = Int_Xferred + 1
   ELSE
     IntKiBuf( Int_Xferred ) = 1
     Int_Xferred = Int_Xferred + 1
-    IntKiBuf( Int_Xferred    ) = LBOUND(InData%indx,1)
-    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%indx,1)
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%temp_Force,1)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%temp_Force,1)
+    Int_Xferred = Int_Xferred + 2
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%temp_Force,2)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%temp_Force,2)
     Int_Xferred = Int_Xferred + 2
 
-      IF (SIZE(InData%indx)>0) IntKiBuf ( Int_Xferred:Int_Xferred+(SIZE(InData%indx))-1 ) = PACK(InData%indx,.TRUE.)
-      Int_Xferred   = Int_Xferred   + SIZE(InData%indx)
+      IF (SIZE(InData%temp_Force)>0) DbKiBuf ( Db_Xferred:Db_Xferred+(SIZE(InData%temp_Force))-1 ) = PACK(InData%temp_Force,.TRUE.)
+      Db_Xferred   = Db_Xferred   + SIZE(InData%temp_Force)
+  END IF
+  IF ( .NOT. ALLOCATED(InData%Solution) ) THEN
+    IntKiBuf( Int_Xferred ) = 0
+    Int_Xferred = Int_Xferred + 1
+  ELSE
+    IntKiBuf( Int_Xferred ) = 1
+    Int_Xferred = Int_Xferred + 1
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%Solution,1)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%Solution,1)
+    Int_Xferred = Int_Xferred + 2
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%Solution,2)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%Solution,2)
+    Int_Xferred = Int_Xferred + 2
+
+      IF (SIZE(InData%Solution)>0) DbKiBuf ( Db_Xferred:Db_Xferred+(SIZE(InData%Solution))-1 ) = PACK(InData%Solution,.TRUE.)
+      Db_Xferred   = Db_Xferred   + SIZE(InData%Solution)
+  END IF
+  IF ( .NOT. ALLOCATED(InData%LP_StifK) ) THEN
+    IntKiBuf( Int_Xferred ) = 0
+    Int_Xferred = Int_Xferred + 1
+  ELSE
+    IntKiBuf( Int_Xferred ) = 1
+    Int_Xferred = Int_Xferred + 1
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%LP_StifK,1)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%LP_StifK,1)
+    Int_Xferred = Int_Xferred + 2
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%LP_StifK,2)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%LP_StifK,2)
+    Int_Xferred = Int_Xferred + 2
+
+      IF (SIZE(InData%LP_StifK)>0) DbKiBuf ( Db_Xferred:Db_Xferred+(SIZE(InData%LP_StifK))-1 ) = PACK(InData%LP_StifK,.TRUE.)
+      Db_Xferred   = Db_Xferred   + SIZE(InData%LP_StifK)
+  END IF
+  IF ( .NOT. ALLOCATED(InData%LP_MassM) ) THEN
+    IntKiBuf( Int_Xferred ) = 0
+    Int_Xferred = Int_Xferred + 1
+  ELSE
+    IntKiBuf( Int_Xferred ) = 1
+    Int_Xferred = Int_Xferred + 1
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%LP_MassM,1)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%LP_MassM,1)
+    Int_Xferred = Int_Xferred + 2
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%LP_MassM,2)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%LP_MassM,2)
+    Int_Xferred = Int_Xferred + 2
+
+      IF (SIZE(InData%LP_MassM)>0) DbKiBuf ( Db_Xferred:Db_Xferred+(SIZE(InData%LP_MassM))-1 ) = PACK(InData%LP_MassM,.TRUE.)
+      Db_Xferred   = Db_Xferred   + SIZE(InData%LP_MassM)
+  END IF
+  IF ( .NOT. ALLOCATED(InData%LP_DampG) ) THEN
+    IntKiBuf( Int_Xferred ) = 0
+    Int_Xferred = Int_Xferred + 1
+  ELSE
+    IntKiBuf( Int_Xferred ) = 1
+    Int_Xferred = Int_Xferred + 1
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%LP_DampG,1)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%LP_DampG,1)
+    Int_Xferred = Int_Xferred + 2
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%LP_DampG,2)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%LP_DampG,2)
+    Int_Xferred = Int_Xferred + 2
+
+      IF (SIZE(InData%LP_DampG)>0) DbKiBuf ( Db_Xferred:Db_Xferred+(SIZE(InData%LP_DampG))-1 ) = PACK(InData%LP_DampG,.TRUE.)
+      Db_Xferred   = Db_Xferred   + SIZE(InData%LP_DampG)
+  END IF
+  IF ( .NOT. ALLOCATED(InData%LP_RHS) ) THEN
+    IntKiBuf( Int_Xferred ) = 0
+    Int_Xferred = Int_Xferred + 1
+  ELSE
+    IntKiBuf( Int_Xferred ) = 1
+    Int_Xferred = Int_Xferred + 1
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%LP_RHS,1)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%LP_RHS,1)
+    Int_Xferred = Int_Xferred + 2
+
+      IF (SIZE(InData%LP_RHS)>0) DbKiBuf ( Db_Xferred:Db_Xferred+(SIZE(InData%LP_RHS))-1 ) = PACK(InData%LP_RHS,.TRUE.)
+      Db_Xferred   = Db_Xferred   + SIZE(InData%LP_RHS)
+  END IF
+  IF ( .NOT. ALLOCATED(InData%LP_StifK_LU) ) THEN
+    IntKiBuf( Int_Xferred ) = 0
+    Int_Xferred = Int_Xferred + 1
+  ELSE
+    IntKiBuf( Int_Xferred ) = 1
+    Int_Xferred = Int_Xferred + 1
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%LP_StifK_LU,1)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%LP_StifK_LU,1)
+    Int_Xferred = Int_Xferred + 2
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%LP_StifK_LU,2)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%LP_StifK_LU,2)
+    Int_Xferred = Int_Xferred + 2
+
+      IF (SIZE(InData%LP_StifK_LU)>0) DbKiBuf ( Db_Xferred:Db_Xferred+(SIZE(InData%LP_StifK_LU))-1 ) = PACK(InData%LP_StifK_LU,.TRUE.)
+      Db_Xferred   = Db_Xferred   + SIZE(InData%LP_StifK_LU)
+  END IF
+  IF ( .NOT. ALLOCATED(InData%LP_RHS_LU) ) THEN
+    IntKiBuf( Int_Xferred ) = 0
+    Int_Xferred = Int_Xferred + 1
+  ELSE
+    IntKiBuf( Int_Xferred ) = 1
+    Int_Xferred = Int_Xferred + 1
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%LP_RHS_LU,1)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%LP_RHS_LU,1)
+    Int_Xferred = Int_Xferred + 2
+
+      IF (SIZE(InData%LP_RHS_LU)>0) DbKiBuf ( Db_Xferred:Db_Xferred+(SIZE(InData%LP_RHS_LU))-1 ) = PACK(InData%LP_RHS_LU,.TRUE.)
+      Db_Xferred   = Db_Xferred   + SIZE(InData%LP_RHS_LU)
+  END IF
+  IF ( .NOT. ALLOCATED(InData%LP_indx) ) THEN
+    IntKiBuf( Int_Xferred ) = 0
+    Int_Xferred = Int_Xferred + 1
+  ELSE
+    IntKiBuf( Int_Xferred ) = 1
+    Int_Xferred = Int_Xferred + 1
+    IntKiBuf( Int_Xferred    ) = LBOUND(InData%LP_indx,1)
+    IntKiBuf( Int_Xferred + 1) = UBOUND(InData%LP_indx,1)
+    Int_Xferred = Int_Xferred + 2
+
+      IF (SIZE(InData%LP_indx)>0) IntKiBuf ( Int_Xferred:Int_Xferred+(SIZE(InData%LP_indx))-1 ) = PACK(InData%LP_indx,.TRUE.)
+      Int_Xferred   = Int_Xferred   + SIZE(InData%LP_indx)
   END IF
       CALL BD_PackInput( Re_Buf, Db_Buf, Int_Buf, InData%u, ErrStat2, ErrMsg2, OnlySize ) ! u 
         CALL SetErrStat(ErrStat2, ErrMsg2, ErrStat, ErrMsg, RoutineName)
@@ -6105,6 +6770,7 @@ ENDIF
   INTEGER(IntKi)                 :: i1, i1_l, i1_u  !  bounds (upper/lower) for an array dimension 1
   INTEGER(IntKi)                 :: i2, i2_l, i2_u  !  bounds (upper/lower) for an array dimension 2
   INTEGER(IntKi)                 :: i3, i3_l, i3_u  !  bounds (upper/lower) for an array dimension 3
+  INTEGER(IntKi)                 :: i4, i4_l, i4_u  !  bounds (upper/lower) for an array dimension 4
   INTEGER(IntKi)                 :: ErrStat2
   CHARACTER(ErrMsgLen)           :: ErrMsg2
   CHARACTER(*), PARAMETER        :: RoutineName = 'BD_UnPackMisc'
@@ -6287,21 +6953,24 @@ ENDIF
     i1_l = IntKiBuf( Int_Xferred    )
     i1_u = IntKiBuf( Int_Xferred + 1)
     Int_Xferred = Int_Xferred + 2
+    i2_l = IntKiBuf( Int_Xferred    )
+    i2_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
     IF (ALLOCATED(OutData%Nuuu)) DEALLOCATE(OutData%Nuuu)
-    ALLOCATE(OutData%Nuuu(i1_l:i1_u),STAT=ErrStat2)
+    ALLOCATE(OutData%Nuuu(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
        CALL SetErrStat(ErrID_Fatal, 'Error allocating OutData%Nuuu.', ErrStat, ErrMsg,RoutineName)
        RETURN
     END IF
-    ALLOCATE(mask1(i1_l:i1_u),STAT=ErrStat2)
+    ALLOCATE(mask2(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
-       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask1.', ErrStat, ErrMsg,RoutineName)
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask2.', ErrStat, ErrMsg,RoutineName)
        RETURN
     END IF
-    mask1 = .TRUE. 
-      IF (SIZE(OutData%Nuuu)>0) OutData%Nuuu = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%Nuuu))-1 ), mask1, 0.0_DbKi ), R8Ki)
+    mask2 = .TRUE. 
+      IF (SIZE(OutData%Nuuu)>0) OutData%Nuuu = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%Nuuu))-1 ), mask2, 0.0_DbKi ), R8Ki)
       Db_Xferred   = Db_Xferred   + SIZE(OutData%Nuuu)
-    DEALLOCATE(mask1)
+    DEALLOCATE(mask2)
   END IF
   IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! Nrrr not allocated
     Int_Xferred = Int_Xferred + 1
@@ -6310,21 +6979,24 @@ ENDIF
     i1_l = IntKiBuf( Int_Xferred    )
     i1_u = IntKiBuf( Int_Xferred + 1)
     Int_Xferred = Int_Xferred + 2
+    i2_l = IntKiBuf( Int_Xferred    )
+    i2_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
     IF (ALLOCATED(OutData%Nrrr)) DEALLOCATE(OutData%Nrrr)
-    ALLOCATE(OutData%Nrrr(i1_l:i1_u),STAT=ErrStat2)
+    ALLOCATE(OutData%Nrrr(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
        CALL SetErrStat(ErrID_Fatal, 'Error allocating OutData%Nrrr.', ErrStat, ErrMsg,RoutineName)
        RETURN
     END IF
-    ALLOCATE(mask1(i1_l:i1_u),STAT=ErrStat2)
+    ALLOCATE(mask2(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
-       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask1.', ErrStat, ErrMsg,RoutineName)
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask2.', ErrStat, ErrMsg,RoutineName)
        RETURN
     END IF
-    mask1 = .TRUE. 
-      IF (SIZE(OutData%Nrrr)>0) OutData%Nrrr = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%Nrrr))-1 ), mask1, 0.0_DbKi ), R8Ki)
+    mask2 = .TRUE. 
+      IF (SIZE(OutData%Nrrr)>0) OutData%Nrrr = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%Nrrr))-1 ), mask2, 0.0_DbKi ), R8Ki)
       Db_Xferred   = Db_Xferred   + SIZE(OutData%Nrrr)
-    DEALLOCATE(mask1)
+    DEALLOCATE(mask2)
   END IF
   IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! Nvvv not allocated
     Int_Xferred = Int_Xferred + 1
@@ -6333,21 +7005,24 @@ ENDIF
     i1_l = IntKiBuf( Int_Xferred    )
     i1_u = IntKiBuf( Int_Xferred + 1)
     Int_Xferred = Int_Xferred + 2
+    i2_l = IntKiBuf( Int_Xferred    )
+    i2_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
     IF (ALLOCATED(OutData%Nvvv)) DEALLOCATE(OutData%Nvvv)
-    ALLOCATE(OutData%Nvvv(i1_l:i1_u),STAT=ErrStat2)
+    ALLOCATE(OutData%Nvvv(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
        CALL SetErrStat(ErrID_Fatal, 'Error allocating OutData%Nvvv.', ErrStat, ErrMsg,RoutineName)
        RETURN
     END IF
-    ALLOCATE(mask1(i1_l:i1_u),STAT=ErrStat2)
+    ALLOCATE(mask2(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
-       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask1.', ErrStat, ErrMsg,RoutineName)
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask2.', ErrStat, ErrMsg,RoutineName)
        RETURN
     END IF
-    mask1 = .TRUE. 
-      IF (SIZE(OutData%Nvvv)>0) OutData%Nvvv = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%Nvvv))-1 ), mask1, 0.0_DbKi ), R8Ki)
+    mask2 = .TRUE. 
+      IF (SIZE(OutData%Nvvv)>0) OutData%Nvvv = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%Nvvv))-1 ), mask2, 0.0_DbKi ), R8Ki)
       Db_Xferred   = Db_Xferred   + SIZE(OutData%Nvvv)
-    DEALLOCATE(mask1)
+    DEALLOCATE(mask2)
   END IF
   IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! Naaa not allocated
     Int_Xferred = Int_Xferred + 1
@@ -6356,21 +7031,76 @@ ENDIF
     i1_l = IntKiBuf( Int_Xferred    )
     i1_u = IntKiBuf( Int_Xferred + 1)
     Int_Xferred = Int_Xferred + 2
+    i2_l = IntKiBuf( Int_Xferred    )
+    i2_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
     IF (ALLOCATED(OutData%Naaa)) DEALLOCATE(OutData%Naaa)
-    ALLOCATE(OutData%Naaa(i1_l:i1_u),STAT=ErrStat2)
+    ALLOCATE(OutData%Naaa(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
        CALL SetErrStat(ErrID_Fatal, 'Error allocating OutData%Naaa.', ErrStat, ErrMsg,RoutineName)
        RETURN
     END IF
-    ALLOCATE(mask1(i1_l:i1_u),STAT=ErrStat2)
+    ALLOCATE(mask2(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
-       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask1.', ErrStat, ErrMsg,RoutineName)
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask2.', ErrStat, ErrMsg,RoutineName)
        RETURN
     END IF
-    mask1 = .TRUE. 
-      IF (SIZE(OutData%Naaa)>0) OutData%Naaa = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%Naaa))-1 ), mask1, 0.0_DbKi ), R8Ki)
+    mask2 = .TRUE. 
+      IF (SIZE(OutData%Naaa)>0) OutData%Naaa = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%Naaa))-1 ), mask2, 0.0_DbKi ), R8Ki)
       Db_Xferred   = Db_Xferred   + SIZE(OutData%Naaa)
-    DEALLOCATE(mask1)
+    DEALLOCATE(mask2)
+  END IF
+  IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! temp_Naaa not allocated
+    Int_Xferred = Int_Xferred + 1
+  ELSE
+    Int_Xferred = Int_Xferred + 1
+    i1_l = IntKiBuf( Int_Xferred    )
+    i1_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
+    i2_l = IntKiBuf( Int_Xferred    )
+    i2_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
+    IF (ALLOCATED(OutData%temp_Naaa)) DEALLOCATE(OutData%temp_Naaa)
+    ALLOCATE(OutData%temp_Naaa(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating OutData%temp_Naaa.', ErrStat, ErrMsg,RoutineName)
+       RETURN
+    END IF
+    ALLOCATE(mask2(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask2.', ErrStat, ErrMsg,RoutineName)
+       RETURN
+    END IF
+    mask2 = .TRUE. 
+      IF (SIZE(OutData%temp_Naaa)>0) OutData%temp_Naaa = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%temp_Naaa))-1 ), mask2, 0.0_DbKi ), R8Ki)
+      Db_Xferred   = Db_Xferred   + SIZE(OutData%temp_Naaa)
+    DEALLOCATE(mask2)
+  END IF
+  IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! temp_Nvvv not allocated
+    Int_Xferred = Int_Xferred + 1
+  ELSE
+    Int_Xferred = Int_Xferred + 1
+    i1_l = IntKiBuf( Int_Xferred    )
+    i1_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
+    i2_l = IntKiBuf( Int_Xferred    )
+    i2_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
+    IF (ALLOCATED(OutData%temp_Nvvv)) DEALLOCATE(OutData%temp_Nvvv)
+    ALLOCATE(OutData%temp_Nvvv(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating OutData%temp_Nvvv.', ErrStat, ErrMsg,RoutineName)
+       RETURN
+    END IF
+    ALLOCATE(mask2(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask2.', ErrStat, ErrMsg,RoutineName)
+       RETURN
+    END IF
+    mask2 = .TRUE. 
+      IF (SIZE(OutData%temp_Nvvv)>0) OutData%temp_Nvvv = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%temp_Nvvv))-1 ), mask2, 0.0_DbKi ), R8Ki)
+      Db_Xferred   = Db_Xferred   + SIZE(OutData%temp_Nvvv)
+    DEALLOCATE(mask2)
   END IF
   IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! elf not allocated
     Int_Xferred = Int_Xferred + 1
@@ -6379,21 +7109,24 @@ ENDIF
     i1_l = IntKiBuf( Int_Xferred    )
     i1_u = IntKiBuf( Int_Xferred + 1)
     Int_Xferred = Int_Xferred + 2
+    i2_l = IntKiBuf( Int_Xferred    )
+    i2_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
     IF (ALLOCATED(OutData%elf)) DEALLOCATE(OutData%elf)
-    ALLOCATE(OutData%elf(i1_l:i1_u),STAT=ErrStat2)
+    ALLOCATE(OutData%elf(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
        CALL SetErrStat(ErrID_Fatal, 'Error allocating OutData%elf.', ErrStat, ErrMsg,RoutineName)
        RETURN
     END IF
-    ALLOCATE(mask1(i1_l:i1_u),STAT=ErrStat2)
+    ALLOCATE(mask2(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
-       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask1.', ErrStat, ErrMsg,RoutineName)
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask2.', ErrStat, ErrMsg,RoutineName)
        RETURN
     END IF
-    mask1 = .TRUE. 
-      IF (SIZE(OutData%elf)>0) OutData%elf = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%elf))-1 ), mask1, 0.0_DbKi ), R8Ki)
+    mask2 = .TRUE. 
+      IF (SIZE(OutData%elf)>0) OutData%elf = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%elf))-1 ), mask2, 0.0_DbKi ), R8Ki)
       Db_Xferred   = Db_Xferred   + SIZE(OutData%elf)
-    DEALLOCATE(mask1)
+    DEALLOCATE(mask2)
   END IF
   IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! elk not allocated
     Int_Xferred = Int_Xferred + 1
@@ -6405,21 +7138,27 @@ ENDIF
     i2_l = IntKiBuf( Int_Xferred    )
     i2_u = IntKiBuf( Int_Xferred + 1)
     Int_Xferred = Int_Xferred + 2
+    i3_l = IntKiBuf( Int_Xferred    )
+    i3_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
+    i4_l = IntKiBuf( Int_Xferred    )
+    i4_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
     IF (ALLOCATED(OutData%elk)) DEALLOCATE(OutData%elk)
-    ALLOCATE(OutData%elk(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    ALLOCATE(OutData%elk(i1_l:i1_u,i2_l:i2_u,i3_l:i3_u,i4_l:i4_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
        CALL SetErrStat(ErrID_Fatal, 'Error allocating OutData%elk.', ErrStat, ErrMsg,RoutineName)
        RETURN
     END IF
-    ALLOCATE(mask2(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    ALLOCATE(mask4(i1_l:i1_u,i2_l:i2_u,i3_l:i3_u,i4_l:i4_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
-       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask2.', ErrStat, ErrMsg,RoutineName)
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask4.', ErrStat, ErrMsg,RoutineName)
        RETURN
     END IF
-    mask2 = .TRUE. 
-      IF (SIZE(OutData%elk)>0) OutData%elk = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%elk))-1 ), mask2, 0.0_DbKi ), R8Ki)
+    mask4 = .TRUE. 
+      IF (SIZE(OutData%elk)>0) OutData%elk = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%elk))-1 ), mask4, 0.0_DbKi ), R8Ki)
       Db_Xferred   = Db_Xferred   + SIZE(OutData%elk)
-    DEALLOCATE(mask2)
+    DEALLOCATE(mask4)
   END IF
   IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! elg not allocated
     Int_Xferred = Int_Xferred + 1
@@ -6431,21 +7170,27 @@ ENDIF
     i2_l = IntKiBuf( Int_Xferred    )
     i2_u = IntKiBuf( Int_Xferred + 1)
     Int_Xferred = Int_Xferred + 2
+    i3_l = IntKiBuf( Int_Xferred    )
+    i3_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
+    i4_l = IntKiBuf( Int_Xferred    )
+    i4_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
     IF (ALLOCATED(OutData%elg)) DEALLOCATE(OutData%elg)
-    ALLOCATE(OutData%elg(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    ALLOCATE(OutData%elg(i1_l:i1_u,i2_l:i2_u,i3_l:i3_u,i4_l:i4_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
        CALL SetErrStat(ErrID_Fatal, 'Error allocating OutData%elg.', ErrStat, ErrMsg,RoutineName)
        RETURN
     END IF
-    ALLOCATE(mask2(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    ALLOCATE(mask4(i1_l:i1_u,i2_l:i2_u,i3_l:i3_u,i4_l:i4_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
-       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask2.', ErrStat, ErrMsg,RoutineName)
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask4.', ErrStat, ErrMsg,RoutineName)
        RETURN
     END IF
-    mask2 = .TRUE. 
-      IF (SIZE(OutData%elg)>0) OutData%elg = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%elg))-1 ), mask2, 0.0_DbKi ), R8Ki)
+    mask4 = .TRUE. 
+      IF (SIZE(OutData%elg)>0) OutData%elg = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%elg))-1 ), mask4, 0.0_DbKi ), R8Ki)
       Db_Xferred   = Db_Xferred   + SIZE(OutData%elg)
-    DEALLOCATE(mask2)
+    DEALLOCATE(mask4)
   END IF
   IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! elm not allocated
     Int_Xferred = Int_Xferred + 1
@@ -6457,21 +7202,27 @@ ENDIF
     i2_l = IntKiBuf( Int_Xferred    )
     i2_u = IntKiBuf( Int_Xferred + 1)
     Int_Xferred = Int_Xferred + 2
+    i3_l = IntKiBuf( Int_Xferred    )
+    i3_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
+    i4_l = IntKiBuf( Int_Xferred    )
+    i4_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
     IF (ALLOCATED(OutData%elm)) DEALLOCATE(OutData%elm)
-    ALLOCATE(OutData%elm(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    ALLOCATE(OutData%elm(i1_l:i1_u,i2_l:i2_u,i3_l:i3_u,i4_l:i4_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
        CALL SetErrStat(ErrID_Fatal, 'Error allocating OutData%elm.', ErrStat, ErrMsg,RoutineName)
        RETURN
     END IF
-    ALLOCATE(mask2(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    ALLOCATE(mask4(i1_l:i1_u,i2_l:i2_u,i3_l:i3_u,i4_l:i4_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
-       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask2.', ErrStat, ErrMsg,RoutineName)
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask4.', ErrStat, ErrMsg,RoutineName)
        RETURN
     END IF
-    mask2 = .TRUE. 
-      IF (SIZE(OutData%elm)>0) OutData%elm = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%elm))-1 ), mask2, 0.0_DbKi ), R8Ki)
+    mask4 = .TRUE. 
+      IF (SIZE(OutData%elm)>0) OutData%elm = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%elm))-1 ), mask4, 0.0_DbKi ), R8Ki)
       Db_Xferred   = Db_Xferred   + SIZE(OutData%elm)
-    DEALLOCATE(mask2)
+    DEALLOCATE(mask4)
   END IF
   IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! EStif0_GL not allocated
     Int_Xferred = Int_Xferred + 1
@@ -6557,32 +7308,6 @@ ENDIF
       Db_Xferred   = Db_Xferred   + SIZE(OutData%DistrLoad_GL)
     DEALLOCATE(mask2)
   END IF
-  IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! StifK not allocated
-    Int_Xferred = Int_Xferred + 1
-  ELSE
-    Int_Xferred = Int_Xferred + 1
-    i1_l = IntKiBuf( Int_Xferred    )
-    i1_u = IntKiBuf( Int_Xferred + 1)
-    Int_Xferred = Int_Xferred + 2
-    i2_l = IntKiBuf( Int_Xferred    )
-    i2_u = IntKiBuf( Int_Xferred + 1)
-    Int_Xferred = Int_Xferred + 2
-    IF (ALLOCATED(OutData%StifK)) DEALLOCATE(OutData%StifK)
-    ALLOCATE(OutData%StifK(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
-    IF (ErrStat2 /= 0) THEN 
-       CALL SetErrStat(ErrID_Fatal, 'Error allocating OutData%StifK.', ErrStat, ErrMsg,RoutineName)
-       RETURN
-    END IF
-    ALLOCATE(mask2(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
-    IF (ErrStat2 /= 0) THEN 
-       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask2.', ErrStat, ErrMsg,RoutineName)
-       RETURN
-    END IF
-    mask2 = .TRUE. 
-      IF (SIZE(OutData%StifK)>0) OutData%StifK = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%StifK))-1 ), mask2, 0.0_DbKi ), R8Ki)
-      Db_Xferred   = Db_Xferred   + SIZE(OutData%StifK)
-    DEALLOCATE(mask2)
-  END IF
   IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! StifK_LU not allocated
     Int_Xferred = Int_Xferred + 1
   ELSE
@@ -6593,21 +7318,59 @@ ENDIF
     i2_l = IntKiBuf( Int_Xferred    )
     i2_u = IntKiBuf( Int_Xferred + 1)
     Int_Xferred = Int_Xferred + 2
+    i3_l = IntKiBuf( Int_Xferred    )
+    i3_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
+    i4_l = IntKiBuf( Int_Xferred    )
+    i4_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
     IF (ALLOCATED(OutData%StifK_LU)) DEALLOCATE(OutData%StifK_LU)
-    ALLOCATE(OutData%StifK_LU(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    ALLOCATE(OutData%StifK_LU(i1_l:i1_u,i2_l:i2_u,i3_l:i3_u,i4_l:i4_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
        CALL SetErrStat(ErrID_Fatal, 'Error allocating OutData%StifK_LU.', ErrStat, ErrMsg,RoutineName)
        RETURN
     END IF
-    ALLOCATE(mask2(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    ALLOCATE(mask4(i1_l:i1_u,i2_l:i2_u,i3_l:i3_u,i4_l:i4_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
-       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask2.', ErrStat, ErrMsg,RoutineName)
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask4.', ErrStat, ErrMsg,RoutineName)
        RETURN
     END IF
-    mask2 = .TRUE. 
-      IF (SIZE(OutData%StifK_LU)>0) OutData%StifK_LU = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%StifK_LU))-1 ), mask2, 0.0_DbKi ), R8Ki)
+    mask4 = .TRUE. 
+      IF (SIZE(OutData%StifK_LU)>0) OutData%StifK_LU = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%StifK_LU))-1 ), mask4, 0.0_DbKi ), R8Ki)
       Db_Xferred   = Db_Xferred   + SIZE(OutData%StifK_LU)
-    DEALLOCATE(mask2)
+    DEALLOCATE(mask4)
+  END IF
+  IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! StifK not allocated
+    Int_Xferred = Int_Xferred + 1
+  ELSE
+    Int_Xferred = Int_Xferred + 1
+    i1_l = IntKiBuf( Int_Xferred    )
+    i1_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
+    i2_l = IntKiBuf( Int_Xferred    )
+    i2_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
+    i3_l = IntKiBuf( Int_Xferred    )
+    i3_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
+    i4_l = IntKiBuf( Int_Xferred    )
+    i4_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
+    IF (ALLOCATED(OutData%StifK)) DEALLOCATE(OutData%StifK)
+    ALLOCATE(OutData%StifK(i1_l:i1_u,i2_l:i2_u,i3_l:i3_u,i4_l:i4_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating OutData%StifK.', ErrStat, ErrMsg,RoutineName)
+       RETURN
+    END IF
+    ALLOCATE(mask4(i1_l:i1_u,i2_l:i2_u,i3_l:i3_u,i4_l:i4_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask4.', ErrStat, ErrMsg,RoutineName)
+       RETURN
+    END IF
+    mask4 = .TRUE. 
+      IF (SIZE(OutData%StifK)>0) OutData%StifK = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%StifK))-1 ), mask4, 0.0_DbKi ), R8Ki)
+      Db_Xferred   = Db_Xferred   + SIZE(OutData%StifK)
+    DEALLOCATE(mask4)
   END IF
   IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! MassM not allocated
     Int_Xferred = Int_Xferred + 1
@@ -6619,21 +7382,59 @@ ENDIF
     i2_l = IntKiBuf( Int_Xferred    )
     i2_u = IntKiBuf( Int_Xferred + 1)
     Int_Xferred = Int_Xferred + 2
+    i3_l = IntKiBuf( Int_Xferred    )
+    i3_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
+    i4_l = IntKiBuf( Int_Xferred    )
+    i4_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
     IF (ALLOCATED(OutData%MassM)) DEALLOCATE(OutData%MassM)
-    ALLOCATE(OutData%MassM(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    ALLOCATE(OutData%MassM(i1_l:i1_u,i2_l:i2_u,i3_l:i3_u,i4_l:i4_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
        CALL SetErrStat(ErrID_Fatal, 'Error allocating OutData%MassM.', ErrStat, ErrMsg,RoutineName)
        RETURN
     END IF
-    ALLOCATE(mask2(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    ALLOCATE(mask4(i1_l:i1_u,i2_l:i2_u,i3_l:i3_u,i4_l:i4_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
-       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask2.', ErrStat, ErrMsg,RoutineName)
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask4.', ErrStat, ErrMsg,RoutineName)
        RETURN
     END IF
-    mask2 = .TRUE. 
-      IF (SIZE(OutData%MassM)>0) OutData%MassM = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%MassM))-1 ), mask2, 0.0_DbKi ), R8Ki)
+    mask4 = .TRUE. 
+      IF (SIZE(OutData%MassM)>0) OutData%MassM = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%MassM))-1 ), mask4, 0.0_DbKi ), R8Ki)
       Db_Xferred   = Db_Xferred   + SIZE(OutData%MassM)
-    DEALLOCATE(mask2)
+    DEALLOCATE(mask4)
+  END IF
+  IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! DampG not allocated
+    Int_Xferred = Int_Xferred + 1
+  ELSE
+    Int_Xferred = Int_Xferred + 1
+    i1_l = IntKiBuf( Int_Xferred    )
+    i1_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
+    i2_l = IntKiBuf( Int_Xferred    )
+    i2_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
+    i3_l = IntKiBuf( Int_Xferred    )
+    i3_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
+    i4_l = IntKiBuf( Int_Xferred    )
+    i4_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
+    IF (ALLOCATED(OutData%DampG)) DEALLOCATE(OutData%DampG)
+    ALLOCATE(OutData%DampG(i1_l:i1_u,i2_l:i2_u,i3_l:i3_u,i4_l:i4_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating OutData%DampG.', ErrStat, ErrMsg,RoutineName)
+       RETURN
+    END IF
+    ALLOCATE(mask4(i1_l:i1_u,i2_l:i2_u,i3_l:i3_u,i4_l:i4_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask4.', ErrStat, ErrMsg,RoutineName)
+       RETURN
+    END IF
+    mask4 = .TRUE. 
+      IF (SIZE(OutData%DampG)>0) OutData%DampG = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%DampG))-1 ), mask4, 0.0_DbKi ), R8Ki)
+      Db_Xferred   = Db_Xferred   + SIZE(OutData%DampG)
+    DEALLOCATE(mask4)
   END IF
   IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! RHS not allocated
     Int_Xferred = Int_Xferred + 1
@@ -6642,21 +7443,24 @@ ENDIF
     i1_l = IntKiBuf( Int_Xferred    )
     i1_u = IntKiBuf( Int_Xferred + 1)
     Int_Xferred = Int_Xferred + 2
+    i2_l = IntKiBuf( Int_Xferred    )
+    i2_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
     IF (ALLOCATED(OutData%RHS)) DEALLOCATE(OutData%RHS)
-    ALLOCATE(OutData%RHS(i1_l:i1_u),STAT=ErrStat2)
+    ALLOCATE(OutData%RHS(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
        CALL SetErrStat(ErrID_Fatal, 'Error allocating OutData%RHS.', ErrStat, ErrMsg,RoutineName)
        RETURN
     END IF
-    ALLOCATE(mask1(i1_l:i1_u),STAT=ErrStat2)
+    ALLOCATE(mask2(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
-       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask1.', ErrStat, ErrMsg,RoutineName)
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask2.', ErrStat, ErrMsg,RoutineName)
        RETURN
     END IF
-    mask1 = .TRUE. 
-      IF (SIZE(OutData%RHS)>0) OutData%RHS = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%RHS))-1 ), mask1, 0.0_DbKi ), R8Ki)
+    mask2 = .TRUE. 
+      IF (SIZE(OutData%RHS)>0) OutData%RHS = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%RHS))-1 ), mask2, 0.0_DbKi ), R8Ki)
       Db_Xferred   = Db_Xferred   + SIZE(OutData%RHS)
-    DEALLOCATE(mask1)
+    DEALLOCATE(mask2)
   END IF
   IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! RHS_LU not allocated
     Int_Xferred = Int_Xferred + 1
@@ -6665,21 +7469,24 @@ ENDIF
     i1_l = IntKiBuf( Int_Xferred    )
     i1_u = IntKiBuf( Int_Xferred + 1)
     Int_Xferred = Int_Xferred + 2
+    i2_l = IntKiBuf( Int_Xferred    )
+    i2_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
     IF (ALLOCATED(OutData%RHS_LU)) DEALLOCATE(OutData%RHS_LU)
-    ALLOCATE(OutData%RHS_LU(i1_l:i1_u),STAT=ErrStat2)
+    ALLOCATE(OutData%RHS_LU(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
        CALL SetErrStat(ErrID_Fatal, 'Error allocating OutData%RHS_LU.', ErrStat, ErrMsg,RoutineName)
        RETURN
     END IF
-    ALLOCATE(mask1(i1_l:i1_u),STAT=ErrStat2)
+    ALLOCATE(mask2(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
-       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask1.', ErrStat, ErrMsg,RoutineName)
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask2.', ErrStat, ErrMsg,RoutineName)
        RETURN
     END IF
-    mask1 = .TRUE. 
-      IF (SIZE(OutData%RHS_LU)>0) OutData%RHS_LU = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%RHS_LU))-1 ), mask1, 0.0_DbKi ), R8Ki)
+    mask2 = .TRUE. 
+      IF (SIZE(OutData%RHS_LU)>0) OutData%RHS_LU = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%RHS_LU))-1 ), mask2, 0.0_DbKi ), R8Ki)
       Db_Xferred   = Db_Xferred   + SIZE(OutData%RHS_LU)
-    DEALLOCATE(mask1)
+    DEALLOCATE(mask2)
   END IF
   IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! F_PointLoad not allocated
     Int_Xferred = Int_Xferred + 1
@@ -6688,33 +7495,166 @@ ENDIF
     i1_l = IntKiBuf( Int_Xferred    )
     i1_u = IntKiBuf( Int_Xferred + 1)
     Int_Xferred = Int_Xferred + 2
+    i2_l = IntKiBuf( Int_Xferred    )
+    i2_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
     IF (ALLOCATED(OutData%F_PointLoad)) DEALLOCATE(OutData%F_PointLoad)
-    ALLOCATE(OutData%F_PointLoad(i1_l:i1_u),STAT=ErrStat2)
+    ALLOCATE(OutData%F_PointLoad(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
        CALL SetErrStat(ErrID_Fatal, 'Error allocating OutData%F_PointLoad.', ErrStat, ErrMsg,RoutineName)
        RETURN
     END IF
-    ALLOCATE(mask1(i1_l:i1_u),STAT=ErrStat2)
+    ALLOCATE(mask2(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
-       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask1.', ErrStat, ErrMsg,RoutineName)
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask2.', ErrStat, ErrMsg,RoutineName)
        RETURN
     END IF
-    mask1 = .TRUE. 
-      IF (SIZE(OutData%F_PointLoad)>0) OutData%F_PointLoad = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%F_PointLoad))-1 ), mask1, 0.0_DbKi ), R8Ki)
+    mask2 = .TRUE. 
+      IF (SIZE(OutData%F_PointLoad)>0) OutData%F_PointLoad = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%F_PointLoad))-1 ), mask2, 0.0_DbKi ), R8Ki)
       Db_Xferred   = Db_Xferred   + SIZE(OutData%F_PointLoad)
-    DEALLOCATE(mask1)
+    DEALLOCATE(mask2)
   END IF
-  IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! indx not allocated
+  IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! temp_Force not allocated
     Int_Xferred = Int_Xferred + 1
   ELSE
     Int_Xferred = Int_Xferred + 1
     i1_l = IntKiBuf( Int_Xferred    )
     i1_u = IntKiBuf( Int_Xferred + 1)
     Int_Xferred = Int_Xferred + 2
-    IF (ALLOCATED(OutData%indx)) DEALLOCATE(OutData%indx)
-    ALLOCATE(OutData%indx(i1_l:i1_u),STAT=ErrStat2)
+    i2_l = IntKiBuf( Int_Xferred    )
+    i2_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
+    IF (ALLOCATED(OutData%temp_Force)) DEALLOCATE(OutData%temp_Force)
+    ALLOCATE(OutData%temp_Force(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
     IF (ErrStat2 /= 0) THEN 
-       CALL SetErrStat(ErrID_Fatal, 'Error allocating OutData%indx.', ErrStat, ErrMsg,RoutineName)
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating OutData%temp_Force.', ErrStat, ErrMsg,RoutineName)
+       RETURN
+    END IF
+    ALLOCATE(mask2(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask2.', ErrStat, ErrMsg,RoutineName)
+       RETURN
+    END IF
+    mask2 = .TRUE. 
+      IF (SIZE(OutData%temp_Force)>0) OutData%temp_Force = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%temp_Force))-1 ), mask2, 0.0_DbKi ), R8Ki)
+      Db_Xferred   = Db_Xferred   + SIZE(OutData%temp_Force)
+    DEALLOCATE(mask2)
+  END IF
+  IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! Solution not allocated
+    Int_Xferred = Int_Xferred + 1
+  ELSE
+    Int_Xferred = Int_Xferred + 1
+    i1_l = IntKiBuf( Int_Xferred    )
+    i1_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
+    i2_l = IntKiBuf( Int_Xferred    )
+    i2_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
+    IF (ALLOCATED(OutData%Solution)) DEALLOCATE(OutData%Solution)
+    ALLOCATE(OutData%Solution(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating OutData%Solution.', ErrStat, ErrMsg,RoutineName)
+       RETURN
+    END IF
+    ALLOCATE(mask2(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask2.', ErrStat, ErrMsg,RoutineName)
+       RETURN
+    END IF
+    mask2 = .TRUE. 
+      IF (SIZE(OutData%Solution)>0) OutData%Solution = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%Solution))-1 ), mask2, 0.0_DbKi ), R8Ki)
+      Db_Xferred   = Db_Xferred   + SIZE(OutData%Solution)
+    DEALLOCATE(mask2)
+  END IF
+  IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! LP_StifK not allocated
+    Int_Xferred = Int_Xferred + 1
+  ELSE
+    Int_Xferred = Int_Xferred + 1
+    i1_l = IntKiBuf( Int_Xferred    )
+    i1_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
+    i2_l = IntKiBuf( Int_Xferred    )
+    i2_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
+    IF (ALLOCATED(OutData%LP_StifK)) DEALLOCATE(OutData%LP_StifK)
+    ALLOCATE(OutData%LP_StifK(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating OutData%LP_StifK.', ErrStat, ErrMsg,RoutineName)
+       RETURN
+    END IF
+    ALLOCATE(mask2(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask2.', ErrStat, ErrMsg,RoutineName)
+       RETURN
+    END IF
+    mask2 = .TRUE. 
+      IF (SIZE(OutData%LP_StifK)>0) OutData%LP_StifK = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%LP_StifK))-1 ), mask2, 0.0_DbKi ), R8Ki)
+      Db_Xferred   = Db_Xferred   + SIZE(OutData%LP_StifK)
+    DEALLOCATE(mask2)
+  END IF
+  IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! LP_MassM not allocated
+    Int_Xferred = Int_Xferred + 1
+  ELSE
+    Int_Xferred = Int_Xferred + 1
+    i1_l = IntKiBuf( Int_Xferred    )
+    i1_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
+    i2_l = IntKiBuf( Int_Xferred    )
+    i2_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
+    IF (ALLOCATED(OutData%LP_MassM)) DEALLOCATE(OutData%LP_MassM)
+    ALLOCATE(OutData%LP_MassM(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating OutData%LP_MassM.', ErrStat, ErrMsg,RoutineName)
+       RETURN
+    END IF
+    ALLOCATE(mask2(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask2.', ErrStat, ErrMsg,RoutineName)
+       RETURN
+    END IF
+    mask2 = .TRUE. 
+      IF (SIZE(OutData%LP_MassM)>0) OutData%LP_MassM = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%LP_MassM))-1 ), mask2, 0.0_DbKi ), R8Ki)
+      Db_Xferred   = Db_Xferred   + SIZE(OutData%LP_MassM)
+    DEALLOCATE(mask2)
+  END IF
+  IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! LP_DampG not allocated
+    Int_Xferred = Int_Xferred + 1
+  ELSE
+    Int_Xferred = Int_Xferred + 1
+    i1_l = IntKiBuf( Int_Xferred    )
+    i1_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
+    i2_l = IntKiBuf( Int_Xferred    )
+    i2_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
+    IF (ALLOCATED(OutData%LP_DampG)) DEALLOCATE(OutData%LP_DampG)
+    ALLOCATE(OutData%LP_DampG(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating OutData%LP_DampG.', ErrStat, ErrMsg,RoutineName)
+       RETURN
+    END IF
+    ALLOCATE(mask2(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask2.', ErrStat, ErrMsg,RoutineName)
+       RETURN
+    END IF
+    mask2 = .TRUE. 
+      IF (SIZE(OutData%LP_DampG)>0) OutData%LP_DampG = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%LP_DampG))-1 ), mask2, 0.0_DbKi ), R8Ki)
+      Db_Xferred   = Db_Xferred   + SIZE(OutData%LP_DampG)
+    DEALLOCATE(mask2)
+  END IF
+  IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! LP_RHS not allocated
+    Int_Xferred = Int_Xferred + 1
+  ELSE
+    Int_Xferred = Int_Xferred + 1
+    i1_l = IntKiBuf( Int_Xferred    )
+    i1_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
+    IF (ALLOCATED(OutData%LP_RHS)) DEALLOCATE(OutData%LP_RHS)
+    ALLOCATE(OutData%LP_RHS(i1_l:i1_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating OutData%LP_RHS.', ErrStat, ErrMsg,RoutineName)
        RETURN
     END IF
     ALLOCATE(mask1(i1_l:i1_u),STAT=ErrStat2)
@@ -6723,8 +7663,80 @@ ENDIF
        RETURN
     END IF
     mask1 = .TRUE. 
-      IF (SIZE(OutData%indx)>0) OutData%indx = UNPACK( IntKiBuf ( Int_Xferred:Int_Xferred+(SIZE(OutData%indx))-1 ), mask1, 0_IntKi )
-      Int_Xferred   = Int_Xferred   + SIZE(OutData%indx)
+      IF (SIZE(OutData%LP_RHS)>0) OutData%LP_RHS = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%LP_RHS))-1 ), mask1, 0.0_DbKi ), R8Ki)
+      Db_Xferred   = Db_Xferred   + SIZE(OutData%LP_RHS)
+    DEALLOCATE(mask1)
+  END IF
+  IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! LP_StifK_LU not allocated
+    Int_Xferred = Int_Xferred + 1
+  ELSE
+    Int_Xferred = Int_Xferred + 1
+    i1_l = IntKiBuf( Int_Xferred    )
+    i1_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
+    i2_l = IntKiBuf( Int_Xferred    )
+    i2_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
+    IF (ALLOCATED(OutData%LP_StifK_LU)) DEALLOCATE(OutData%LP_StifK_LU)
+    ALLOCATE(OutData%LP_StifK_LU(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating OutData%LP_StifK_LU.', ErrStat, ErrMsg,RoutineName)
+       RETURN
+    END IF
+    ALLOCATE(mask2(i1_l:i1_u,i2_l:i2_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask2.', ErrStat, ErrMsg,RoutineName)
+       RETURN
+    END IF
+    mask2 = .TRUE. 
+      IF (SIZE(OutData%LP_StifK_LU)>0) OutData%LP_StifK_LU = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%LP_StifK_LU))-1 ), mask2, 0.0_DbKi ), R8Ki)
+      Db_Xferred   = Db_Xferred   + SIZE(OutData%LP_StifK_LU)
+    DEALLOCATE(mask2)
+  END IF
+  IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! LP_RHS_LU not allocated
+    Int_Xferred = Int_Xferred + 1
+  ELSE
+    Int_Xferred = Int_Xferred + 1
+    i1_l = IntKiBuf( Int_Xferred    )
+    i1_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
+    IF (ALLOCATED(OutData%LP_RHS_LU)) DEALLOCATE(OutData%LP_RHS_LU)
+    ALLOCATE(OutData%LP_RHS_LU(i1_l:i1_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating OutData%LP_RHS_LU.', ErrStat, ErrMsg,RoutineName)
+       RETURN
+    END IF
+    ALLOCATE(mask1(i1_l:i1_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask1.', ErrStat, ErrMsg,RoutineName)
+       RETURN
+    END IF
+    mask1 = .TRUE. 
+      IF (SIZE(OutData%LP_RHS_LU)>0) OutData%LP_RHS_LU = REAL( UNPACK(DbKiBuf( Db_Xferred:Db_Xferred+(SIZE(OutData%LP_RHS_LU))-1 ), mask1, 0.0_DbKi ), R8Ki)
+      Db_Xferred   = Db_Xferred   + SIZE(OutData%LP_RHS_LU)
+    DEALLOCATE(mask1)
+  END IF
+  IF ( IntKiBuf( Int_Xferred ) == 0 ) THEN  ! LP_indx not allocated
+    Int_Xferred = Int_Xferred + 1
+  ELSE
+    Int_Xferred = Int_Xferred + 1
+    i1_l = IntKiBuf( Int_Xferred    )
+    i1_u = IntKiBuf( Int_Xferred + 1)
+    Int_Xferred = Int_Xferred + 2
+    IF (ALLOCATED(OutData%LP_indx)) DEALLOCATE(OutData%LP_indx)
+    ALLOCATE(OutData%LP_indx(i1_l:i1_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating OutData%LP_indx.', ErrStat, ErrMsg,RoutineName)
+       RETURN
+    END IF
+    ALLOCATE(mask1(i1_l:i1_u),STAT=ErrStat2)
+    IF (ErrStat2 /= 0) THEN 
+       CALL SetErrStat(ErrID_Fatal, 'Error allocating mask1.', ErrStat, ErrMsg,RoutineName)
+       RETURN
+    END IF
+    mask1 = .TRUE. 
+      IF (SIZE(OutData%LP_indx)>0) OutData%LP_indx = UNPACK( IntKiBuf ( Int_Xferred:Int_Xferred+(SIZE(OutData%LP_indx))-1 ), mask1, 0_IntKi )
+      Int_Xferred   = Int_Xferred   + SIZE(OutData%LP_indx)
     DEALLOCATE(mask1)
   END IF
       Buf_size=IntKiBuf( Int_Xferred )
