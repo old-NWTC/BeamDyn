@@ -440,6 +440,9 @@ subroutine InitializeNodalLocations(InputFileData,p,SP_Coef,GLL_nodes,ErrStat, E
    character(ErrMsgLen)                         :: ErrMsg2           ! temporary Error message
    character(*), parameter                      :: RoutineName = 'InitGaussPoints'
 
+   ErrStat = ErrID_None
+   ErrMsg  = ""
+   
    !-------------------------------------------------
    ! p%uuN0 contains the initial (physical) positions and orientations of the (output) GLL nodes
    !-------------------------------------------------
